@@ -1,0 +1,5 @@
+input.form-control,  .select2-selection, select.form-control, textarea.form-control{ 
+    border-radius: 5px 5px 5px 5px;
+    color: #000000;
+    border: 1px solid #000000 !important;
+}

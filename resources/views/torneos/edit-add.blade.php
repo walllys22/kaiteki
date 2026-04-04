@@ -1,0 +1,108 @@
+@extends('voyager::master')
+
+@section('page_title', (isset($dataTypeContent->id) ? 'Editar' : 'Crear').' Torneo')
+
+@section('page_header')
+    <h1 class="page-title">
+        <i class="voyager-trophy"></i>
+        {{ isset($dataTypeContent->id) ? 'Editar' : 'Crear' }} Torneo
+    </h1>
+@stop
+
+@section('content')
+    <div class="page-content edit-add container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-bordered">
+                    <!-- FORM -->
+                    <form role="form"
+                          action="{{ isset($dataTypeContent->id) ? route('voyager.torneos.update', $dataTypeContent->id) : route('voyager.torneos.store') }}"
+                          method="POST" enctype="multipart/form-data">
+                        @csrf
+                        @if(isset($dataTypeContent->id))
+                            @method('PUT')
+                        @endif
+
+                        <div class="panel-body">
+                            <div class="row">
+                                {{-- Nombre del Torneo --}}
+                                <div class="form-group col-md-6">
+                                    <label for="nombre">Nombre del Torneo</label>
+                                    <input type="text" class="form-control" name="nombre" placeholder="Nombre" value="{{ old('nombre', $dataTypeContent->nombre) }}" required>
+                                </div>
+
+                                {{-- Persona Encargada --}}
+                                <div class="form-group col-md-6">
+                                    <label for="person_id">Persona Responsable</label>
+                                    <select name="person_id" class="form-control select2" required>
+                                        <option value="">Seleccione una persona</option>
+                                        @foreach($people as $person)
+                                            <option value="{{ $person->id }}" {{ old('person_id', $dataTypeContent->person_id) == $person->id ? 'selected' : '' }}>
+                                                {{ $person->first_name }} {{ $person->middle_name }}  {{ $person->paternal_surname }}  {{ $person->maternal_surname }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                {{-- Ciudad --}}
+                                <div class="form-group col-md-4">
+                                    <label for="ciudad_id">Ciudad</label>
+                                    <select name="ciudad_id" class="form-control select2" required>
+                                        <option value="">Seleccione una ciudad</option>
+                                        @foreach($ciudades as $ciudad)
+                                            <option value="{{ $ciudad->id }}" {{ old('ciudad_id', $dataTypeContent->ciudad_id) == $ciudad->id ? 'selected' : '' }}>
+                                                {{ $ciudad->nombre }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                {{-- Fecha Inicio --}}
+                                <div class="form-group col-md-4">
+                                    <label for="fechainicio">Fecha de Inicio</label>
+                                    <input type="date" class="form-control" name="fechainicio" value="{{ old('fechainicio', $dataTypeContent->fechainicio) }}" required>
+                                </div>
+
+                                {{-- Fecha Final --}}
+                                <div class="form-group col-md-4">
+                                    <label for="fechafinal">Fecha Final</label>
+                                    <input type="date" class="form-control" name="fechafinal" value="{{ old('fechafinal', $dataTypeContent->fechafinal) }}" required>
+                                </div>
+
+                                {{-- Archivo --}}
+                                <div class="form-group col-md-12">
+                                    <label for="archivo">Archivo / Convocatoria (PDF o Imagen)</label>
+                                    @if($dataTypeContent->archivo)
+                                        <div class="m-b-10">
+                                            <a href="{{ Storage::url($dataTypeContent->archivo) }}" target="_blank" class="btn btn-sm btn-info">Ver archivo actual</a>
+                                        </div>
+                                    @endif
+                                    <input type="file" name="archivo" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel-footer">
+                            <button type="submit" class="btn btn-primary save">{{ __('voyager::generic.save') }}</button>
+                            <a href="{{ route('voyager.torneos.index') }}" class="btn btn-default">{{ __('voyager::generic.cancel') }}</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+@stop
+
+@section('css')
+    <style>
+        .select2-container { width: 100% !important; }
+    </style>
+@stop
+
+@section('javascript')
+    <script>
+        $(document).ready(function () {
+            $('.select2').select2();
+        });
+    </script>
+@stop
