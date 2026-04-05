@@ -56,9 +56,9 @@ class PermissionsTableSeeder extends Seeder
 
         
 
-        // Administracion
+        // C
         $permissions = [
-            'browse_people' => 'Ver lista de personas',
+            'browse_people' => 'Ver lista de C',
             'read_people' => 'Ver detalles de una persona',
             'edit_people' => 'Editar información de personas',
             'add_people' => 'Agregar nuevas personas',
@@ -74,8 +74,58 @@ class PermissionsTableSeeder extends Seeder
             ]);
         }
 
-     
+        $permissions = [
+            'browse_categorias' => 'Ver lista de Categorias',
+            'read_categorias' => 'Ver detalles de una Categoria',
+            'edit_categorias' => 'Editar información de Categorias',
+            'add_categorias' => 'Agregar nuevas Categorias',
+            'delete_categorias' => 'Eliminar Categorias',
+        ];
 
+        foreach ($permissions as $key => $description) {
+            Permission::firstOrCreate([
+                'key'        => $key,
+                'keyDescription'=> $description,
+                'table_name' => 'categorias',
+                'tableDescription'=>'Categorias'
+            ]);
+        }
+
+        
+        $permissions = [
+            'browse_ciudads' => 'Ver lista de C',
+            'read_ciudads' => 'Ver detalles de una persona',
+            'edit_ciudads' => 'Editar información de C',
+            'add_ciudads' => 'Agregar nuevas C',
+            'delete_ciudads' => 'Eliminar C',
+        ];
+
+        foreach ($permissions as $key => $description) {
+            Permission::firstOrCreate([
+                'key'        => $key,
+                'keyDescription'=> $description,
+                'table_name' => 'ciudads',
+                'tableDescription'=>'Ciudades'
+            ]);
+        }
+     
+        $permissions = [
+            'browse_Torneos' => 'Ver lista de C',
+            'read_Torneos' => 'Ver detalles de una persona',
+            'edit_Torneos' => 'Editar información de C',
+            'add_Torneos' => 'Agregar nuevas C',
+            'delete_Torneos' => 'Eliminar C',
+        ];
+
+        foreach ($permissions as $key => $description) {
+            Permission::firstOrCreate([
+                'key'        => $key,
+                'keyDescription'=> $description,
+                'table_name' => 'Torneos',
+                'tableDescription'=>'Ciudades'
+            ]);
+        }
+     
 
 
         

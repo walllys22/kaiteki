@@ -11,9 +11,12 @@ use Illuminate\Support\Facades\DB;
 
 class TorneoController extends Controller
 {
+    protected $storageController;
+
     public function __construct()
     {
         $this->middleware('auth');
+        $this->storageController = new StorageController();
     }
 
     public function create()
@@ -41,7 +44,14 @@ class TorneoController extends Controller
             $data = $request->all();
 
             if ($request->hasFile('archivo')) {
-                $data['archivo'] = $request->file('archivo')->store('torneos', 'public');
+                $file = $request->file('archivo');
+                // Si el archivo es una imagen, usamos el StorageController para optimizarla
+                if (str_starts_with($file->getMimeType(), 'image/')) {
+                    $data['archivo'] = $this->storageController->store_image($file, 'torneos');
+                } else {
+                    // Si es un PDF u otro tipo de archivo, usamos el guardado tradicional
+                    $data['archivo'] = $file->store('torneos', 'public');
+                }
             }
 
             Torneo::create($data);
@@ -84,7 +94,14 @@ class TorneoController extends Controller
                 if ($torneo->archivo) {
                     Storage::disk('public')->delete($torneo->archivo);
                 }
-                $data['archivo'] = $request->file('archivo')->store('torneos', 'public');
+                
+                $file = $request->file('archivo');
+                // Aplicamos la misma lógica de detección para la actualización
+                if (str_starts_with($file->getMimeType(), 'image/')) {
+                    $data['archivo'] = $this->storageController->store_image($file, 'torneos');
+                } else {
+                    $data['archivo'] = $file->store('torneos', 'public');
+                }
             }
 
             $torneo->update($data);
