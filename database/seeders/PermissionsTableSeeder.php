@@ -56,7 +56,7 @@ class PermissionsTableSeeder extends Seeder
 
         
 
-        // C
+        // Peopple
         $permissions = [
             'browse_people' => 'Ver lista de C',
             'read_people' => 'Ver detalles de una persona',
@@ -74,6 +74,7 @@ class PermissionsTableSeeder extends Seeder
             ]);
         }
 
+        //Categorias
         $permissions = [
             'browse_categorias' => 'Ver lista de Categorias',
             'read_categorias' => 'Ver detalles de una Categoria',
@@ -91,7 +92,7 @@ class PermissionsTableSeeder extends Seeder
             ]);
         }
 
-        
+        //Ciudad
         $permissions = [
             'browse_ciudads' => 'Ver lista de C',
             'read_ciudads' => 'Ver detalles de una persona',
@@ -109,12 +110,13 @@ class PermissionsTableSeeder extends Seeder
             ]);
         }
      
+        //Torneos
         $permissions = [
-            'browse_Torneos' => 'Ver lista de C',
-            'read_Torneos' => 'Ver detalles de una persona',
-            'edit_Torneos' => 'Editar información de C',
-            'add_Torneos' => 'Agregar nuevas C',
-            'delete_Torneos' => 'Eliminar C',
+            'browse_Torneos' => 'Ver lista de Torneos',
+            'read_Torneos' => 'Ver detalles de una Torneos',
+            'edit_Torneos' => 'Editar información de Torneos',
+            'add_Torneos' => 'Agregar nuevos Torneos',
+            'delete_Torneos' => 'Eliminar Torneos',
         ];
 
         foreach ($permissions as $key => $description) {
@@ -122,13 +124,45 @@ class PermissionsTableSeeder extends Seeder
                 'key'        => $key,
                 'keyDescription'=> $description,
                 'table_name' => 'Torneos',
-                'tableDescription'=>'Ciudades'
+                'tableDescription'=>'Torneos',
             ]);
         }
      
+        //Grado
+        $permissions = [
+            'browse_grados' => 'Ver lista de Grados',
+            'read_grados' => 'Ver detalles de un Grado',
+            'edit_grados' => 'Editar información de Grados',
+            'add_grados' => 'Agregar nuevos Grados',
+            'delete_grados' => 'Eliminar Grado',
+        ];
 
+        foreach ($permissions as $key => $description) {
+            Permission::firstOrCreate([
+                'key'        => $key,
+                'keyDescription'=> $description,
+                'table_name' => 'grados',
+                'tableDescription'=>'grados'
+            ]);
+        }
 
-        
+             //Modalidades
+        $permissions = [
+            'browse_modalidas' => 'Ver lista de C',
+            'read_modalidas' => 'Ver detalles de una persona',
+            'edit_modalidas' => 'Editar información de C',
+            'add_modalidas' => 'Agregar nuevas C',
+            'delete_modalidas' => 'Eliminar C',
+        ];
+
+        foreach ($permissions as $key => $description) {
+            Permission::firstOrCreate([
+                'key'        => $key,
+                'keyDescription'=> $description,
+                'table_name' => 'modalidas',
+                'tableDescription'=>'modalidas'
+            ]);
+        }   
         
     }
 }
