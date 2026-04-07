@@ -9,6 +9,7 @@ use App\Http\Controllers\MicroServiceController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\WhatsappController;
 use App\Http\Controllers\TorneoController;
+use App\Http\Controllers\KumiteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -66,6 +67,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
 
 });
 
+Route::get('/kumite-temporizador', [KumiteController::class, 'index'])->name('kumite.temporizador');
 
 // Clear cache
 Route::get('/admin/clear-cache', function() {
