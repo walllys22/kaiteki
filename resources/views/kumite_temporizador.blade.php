@@ -15,7 +15,6 @@
 
 <!-- MARCADOR AZUL -->
     <div class="marcador-ao">
-        <div id="contenedor-s-azul"></div>
         <div class="pantalla-puntos">
             <div class="etiqueta-ao">AZUL  -  AO</div>
             <div id="indicador-senshu-azul" class="circulo-senshu"></div>
@@ -46,13 +45,13 @@
                 <button id="btn-hc-azul" class="btn-falta" onclick="logicaHC()">HC</button>
                 <button id="btn-c-azul" class="btn-falta" onclick="logicaC()">C</button>
             </div>
+            <br>
             <span style="color: white; font-weight: bold; display: block; text-align: Left; width: 100%;">
                 Competidor: Walter Landivar Limpias
             </span>
             <span style="color: white; font-weight: bold; display: block; text-align: center; width: 100%;">
                 L.J.P. ZABALA DOJO
             </span>
-            <br>
         </div>
     </div>
 
@@ -86,7 +85,7 @@
                 <button @click="decrementSec" :disabled="isRunning" class="btn-Reloj ">-</button>   
             </div>
             <div class="flex flex-col gap-3">
-                <br>
+                <span class="text-xl font-bold text-gray-100 uppercase">.</span>
                 <button id="btnMuestraGanador" class="btn-personalizado" onclick="declararGanador()" disabled>GANADOR</button>
                 <button onclick="window.history.back()" class="btn-personalizado">Cerrar</button>
             </div>
@@ -100,12 +99,11 @@
 <!-- MARCADOR ROJO -->
  <div class="marcador-aka">
     <div id="contenedor-s-rojo"></div>
-    <div class="pantalla-puntos-aka">
+    <div class="pantalla-puntos">
         <div class="etiqueta-aka">AKA  -  ROJO</div>
         <div id="indicador-senshu-rojo" class="circulo-senshu"></div>
-        <div id="puntosRojo" class="puntos-gigantes">0</div>
+        <div id="puntosRoo" class="puntos-gigantes">0</div>
     </div>
-
     <div class="panel-control-rojo">
         <div class="fila">
             <button class="btn-personalizadoRojo suma" onclick="gestionarPuntosAka(1)">+ YUKO</button>
@@ -117,35 +115,23 @@
             <button class="btn-personalizadoRojo resta" onclick="gestionarPuntosAka(-1)">- YUKO</button>
             <button class="btn-personalizadoRojo resta" onclick="gestionarPuntosAka(-2)">- WAZARI</button>
             <button class="btn-personalizadoRojo resta" onclick="gestionarPuntosAka(-3)">- IPPON</button>
-            <button id="btn-senshu-azul" class="btn-personalizadosenshuazul" onclick="logicahanteirojo()">
-                Hantei
-            </button>
+            <button id="btn-senshu-azul" class="btn-personalizadosenshuazul" onclick="logicahanteirojo()">Hantei</button>
         </div>
         <div class="fila">
-            <button id="btn-c1-azul" class="btn-falta" onclick="logicaC1()">C1</button>
-            <button id="btn-c2-azul" class="btn-falta" onclick="logicaC2()">C2</button>
-            <button id="btn-c3-azul" class="btn-falta" onclick="logicaC3()">C3</button>
-            <button id="btn-hc-azul" class="btn-falta" onclick="logicaHC()">HC</button>
-            <button id="btn-c-azul" class="btn-falta" onclick="logicaC()">C</button>
+            <button id="btn-c1-rojo" class="btn-falta" onclick="logicaC1aka()">C1</button>
+            <button id="btn-c2-rojo" class="btn-falta" onclick="logicaC2aka()">C2</button>
+            <button id="btn-c3-rojo" class="btn-falta" onclick="logicaC3aka()">C3</button>
+            <button id="btn-hc-rojo" class="btn-falta" onclick="logicaHCaka()">HC</button>
+            <button id="btn-c-rojo" class="btn-falta" onclick="logicaCaka()">C</button>
         </div>
+        <br>
         <span style="color: white; font-weight: bold; display: block; text-align: Left; width: 100%;">
             Competidor: Walter Landivar Limpias
         </span>
         <span style="color: white; font-weight: bold; display: block; text-align: center; width: 100%;">
             L.J.P. ZABALA DOJO
         </span>
-        <br>
     </div> 
-<!--    
-    <div id="pantalla-ganador" class="overlay-ganador">
-        <div class="mensaje-contenedor">
-            <h1 class="texto-arriba">GANADOR ROJO</h1>
-            <p class="texto-debajo">POR FALTAS DEL COMPETIDOR AZUL</p>
-            
-            <button class="btn-cerrar-anuncio" onclick="cerrarMensaje()">CERRAR</button>
-        </div>
-    </div>
--->
 </div>
 
 
@@ -340,7 +326,7 @@
         width: 450px;
         
         /* --- OPCIÓN DE ALTO --- */
-        min-height: 400px;         /* Ajusta este valor (ej: 300px, 400px) para aumentar el alto */
+        min-height: 380px;         /* Ajusta este valor (ej: 300px, 400px) para aumentar el alto */
         
         /* --- CENTRADO VERTICAL (Opcional pero recomendado) --- */
         display: flex;
@@ -349,7 +335,7 @@
         align-items: center;
         
         border-radius: 15px;
-        padding: 20px;
+        padding: 15px;
         color: white;
         font-family: 'Arial Black', sans-serif;
         box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -358,6 +344,30 @@
         position: relative;
         /* Cambié display inline-block por flex para manejar mejor el alto */
     }
+
+        .marcador-aka {
+            background-color: #cc0000; /* Rojo reglamentario AKA */
+            width: 450px;
+            /* --- OPCIÓN DE ALTO --- */
+            min-height: 380px;         /* Ajusta este valor (ej: 300px, 400px) para aumentar el alto */
+            /* --- CENTRADO VERTICAL (Opcional pero recomendado) --- */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            
+            border-radius: 15px;
+            padding: 15px;
+            color: white;
+            font-family: 'Arial Black', sans-serif;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 4px solid #ffffff;
+            text-align: center;
+            position: relative;
+        }
+
+
+
 
     .etiqueta-ao {
         font-size: 1.5rem;
@@ -546,7 +556,7 @@
         cursor: pointer;
         padding: 10px 10px;
         min-width: 40px;
-        height: 50px;
+        height: 40px;
         
         display: inline-flex;
         align-items: center;
@@ -605,23 +615,12 @@
     }
 
 
-    .marcador-aka {
-        background-color: #cc0000; /* Rojo reglamentario AKA */
-        width: 450px;
-        border-radius: 15px;
-        padding: 25px;
-        color: #ffffff; /* Letra blanca */
-        font-family: 'Arial Black', Gadget, sans-serif;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-        border: 4px solid #ffffff;
-        text-align: center;
-    }
+
 
     .etiqueta-aka {
-        font-size: 1.8rem;
-        letter-spacing: 4px;
-        margin-bottom: -15px;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        font-size: 1.5rem;
+        letter-spacing: 3px;
+        margin-bottom: -10px;
     }
 
     .puntos-gigantes {
@@ -801,9 +800,22 @@
 
 <script>
     /* ******************** Marcadores ******************** */
-    let puntajeAo = 0;
 
     function cambiarPuntos(valor) {
+        // 1. Verificación de tiempo: Si ambos están en 0, mostramos alerta y salimos
+        if (minutos === 0 && segundos === 0) {
+            alert("NO SE PUEDE DAR PUNTAJE SI EL TIEMPO ESTA EN 00:00");
+            return; // Esto detiene la función aquí mismo
+        }
+
+        // Lee el contenido del cronómetro desde el HTML
+        const tiempoActual = document.getElementById('tu-id-del-reloj').innerText;
+        
+        if (tiempoActual === "00:00" || tiempoActual === "0:00") {
+            alert("NO SE PUEDE DAR PUNTAJE SI EL TIEMPO ESTA EN 00:00");
+            return;
+        }
+        // 2. Si el tiempo es mayor a cero, procedemos con la suma
         puntajeAo += valor;
 
         // Validación: No permitir puntos negativos
@@ -811,15 +823,48 @@
             puntajeAo = 0;
         }
 
+        // 3. Actualización del marcador visual
         const display = document.getElementById('puntosAzul');
-        display.innerText = puntajeAo;
+        if (display) {
+            display.innerText = puntajeAo;
 
-        // Efecto visual de confirmación (pequeño salto)
-        display.style.transform = "scale(1.1)";
-        setTimeout(() => {
-            display.style.transform = "scale(1)";
-        }, 100);
+            // Efecto visual de confirmación (pequeño salto)
+            display.style.transform = "scale(1.1)";
+            setTimeout(() => {
+                display.style.transform = "scale(1)";
+            }, 100);
+        }
     }
+
+/* ******************** controla puntos rojo ******************** */
+    let puntajeAo = 0; 
+
+    function cambiarPuntos(valor) {
+        // 1. Verificamos que el clic entra a la función
+        console.log("Pulsado botón con valor: " + valor);
+
+        // 2. Buscamos el display
+        const display = document.getElementById('puntosAzul');
+        
+        // 3. Calculamos el puntaje
+        puntajeAo += valor;
+        if (puntajeAo < 0) puntajeAo = 0;
+
+        // 4. Actualizamos la pantalla solo si el elemento existe
+        if (display) {
+            display.innerText = puntajeAo;
+            
+            // Animación rápida de latido
+            display.style.transform = "scale(1.2)";
+            setTimeout(() => {
+                display.style.transform = "scale(1)";
+            }, 100);
+        } else {
+            console.error("Error: No encuentro el ID 'puntosAzul' en el HTML");
+        }
+    }
+
+
 
 /* ******************** controla puntos rojo ******************** */
     let puntajeRojo = 0; 
@@ -937,7 +982,7 @@
 
     /* ******************** Hansoku Chuy Azul ******************** */    
     // Variable global para recordar qué botones activó el HC en su último clic
-    let botonesActivadosPorHC = [];
+/*    let botonesActivadosPorHC = any[]; */
 
     function logicaHC() {
         const btnC1 = document.getElementById('btn-c1-azul');
@@ -1120,7 +1165,7 @@
             <div id="circulo-s-rojo" style="
                 position: absolute;
                 top: 5px;
-                right: 5px;
+                right: 15px;
                 width: 80px;
                 height: 80px;
                 background-color: yellow;
@@ -1139,4 +1184,160 @@
             </div>
         `;
     }
+    /* ******************** Chuy 1 Rojo ******************** */
+    function logicaC1aka() {
+        const btnC1aka = document.getElementById('btn-c1-rojo');
+        const btnC2aka = document.getElementById('btn-c2-rojo');
+
+        // Función para verificar si un botón tiene el fondo amarillo
+        const esAmarillo = (el) => el && el.classList.contains('falta-activa');
+
+        // CASO A: El botón C1 ya está en amarillo (queremos quitarlo)
+        if (esAmarillo(btnC1aka)) {
+            // Regla: Si C2 está amarillo, no se puede quitar C1
+            if (esAmarillo(btnC2aka)) {
+                alert("PRIMERO DEBE QUITAR EL CHUY 2");
+            } else {
+                // Si C2 está transparente, permitimos quitar el fondo amarillo
+                btnC1aka.classList.remove('falta-activa');
+            }
+        } 
+        // CASO B: El botón C1 está transparente (queremos activarlo)
+        else {
+            btnC1aka.classList.add('falta-activa');
+        }
+    }
+
+    /* ******************** Chuy 2 Rojo ******************** */
+    function logicaC2aka() {
+        const btnC1aka = document.getElementById('btn-c1-rojo');
+        const btnC2aka = document.getElementById('btn-c2-rojo');
+        const btnC3aka = document.getElementById('btn-c3-rojo');
+
+        // Función auxiliar para saber si un botón está "activo" (amarillo)
+        const esAmarillo = (el) => el && el.classList.contains('falta-activa');
+
+        // CASO A: El botón C2 ya está en amarillo (queremos quitarlo)
+        if (esAmarillo(btnC2aka)) {
+            // Regla: Si C3 está amarillo, no se puede quitar C2
+            if (esAmarillo(btnC3aka)) {
+                alert("PRIMERO DEBE QUITAR EL CHUY 3");
+            } else {
+                // Si C3 está transparente, entonces sí podemos quitar C2
+                btnC2aka.classList.remove('falta-activa');
+            }
+        } 
+        // CASO B: El botón C2 está transparente (queremos activarlo)
+        else {
+            // Regla: Solo se activa si C1 ya tiene el fondo amarillo
+            if (esAmarillo(btnC1aka)) {
+                btnC2aka.classList.add('falta-activa');
+            } else {
+                // Opcional: podrías poner un alert aquí indicando que falta el C1
+                console.log("Debe Marcar C1 Primero");
+            }
+        }
+    }
+
+    /* ******************** Chuy 3 Rojo ******************** */
+    function logicaC3aka() {
+        const btnC2aka = document.getElementById('btn-c2-rojo');
+        const btnC3aka = document.getElementById('btn-c3-rojo');
+        const btnHCaka = document.getElementById('btn-hc-rojo');
+
+        // Función para verificar si un botón tiene la clase de fondo amarillo
+        const esAmarillo = (el) => el && el.classList.contains('falta-activa');
+
+        // CASO A: El botón C3 ya está en amarillo (queremos quitarlo / ponerlo transparente)
+        if (esAmarillo(btnC3aka)) {
+            // Regla: Si HC está amarillo, no se puede quitar C3
+            if (esAmarillo(btnHCaka)) {
+                alert("PRIMERO DEBE QUITAR EL HANSOKU CHUY");
+            } else {
+                // Si HC está transparente, permitimos volver a transparente
+                btnC3aka.classList.remove('falta-activa');
+            }
+        } 
+        // CASO B: El botón C3 está transparente (queremos activarlo / ponerlo amarillo)
+        else {
+            // Regla: Solo se activa si C2 ya tiene el fondo amarillo
+            if (esAmarillo(btnC2aka)) {
+                btnC3aka.classList.add('falta-activa');
+            } else {
+                // Mensaje opcional en consola para el usuario
+                console.log("Debe marcar C2 primero");
+            }
+        }
+    }
+
+    // Variable global para recordar qué botones activó el HC en su último clic
+    let botonesActivadosPorHCaka  = [];
+
+    /* ******************** Hansoku Chuy Rojo ******************** */    
+    // Variable global para recordar qué botones activó el HC en su último clic
+/*    let botonesActivadosPorHC = any[]; */
+
+    function logicaHCaka() {
+        const btnC1aka = document.getElementById('btn-c1-rojo');
+        const btnC2aka = document.getElementById('btn-c2-rojo');
+        const btnC3aka = document.getElementById('btn-c3-rojo');
+        const btnHCaka = document.getElementById('btn-hc-rojo');
+        const btnCaka  = document.getElementById('btn-c-rojo');
+
+        const esAmarillo = (el) => el && el.classList.contains('falta-activa');
+
+        // CASO A: El botón HC ya está en amarillo (Queremos desactivar)
+        if (esAmarillo(btnHCaka )) {
+            // REGLA: Solo si el botón C (Hansoku) está transparente
+            if (esAmarillo(btnCaka )) {
+                alert("PRIMERO DEBE QUITAR EL HANSOKU");
+            } else {
+                // REGLA ESPECIAL: Solo volvemos a transparente los botones 
+                // que el HC encendió en el paso anterior.
+                botonesActivadosPorHCaka .forEach(boton => {
+                    if (boton) boton.classList.remove('falta-activa');
+                });
+                // Limpiamos el recuerdo para la próxima vez
+                botonesActivadosPorHCaka  = [];
+            }
+        } 
+        // CASO B: El botón HC está transparente (Queremos activar)
+        else {
+            const grupoFaltas = [btnC1aka , btnC2aka , btnC3aka , btnHCaka ];
+            botonesActivadosPorHCaka  = []; // Reiniciamos la lista de seguimiento
+
+            grupoFaltas.forEach(boton => {
+                if (boton && !esAmarillo(boton)) {
+                    // Si está transparente, lo encendemos y lo guardamos en la lista
+                    boton.classList.add('falta-activa');
+                    botonesActivadosPorHCaka .push(boton);
+                }
+            });
+        }
+    }
+
+    /* ******************** Hansoku Chuy Rojo ******************** */    
+    function logicaCaka() {
+        const btnCaka = document.getElementById('btn-c-rojo');
+        const btnHCaka = document.getElementById('btn-hc-rojo');
+
+        // 1. Verificamos si el botón HC ya está en amarillo (falta-activa)
+        const hcEsAmarillo = btnHCaka.classList.contains('falta-activa');
+        const cYaEsAmarillo = btnCaka.classList.contains('falta-activa');
+
+        if (!cYaEsAmarillo) {
+            // REGLA: Solo se activa C si HC ya es amarillo
+            if (hcEsAmarillo) {
+                btnCaka.classList.add('falta-activa');
+                console.log("Falta C marcada correctamente.");
+            } else {
+                alert("DEBE MARCAR PRIMERO EL HANSOKU CHUI (HC)");
+            }
+        } else {
+            // Si ya es amarillo, al hacer clic vuelve a su color original (transparente/blanco)
+            btnCaka.classList.remove('falta-activa');
+            btnCaka.style.backgroundColor = "transparent";
+        }
+    }
+
 </script>
