@@ -44,8 +44,8 @@
                                     </select>
                                 </div>
 
-                                {{-- Ciudad --}}
-                                <div class="form-group col-md-4">
+                                {{-- Ciudad y Modalidades --}}
+                                <div class="form-group col-md-6">
                                     <label for="ciudad_id">Ciudad</label>
                                     <select name="ciudad_id" class="form-control select2" required>
                                         <option value="">Seleccione una ciudad</option>
@@ -57,14 +57,31 @@
                                     </select>
                                 </div>
 
+                                <div class="form-group col-md-6">
+                                    <label for="modalidad_id">Modalidades (Selección Múltiple)</label>
+                                    @php $all_modalidades = \App\Models\Modalida::all(); @endphp
+                                    <select name="modalidad_id[]" class="form-control select2" multiple required>
+                                        @foreach($all_modalidades as $modalidad)
+                                            @php
+                                                // Verificamos si el ID está en el array de seleccionados (viniendo de la DB o de un error de validación)
+                                                $selected_ids = old('modalidad_id', $dataTypeContent->modalidad_id) ?? [];
+                                                $is_selected = is_array($selected_ids) && in_array($modalidad->id, $selected_ids);
+                                            @endphp
+                                            <option value="{{ $modalidad->id }}" {{ $is_selected ? 'selected' : '' }}>
+                                                {{ $modalidad->nombre }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
                                 {{-- Fecha Inicio --}}
-                                <div class="form-group col-md-4">
+                                <div class="form-group col-md-6">
                                     <label for="fechainicio">Fecha de Inicio</label>
                                     <input type="date" class="form-control" name="fechainicio" value="{{ old('fechainicio', $dataTypeContent->fechainicio) }}" required>
                                 </div>
 
                                 {{-- Fecha Final --}}
-                                <div class="form-group col-md-4">
+                                <div class="form-group col-md-6">
                                     <label for="fechafinal">Fecha Final</label>
                                     <input type="date" class="form-control" name="fechafinal" value="{{ old('fechafinal', $dataTypeContent->fechafinal) }}" required>
                                 </div>
@@ -103,6 +120,20 @@
     <script>
         $(document).ready(function () {
             $('.select2').select2();
+
+            // Obtener referencias a los campos de fecha
+            let $fechaInicio = $('input[name="fechainicio"]');
+            let $fechaFinal = $('input[name="fechafinal"]');
+
+            // Actualizar el atributo 'min' de la fecha final cuando cambie la inicial
+            $fechaInicio.on('change', function() {
+                $fechaFinal.attr('min', $(this).val());
+            });
+
+            // Ejecutar al cargar la página por si ya hay valores (en edición)
+            if($fechaInicio.val()) {
+                $fechaFinal.attr('min', $fechaInicio.val());
+            }
         });
     </script>
 @stop

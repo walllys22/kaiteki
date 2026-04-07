@@ -11,6 +11,13 @@ class Torneo extends Model
     use HasFactory, SoftDeletes;
     protected $dates = ['deleted_at'];
 
+    /**
+     * Los atributos que deben ser convertidos a tipos nativos.
+     */
+    protected $casts = [
+        'modalidad_id' => 'array',
+    ];
+
     protected $fillable = [
         'person_id',
         'ciudad_id',
