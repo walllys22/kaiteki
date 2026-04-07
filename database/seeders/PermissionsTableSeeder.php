@@ -112,18 +112,18 @@ class PermissionsTableSeeder extends Seeder
      
         //Torneos
         $permissions = [
-            'browse_Torneos' => 'Ver lista de Torneos',
-            'read_Torneos' => 'Ver detalles de una Torneos',
-            'edit_Torneos' => 'Editar información de Torneos',
-            'add_Torneos' => 'Agregar nuevos Torneos',
-            'delete_Torneos' => 'Eliminar Torneos',
+            'browse_torneos' => 'Ver lista de Torneos',
+            'read_torneos' => 'Ver detalles de una Torneos',
+            'edit_torneos' => 'Editar información de Torneos',
+            'add_torneos' => 'Agregar nuevos Torneos',
+            'delete_torneos' => 'Eliminar Torneos',
         ];
 
         foreach ($permissions as $key => $description) {
             Permission::firstOrCreate([
                 'key'        => $key,
                 'keyDescription'=> $description,
-                'table_name' => 'Torneos',
+                'table_name' => 'torneos',
                 'tableDescription'=>'Torneos',
             ]);
         }

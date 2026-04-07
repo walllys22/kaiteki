@@ -18,6 +18,7 @@ class Torneo extends Model
         'fechainicio',
         'fechafinal',
         'archivo',
+        'modalidad_id',
         'deleted_at'
     ];
 
