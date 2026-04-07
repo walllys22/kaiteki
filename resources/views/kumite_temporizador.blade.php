@@ -16,7 +16,9 @@
 <!-- MARCADOR AZUL -->
     <div class="marcador-ao">
         <div class="pantalla-puntos">
-            <div class="etiqueta-ao">AZUL  -  AO</div>
+            <span style="color: white; font-weight: bold; display: block; text-align: Left; width: 100%;">
+               Walter Landivar Limpias - L.J.P. ZABALA DOJO
+            </span>
             <div id="indicador-senshu-azul" class="circulo-senshu"></div>
             <div id="puntosAzul" class="puntos-gigantes">0</div>
         </div>
@@ -46,6 +48,9 @@
                 <button id="btn-c-azul" class="btn-falta" onclick="logicaC()">C</button>
             </div>
             <br>
+            <span style="color: white; font-weight: bold; display: block; text-align: center; width: 100%;">
+                PROXIMO COMBATE
+            </span>
             <span style="color: white; font-weight: bold; display: block; text-align: Left; width: 100%;">
                 Competidor: Walter Landivar Limpias
             </span>
@@ -93,6 +98,7 @@
         <br>
         <br>
         <br>
+        <br>
     </div>
 
 
@@ -100,9 +106,11 @@
  <div class="marcador-aka">
     <div id="contenedor-s-rojo"></div>
     <div class="pantalla-puntos">
-        <div class="etiqueta-aka">AKA  -  ROJO</div>
+            <span style="color: white; font-weight: bold; display: block; text-align: Left; width: 100%;">
+               Walter Landivar Limpias - L.J.P. ZABALA DOJO
+            </span>
         <div id="indicador-senshu-rojo" class="circulo-senshu"></div>
-        <div id="puntosRoo" class="puntos-gigantes">0</div>
+        <div id="puntosRojo" class="puntos-gigantes">0</div>
     </div>
     <div class="panel-control-rojo">
         <div class="fila">
@@ -125,6 +133,9 @@
             <button id="btn-c-rojo" class="btn-falta" onclick="logicaCaka()">C</button>
         </div>
         <br>
+        <span style="color: white; font-weight: bold; display: block; text-align: center; width: 100%;">
+            PROXIMO COMBATE
+        </span>
         <span style="color: white; font-weight: bold; display: block; text-align: Left; width: 100%;">
             Competidor: Walter Landivar Limpias
         </span>
@@ -366,9 +377,6 @@
             position: relative;
         }
 
-
-
-
     .etiqueta-ao {
         font-size: 1.5rem;
         letter-spacing: 3px;
@@ -440,8 +448,6 @@
         transform: translateY(2px);
         box-shadow: inset 2px 2px 5px #bcbcbc, inset -2px -2px 5px #ffffff;
     }
-
-
 
     /* Botones rojos */
     .btn-personalizadoRojo {
@@ -614,9 +620,6 @@
         border-bottom: 4px solid #5d5d5e;
     }
 
-
-
-
     .etiqueta-aka {
         font-size: 1.5rem;
         letter-spacing: 3px;
@@ -624,11 +627,11 @@
     }
 
     .puntos-gigantes {
-        font-size: 300px; /* Tamaño máximo para visibilidad */
+        font-size: 280px; /* Tamaño máximo para visibilidad */
         line-height: 0.9;
-        margin: 15px 0;
-        font-weight: 900;
-        text-shadow: 5px 5px 0px rgba(0,0,0,0.2);
+        margin: 10px 0;
+        font-weight: 890;
+        text-shadow: 3px 3px 0px rgba(0,0,0,0.2);
         transition: transform 0.1s ease;
     }
 
@@ -798,43 +801,8 @@
 
 
 
+
 <script>
-    /* ******************** Marcadores ******************** */
-
-    function cambiarPuntos(valor) {
-        // 1. Verificación de tiempo: Si ambos están en 0, mostramos alerta y salimos
-        if (minutos === 0 && segundos === 0) {
-            alert("NO SE PUEDE DAR PUNTAJE SI EL TIEMPO ESTA EN 00:00");
-            return; // Esto detiene la función aquí mismo
-        }
-
-        // Lee el contenido del cronómetro desde el HTML
-        const tiempoActual = document.getElementById('tu-id-del-reloj').innerText;
-        
-        if (tiempoActual === "00:00" || tiempoActual === "0:00") {
-            alert("NO SE PUEDE DAR PUNTAJE SI EL TIEMPO ESTA EN 00:00");
-            return;
-        }
-        // 2. Si el tiempo es mayor a cero, procedemos con la suma
-        puntajeAo += valor;
-
-        // Validación: No permitir puntos negativos
-        if (puntajeAo < 0) {
-            puntajeAo = 0;
-        }
-
-        // 3. Actualización del marcador visual
-        const display = document.getElementById('puntosAzul');
-        if (display) {
-            display.innerText = puntajeAo;
-
-            // Efecto visual de confirmación (pequeño salto)
-            display.style.transform = "scale(1.1)";
-            setTimeout(() => {
-                display.style.transform = "scale(1)";
-            }, 100);
-        }
-    }
 
 /* ******************** controla puntos rojo ******************** */
     let puntajeAo = 0; 
@@ -894,7 +862,6 @@
         }
     }
 
-/* ******************** faltas ******************** */
     /* ******************** Chuy 1 Azul ******************** */
     function logicaC1() {
         const btnC1 = document.getElementById('btn-c1-azul');
