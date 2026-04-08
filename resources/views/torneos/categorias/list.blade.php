@@ -1,5 +1,5 @@
 <div class="table-responsive">
-    <table class="table table-bordered table-hover">
+    <table id="dataTable" class="table table-bordered table-hover">
         <thead>
             <tr>
                 <th>Categoría</th>

@@ -14,9 +14,7 @@
                         <br>
                         <p><b>¿Estás seguro que quieres eliminar?</b></p>
                     </div>
-                    <div class="form-group">
-                        <textarea name="deleteObservation" class="form-control" rows="4" placeholder="Describa el motivo de la eliminación..." required></textarea>
-                    </div>
+                 
                     <label class="checkbox-inline">
                         <input type="checkbox" required>Confirmar eliminación..!
                     </label>

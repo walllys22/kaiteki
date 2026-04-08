@@ -172,7 +172,7 @@ class TorneoController extends Controller
             ->orderBy('id', 'DESC')
             ->paginate($paginate);
 
-        return view('torneos.categories.list', compact('data', 'id'));
+        return view('torneos.categorias.list', compact('data', 'id'));
     }
 
     public function categoryStore(Request $request)

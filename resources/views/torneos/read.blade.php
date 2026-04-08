@@ -119,8 +119,15 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="panel panel-bordered">
-                    <div class="panel-heading" style="border-bottom:0;">
-                        <h3 class="panel-title"><i class="voyager-categories"></i> Categorías del Torneo</h3>
+                    <div class="panel-heading" style="border-bottom:0; display: flex; align-items: center; justify-content: space-between;">
+                        <h3 class="panel-title" style="margin: 0;"><i class="voyager-categories"></i> Categorías del Torneo</h3>
+                        <div style="padding-right: 20px;">
+                            @if (auth()->user()->hasPermission('add_torneos'))
+                                <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#modal-add-category">
+                                    <i class="voyager-plus"></i> <span>Agregar</span>
+                                </button>
+                            @endif
+                        </div>
                     </div>
                     <div class="panel-body" style="padding-top:0;">
                         <div class="row">
@@ -143,6 +150,46 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal para agregar categoría --}}
+    <div class="modal fade" tabindex="-1" id="modal-add-category" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title"><i class="voyager-plus"></i> Agregar Categoría</h4>
+                </div>
+                <form id="form-add-category" action="{{ route('torneos.categories.store') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="torneo_id" value="{{ $torneo->id }}">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="categoria_id">Categoría</label>
+                            <select name="categoria_id" class="form-control select2" required>
+                                <option value="">Seleccione una categoría</option>
+                                @foreach($categorias as $item)
+                                    <option value="{{ $item->id }}">{{ $item->nombre }} - {{ $item->sexo }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="modalidad_id">Modalidad</label>
+                            <select name="modalidad_id" class="form-control select2" required>
+                                <option value="">Seleccione una modalidad</option>
+                                @foreach($modalidades as $item)
+                                    <option value="{{ $item->id }}">{{ $item->nombre }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success btn-submit">Guardar</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -174,6 +221,26 @@
                     listCategories();
                 }, 1000); // Retardo de 1 segundo para la búsqueda automática
             });
+
+            // Guardar nueva categoría mediante AJAX
+            $('#form-add-category').submit(function(e){
+                e.preventDefault();
+                $('.btn-submit').attr('disabled', true);
+                let url = $(this).attr('action');
+                let data = $(this).serialize();
+                $.post(url, data, function(res){
+                    $('.btn-submit').attr('disabled', false);
+                    if(res.success){
+                        toastr.success(res.message);
+                        $('#modal-add-category').modal('hide');
+                        $('#form-add-category')[0].reset();
+                        $('.select2').val(null).trigger('change');
+                        listCategories();
+                    }else{
+                        toastr.error(res.message);
+                    }
+                });
+            });
         });
 
         function listCategories(page = 1) {
@@ -199,8 +266,19 @@
 
         function deleteCategory(id) {
             if(confirm('¿Está seguro de eliminar esta categoría del torneo?')) {
-                // Aquí puedes implementar la lógica de eliminación vía AJAX si lo deseas
-                toastr.info('Funcionalidad de eliminación pendiente de implementar en el controlador.');
+                $.ajax({
+                    url: "{{ url('admin/torneos/categories') }}/" + id + "/delete",
+                    type: 'delete',
+                    data: { _token: "{{ csrf_token() }}" },
+                    success: function(res){
+                        if(res.success){
+                            toastr.success('Categoría eliminada del torneo.');
+                            listCategories();
+                        }else{
+                            toastr.error('Ocurrió un error al intentar eliminar.');
+                        }
+                    }
+                });
             }
         }
     </script>
