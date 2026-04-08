@@ -43,6 +43,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     Route::get('torneos/create', [TorneoController::class, 'create'])->name('voyager.torneos.create');
     Route::post('torneos/store', [TorneoController::class, 'store'])->name('voyager.torneos.store');
     Route::get('torneos/{id}/edit', [TorneoController::class, 'edit'])->name('voyager.torneos.edit');
+    Route::get('torneos/{id}', [TorneoController::class, 'show'])->name('voyager.torneos.show');
     Route::put('torneos/{id}', [TorneoController::class, 'update'])->name('voyager.torneos.update');
     // Nota: El index de torneos usualmente lo maneja el BREAD de Voyager
 

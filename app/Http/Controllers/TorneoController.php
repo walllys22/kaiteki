@@ -141,4 +141,11 @@ class TorneoController extends Controller
                 ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
         }
     }
+
+    public function show($id)
+    {
+        $this->custom_authorize('read_torneos');
+        $dataTypeContent = Torneo::findOrFail($id);
+        return view('torneos.read', compact('dataTypeContent'));
+    }
 }
