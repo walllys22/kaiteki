@@ -28,7 +28,6 @@
                 <button class="btn-personalizadoAzul suma" onclick="updateScore('ao', 2)">+ WAZARI</button>
                 <button class="btn-personalizadoAzul suma" onclick="updateScore('ao', 3)">+ IPPON</button>
                 <button id="btn-senshu-azul" class="btn-senshu btn-personalizadosenshuazul" onclick="toggleSenshu('ao')">Senshu</button>
-                
             </div>
 
             <div class="fila">
@@ -117,7 +116,7 @@
             <button class="btn-personalizadoRojo suma" onclick="updateScore('aka', 1)">+ YUKO</button>
             <button class="btn-personalizadoRojo suma" onclick="updateScore('aka', 2)">+ WAZARI</button>
             <button class="btn-personalizadoRojo suma" onclick="updateScore('aka', 3)">+ IPPON</button>
-           <button id="btn-senshu-rojo" class="btn-senshu btn-personalizadosenshurojo" onclick="toggleSenshu('aka')">Senshu</button>
+            <button id="btn-senshu-rojo" class="btn-senshu btn-personalizadosenshurojo" onclick="toggleSenshu('aka')">Senshu</button>
         </div>
         <div class="fila">
             <button class="btn-personalizadoRojo resta" onclick="updateScore('aka', -1)">- YUKO</button>

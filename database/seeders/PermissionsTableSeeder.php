@@ -146,7 +146,7 @@ class PermissionsTableSeeder extends Seeder
             ]);
         }
 
-             //Modalidades
+        //Modalidades
         $permissions = [
             'browse_modalidas' => 'Ver lista de C',
             'read_modalidas' => 'Ver detalles de una persona',
@@ -162,7 +162,33 @@ class PermissionsTableSeeder extends Seeder
                 'table_name' => 'modalidas',
                 'tableDescription'=>'modalidas'
             ]);
-        }   
+        }
+    
+        //Katas
+        $permissions = [
+            'browse_katas' => 'Ver lista de C',
+            'read_katas' => 'Ver detalles de una persona',
+            'edit_katas' => 'Editar información de C',
+            'add_katas' => 'Agregar nuevas C',
+            'delete_katas' => 'Eliminar C',
+        ];
+
+        foreach ($permissions as $key => $description) {
+            Permission::firstOrCreate([
+                'key'        => $key,
+                'keyDescription'=> $description,
+                'table_name' => 'katas',
+                'tableDescription'=>'katas'
+            ]);
+        }
+        
+
+
+
+
+
+
+
         
     }
 }
