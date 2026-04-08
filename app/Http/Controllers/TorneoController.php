@@ -178,6 +178,15 @@ class TorneoController extends Controller
     public function categoryStore(Request $request)
     {
         try {
+            // Verificar si ya existe la misma categoría y modalidad para este torneo
+            $exists = TorneoCategoria::where('torneo_id', $request->torneo_id)
+                                    ->where('categoria_id', $request->categoria_id)
+                                    ->where('modalidad_id', $request->modalidad_id)
+                                    ->exists();
+            if ($exists) {
+                return response()->json(['success' => false, 'message' => 'Esta categoría y modalidad ya están registradas para este torneo.']);
+            }
+
             TorneoCategoria::create([
                 'torneo_id' => $request->torneo_id,
                 'categoria_id' => $request->categoria_id,
