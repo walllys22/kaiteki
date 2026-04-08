@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('torneos', function (Blueprint $table) {
-            $table->string('estado')->default('En curso')->after('modalidad_id');
+            $table->string('estado')->default('En curso')->after('archivo');
         });
     }
 

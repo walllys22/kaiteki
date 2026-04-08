@@ -6,7 +6,7 @@
     <title>Kumite Temporizador</title>
     <!-- CDN para Tailwind y Alpine.js -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 
 
@@ -19,39 +19,39 @@
             <span style="color: white; font-weight: bold; display: block; text-align: Left; width: 100%;">
                Walter Landivar Limpias - L.J.P. ZABALA DOJO
             </span>
-            <div id="indicador-senshu-azul" class="circulo-senshu"></div>
+            <div id="contenedor-s-azul"></div>
             <div id="puntosAzul" class="puntos-gigantes">0</div>
         </div>
         <div class="panel-control">
             <div class="fila">
-                <button class="btn-personalizadoAzul suma" onclick="cambiarPuntos(1)">+ YUKO</button>
-                <button class="btn-personalizadoAzul suma" onclick="cambiarPuntos(2)">+ WAZARI</button>
-                <button class="btn-personalizadoAzul suma" onclick="cambiarPuntos(3)">+ IPPON</button>
-                <button id="btn-senshu-azul" class="btn-personalizadosenshuazul" onclick="logicaSenshuAzul()">Senshu</button>
+                <button class="btn-personalizadoAzul suma" onclick="updateScore('ao', 1)">+ YUKO</button>
+                <button class="btn-personalizadoAzul suma" onclick="updateScore('ao', 2)">+ WAZARI</button>
+                <button class="btn-personalizadoAzul suma" onclick="updateScore('ao', 3)">+ IPPON</button>
+                <button id="btn-senshu-azul" class="btn-senshu btn-personalizadosenshuazul" onclick="toggleSenshu('ao')">Senshu</button>
                 
             </div>
 
             <div class="fila">
-                <button class="btn-personalizadoAzul resta" onclick="cambiarPuntos(-1)">- YUKO</button>
-                <button class="btn-personalizadoAzul resta" onclick="cambiarPuntos(-2)">- WAZARI</button>
-                <button class="btn-personalizadoAzul resta" onclick="cambiarPuntos(-3)">- IPPON</button>
-                <button id="btn-senshu-azul" class="btn-personalizadosenshuazul" onclick="logicahanteiazul()">
+                <button class="btn-personalizadoAzul resta" onclick="updateScore('ao', -1)">- YUKO</button>
+                <button class="btn-personalizadoAzul resta" onclick="updateScore('ao', -2)">- WAZARI</button>
+                <button class="btn-personalizadoAzul resta" onclick="updateScore('ao', -3)">- IPPON</button>
+                <button id="btn-hantei-azul" class="btn-personalizadosenshuazul" onclick="logicahanteiazul()">
                     Hantei
                 </button>
             </div>
 
             <div class="fila">
-                <button id="btn-c1-azul" class="btn-falta" onclick="logicaC1()">C1</button>
-                <button id="btn-c2-azul" class="btn-falta" onclick="logicaC2()">C2</button>
-                <button id="btn-c3-azul" class="btn-falta" onclick="logicaC3()">C3</button>
-                <button id="btn-hc-azul" class="btn-falta" onclick="logicaHC()">HC</button>
-                <button id="btn-c-azul" class="btn-falta" onclick="logicaC()">C</button>
+                <button id="btn-ao-c1" class="btn-falta" onclick="togglePenalty('ao', 1)">C1</button>
+                <button id="btn-ao-c2" class="btn-falta" onclick="togglePenalty('ao', 2)">C2</button>
+                <button id="btn-ao-c3" class="btn-falta" onclick="togglePenalty('ao', 3)">C3</button>
+                <button id="btn-ao-hc" class="btn-falta" onclick="togglePenalty('ao', 4)">HC</button>
+                <button id="btn-ao-c" class="btn-falta" onclick="togglePenalty('ao', 5)">C</button>
             </div>
             <br>
             <span style="color: white; font-weight: bold; display: block; text-align: center; width: 100%;">
                 PROXIMO COMBATE
             </span>
-            <span style="color: white; font-weight: bold; display: block; text-align: Left; width: 100%;">
+            <span style="color: white; font-weight: bold; display: block; text-align: left; width: 100%;">
                 Competidor: Walter Landivar Limpias
             </span>
             <span style="color: white; font-weight: bold; display: block; text-align: center; width: 100%;">
@@ -60,18 +60,17 @@
         </div>
     </div>
 
-    <div class="bg-white p-2 rounded-3xl shadow-2xl text-center w-full max-w-md" x-data="timer()">
+    <div class="bg-white p-2 rounded-3xl shadow-2xl text-center w-full max-w-md">
         <!-- Pantalla del Temporizador -->
-        <div class="font-mono mb-10 bg-gray-100 text-red-600 py-12 w-full max-w-5xl mx-auto rounded-3xl shadow-inner border-8 border-gray-200 text-center" 
+        <div id="timer-display" class="font-mono mb-10 bg-gray-100 text-red-600 py-12 w-full max-w-5xl mx-auto rounded-3xl shadow-inner border-8 border-gray-200 text-center" 
             style="font-size: 9rem; line-height: 1;">
-            <span x-text="format(minutes)">00</span>:<span x-text="format(seconds)">00</span>
+            00:00
         </div>
         <!-- Controles de Ejecución -->
         <div class="grid grid-cols-2 gap-4 mb-8">
-            <button @click="start" x-show="!isRunning && minutes == 0 && seconds == 0" class="bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition-colors shadow-md">INICIO</button>
-            <button @click="start" x-show="!isRunning && (minutes > 0 || seconds > 0)" class="bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-md">CONTINUAR</button>
-            <button @click="pause" x-show="isRunning" class="bg-yellow-500 text-white py-3 rounded-xl font-bold hover:bg-yellow-600 transition-colors shadow-md">PAUSA</button>
-            <button @click="reset" class="bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700 transition-colors shadow-md">RESET</button>
+            <button id="btn-start" onclick="startTimer()" class="bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition-colors shadow-md">INICIO</button>
+            <button id="btn-pause" onclick="pauseTimer()" class="hidden bg-yellow-500 text-white py-3 rounded-xl font-bold hover:bg-yellow-600 transition-colors shadow-md">PAUSA</button>
+            <button onclick="resetTimer()" class="bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700 transition-colors shadow-md">RESET</button>
         </div>
 
         <!-- Controles de Ajuste -->
@@ -79,16 +78,17 @@
             <!-- Minutos -->
             <div class="flex flex-col gap-3">
                 <span class="text-xl font-bold text-gray-800 uppercase">Minutos</span>
-                <button @click="incrementMin" :disabled="isRunning" class="btn-Reloj ">+</button>
-                <button @click="decrementMin" :disabled="isRunning" class="btn-Reloj ">-</button>
+                <button onclick="adjustTime(60)" class="btn-Reloj ">+</button>
+                <button onclick="adjustTime(-60)" class="btn-Reloj ">-</button>
                 
             </div>
             <!-- Segundos -->
             <div class="flex flex-col gap-3">
                 <span class="text-xl font-bold text-gray-800 uppercase">Segundos</span>
-                <button @click="incrementSec" :disabled="isRunning" class="btn-Reloj ">+</button>
-                <button @click="decrementSec" :disabled="isRunning" class="btn-Reloj ">-</button>   
+                <button onclick="adjustTime(1)" class="btn-Reloj ">+</button>
+                <button onclick="adjustTime(-1)" class="btn-Reloj ">-</button>   
             </div>
+
             <div class="flex flex-col gap-3">
                 <span class="text-xl font-bold text-gray-100 uppercase">.</span>
                 <button id="btnMuestraGanador" class="btn-personalizado" onclick="declararGanador()" disabled>GANADOR</button>
@@ -109,28 +109,28 @@
             <span style="color: white; font-weight: bold; display: block; text-align: Left; width: 100%;">
                Walter Landivar Limpias - L.J.P. ZABALA DOJO
             </span>
-        <div id="indicador-senshu-rojo" class="circulo-senshu"></div>
+        <div id="contenedor-s-rojo"></div>
         <div id="puntosRojo" class="puntos-gigantes">0</div>
     </div>
     <div class="panel-control-rojo">
         <div class="fila">
-            <button class="btn-personalizadoRojo suma" onclick="gestionarPuntosAka(1)">+ YUKO</button>
-            <button class="btn-personalizadoRojo suma" onclick="gestionarPuntosAka(2)">+ WAZARI</button>
-            <button class="btn-personalizadoRojo suma" onclick="gestionarPuntosAka(3)">+ IPPON</button>
-           <button id="btn-senshu-rojo" class="btn-personalizadosenshurojo" onclick="logicaSenshuRojo()">Senshu</button>
+            <button class="btn-personalizadoRojo suma" onclick="updateScore('aka', 1)">+ YUKO</button>
+            <button class="btn-personalizadoRojo suma" onclick="updateScore('aka', 2)">+ WAZARI</button>
+            <button class="btn-personalizadoRojo suma" onclick="updateScore('aka', 3)">+ IPPON</button>
+           <button id="btn-senshu-rojo" class="btn-senshu btn-personalizadosenshurojo" onclick="toggleSenshu('aka')">Senshu</button>
         </div>
         <div class="fila">
-            <button class="btn-personalizadoRojo resta" onclick="gestionarPuntosAka(-1)">- YUKO</button>
-            <button class="btn-personalizadoRojo resta" onclick="gestionarPuntosAka(-2)">- WAZARI</button>
-            <button class="btn-personalizadoRojo resta" onclick="gestionarPuntosAka(-3)">- IPPON</button>
-            <button id="btn-senshu-azul" class="btn-personalizadosenshuazul" onclick="logicahanteirojo()">Hantei</button>
+            <button class="btn-personalizadoRojo resta" onclick="updateScore('aka', -1)">- YUKO</button>
+            <button class="btn-personalizadoRojo resta" onclick="updateScore('aka', -2)">- WAZARI</button>
+            <button class="btn-personalizadoRojo resta" onclick="updateScore('aka', -3)">- IPPON</button>
+            <button id="btn-hantei-rojo" class="btn-personalizadosenshurojo" onclick="logicahanteirojo()">Hantei</button>
         </div>
         <div class="fila">
-            <button id="btn-c1-rojo" class="btn-falta" onclick="logicaC1aka()">C1</button>
-            <button id="btn-c2-rojo" class="btn-falta" onclick="logicaC2aka()">C2</button>
-            <button id="btn-c3-rojo" class="btn-falta" onclick="logicaC3aka()">C3</button>
-            <button id="btn-hc-rojo" class="btn-falta" onclick="logicaHCaka()">HC</button>
-            <button id="btn-c-rojo" class="btn-falta" onclick="logicaCaka()">C</button>
+            <button id="btn-aka-c1" class="btn-falta" onclick="togglePenalty('aka', 1)">C1</button>
+            <button id="btn-aka-c2" class="btn-falta" onclick="togglePenalty('aka', 2)">C2</button>
+            <button id="btn-aka-c3" class="btn-falta" onclick="togglePenalty('aka', 3)">C3</button>
+            <button id="btn-aka-hc" class="btn-falta" onclick="togglePenalty('aka', 4)">HC</button>
+            <button id="btn-aka-c" class="btn-falta" onclick="togglePenalty('aka', 5)">C</button>
         </div>
         <br>
         <span style="color: white; font-weight: bold; display: block; text-align: center; width: 100%;">
@@ -148,81 +148,150 @@
 
 
     <script>
-        function timer() {
-            return {
-                minutes: 0,
-                seconds: 0,
-                isRunning: false,
-                interval: null,
-                start() {
-                    if (this.isRunning) return;
-                    if (this.minutes === 0 && this.seconds === 0) return;
-                    
-                    this.isRunning = true;
-                    this.interval = setInterval(() => {
-                        if (this.seconds > 0) {
-                            this.seconds--;
-                        } else if (this.minutes > 0) {
-                            this.minutes--;
-                            this.seconds = 59;
-                        } else {
-                            this.pause();
-                        }
-                    }, 1000);
-                },
-                pause() {
-                    clearInterval(this.interval);
-                    this.isRunning = false;
-                },
-                reset() {
-                    this.pause();
-                    this.minutes = 0;
-                    this.seconds = 0;
-                },
-                incrementMin() { 
-                    this.minutes++; 
-                },
-                decrementMin() { 
-                    if (this.minutes > 0) this.minutes--; 
-                },
-                incrementSec() { 
-                    this.seconds++; 
-                    if (this.seconds >= 60) {
-                        this.seconds = 0;
-                        this.minutes++;
-                    }
-                },
-                decrementSec() { 
-                    if (this.seconds > 0) {
-                        this.seconds--;
-                    } else if (this.minutes > 0) {
-                        this.minutes--;
-                        this.seconds = 59;
-                    }
-                },
-                format(num) {
-                    return num.toString().padStart(2, '0');
+        // ESTADO GLOBAL
+        let timerInterval = null;
+        let timerSeconds = 0;
+        let scores = { ao: 0, aka: 0 };
+        let activeSenshu = null;
+        let penalties = {
+            ao: [false, false, false, false, false], // C1, C2, C3, HC, C
+            aka: [false, false, false, false, false]
+        };
+
+        // --- TEMPORIZADOR ---
+        function updateTimerDisplay() {
+            const m = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
+            const s = (timerSeconds % 60).toString().padStart(2, '0');
+            $('#timer-display').text(`${m}:${s}`);
+        }
+
+        function startTimer() {
+            if (timerInterval || timerSeconds <= 0) return;
+            timerInterval = setInterval(() => {
+                if (timerSeconds > 0) {
+                    timerSeconds--;
+                    updateTimerDisplay();
+                } else {
+                    pauseTimer();
                 }
+            }, 1000);
+            $('#btn-start').addClass('hidden');
+            $('#btn-pause').removeClass('hidden');
+        }
+
+        function pauseTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            $('#btn-start').removeClass('hidden');
+            $('#btn-pause').addClass('hidden');
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            timerSeconds = 0;
+            updateTimerDisplay();
+        }
+
+        function adjustTime(val) {
+            if (timerInterval) return;
+            timerSeconds += val;
+            if (timerSeconds < 0) timerSeconds = 0;
+            updateTimerDisplay();
+        }
+
+        // --- PUNTUACIÓN ---
+        function updateScore(side, val) {
+            scores[side] += val;
+            if (scores[side] < 0) scores[side] = 0;
+            const displayId = side === 'ao' ? 'puntosAzul' : 'puntosRojo';
+            $(`#${displayId}`).text(scores[side]);
+            
+            // Animación
+            $(`#${displayId}`).css('transform', 'scale(1.2)');
+            setTimeout(() => $(`#${displayId}`).css('transform', 'scale(1)'), 100);
+        }
+
+        // --- SENSHU (VENTAJA) ---
+        function toggleSenshu(side) {
+            const otherSide = side === 'ao' ? 'aka' : 'ao';
+            
+            if (activeSenshu === side) {
+                // Quitar
+                activeSenshu = null;
+                $(`#btn-senshu-${side}`).css('background-color', 'transparent');
+                $(`#contenedor-s-${side}`).empty();
+            } else if (activeSenshu === otherSide) {
+                alert("EL OTRO COMPETIDOR YA TIENE EL SENSHU");
+            } else {
+                // Activar
+                activeSenshu = side;
+                $(`#btn-senshu-${side}`).css('background-color', 'yellow');
+                $(`#contenedor-s-${side}`).html(`
+                    <div style="position: absolute; top: 5px; right: 5px; width: 80px; height: 80px; background-color: yellow; color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Arial Black', sans-serif; font-weight: bold; font-size: 50px; border: 2px solid #000; z-index: 100;">
+                        S
+                    </div>
+                `);
             }
         }
 
-        function cerrarMensaje() {
-        // Buscamos el contenedor que cubre la pantalla
-        const pantalla = document.getElementById('pantalla-ganador');
-        
-        if (pantalla) {
-            // Cambiamos el display a 'none' para hacerlo desaparecer
-            pantalla.style.display = "none";
-        }
-}
-    </script>
+        // --- PENALIZACIONES (Lógica Jerárquica) ---
+        function togglePenalty(side, level) {
+            const index = level - 1;
+            const sidePenalties = penalties[side];
 
+            if (sidePenalties[index]) {
+                // Quitar falta: Solo si la superior no está activa
+                if (index < 4 && sidePenalties[index + 1]) {
+                    const names = ["C1", "C2", "C3", "HC", "C"];
+                    alert(`PRIMERO DEBE QUITAR ${names[index+1]}`);
+                    return;
+                }
+                sidePenalties[index] = false;
+            } else {
+                // Poner falta
+                if (level === 4) { // HC Especial: Activa todas las anteriores
+                    for(let i=0; i<4; i++) sidePenalties[i] = true;
+                } else {
+                    // Regla: No puedes poner C2 sin C1
+                    if (index > 0 && !sidePenalties[index - 1]) {
+                        alert("DEBE MARCAR LA PENALIZACIÓN ANTERIOR PRIMERO");
+                        return;
+                    }
+                    sidePenalties[index] = true;
+                }
+            }
+            renderPenalties(side);
+        }
+
+        function renderPenalties(side) {
+            penalties[side].forEach((active, i) => {
+                const suffix = ["c1", "c2", "c3", "hc", "c"][i];
+                const btnId = `#btn-${side}-${suffix}`;
+                if (active) {
+                    $(btnId).addClass('falta-activa');
+                } else {
+                    $(btnId).removeClass('falta-activa');
+                }
+            });
+        }
+
+        $(document).ready(() => {
+            updateTimerDisplay();
+        });
+    </script>
 </body>
 </html>
 
-
 <!--********************* Estilos ***********************-->
 <style>
+    .hidden {
+        display: none !important;
+    }
+
+    .circulo-s {
+        /* Reutilizado de tu lógica de Senshu */
+    }
+
     .contenedor-botones {
         display: flex !important;          /* Activa el modo flexible obligatoriamente */
         flex-direction: row !important;    /* Fuerza a que los hijos estén en FILA, no columna */

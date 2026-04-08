@@ -15,7 +15,7 @@
                         </div>
                         <div class="col-md-4 text-right" style="margin-top: 30px">
                             @if (auth()->user()->hasPermission('add_torneos'))
-                            <a href="{{ route('voyager.people.create') }}" class="btn btn-success">
+                            <a href="{{ route('voyager.torneos.create') }}" class="btn btn-success">
                                 <i class="voyager-plus"></i> <span>Crear</span>
                             </a>
                             @endif

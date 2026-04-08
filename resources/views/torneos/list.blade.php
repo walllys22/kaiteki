@@ -9,7 +9,6 @@
                     <th style="text-align: center">Fecha Inicio</th>
                     <th style="text-align: center">Fecha Final</th>
                     <th style="text-align: center">Responsable</th>
-                    <th style="text-align: center">Modalidades</th>
                     <th style="text-align: center">Estado</th>
                     <th style="text-align: center">Registrado</th>
                     <th style="text-align: center">Acciones</th>
@@ -45,15 +44,7 @@
                     <td style="text-align: center">
                         {{ $item->person->first_name }}
                     </td>
-                    <td style="text-align: center">
-                        @php
-                            $ids = is_array($item->modalidad_id) ? $item->modalidad_id : [];
-                            $nombres = \App\Models\Modalida::whereIn('id', $ids)->pluck('nombre');
-                        @endphp
-                        @foreach ($nombres as $nombre)
-                            <span class="label label-info" style="display: inline-block; margin-bottom: 2px;">{{ $nombre }}</span>
-                        @endforeach
-                    </td>
+         
                  
                     <td style="text-align: center">
                         @if ($item->estado=="En curso")  
@@ -85,7 +76,7 @@
                 </tr>
                 @empty
                     <tr>
-                        <td colspan="10">
+                        <td colspan="9">
                             <h5 class="text-center" style="margin-top: 50px">
                                 <img src="{{ asset('images/empty.png') }}" width="120px" alt="" style="opacity: 0.8">
                                 <br><br>
