@@ -69,7 +69,7 @@
         <div class="grid grid-cols-2 gap-4 mb-8">
             <button id="btn-start" onclick="startTimer()" class="bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition-colors shadow-md">INICIO</button>
             <button id="btn-pause" onclick="pauseTimer()" class="hidden bg-yellow-500 text-white py-3 rounded-xl font-bold hover:bg-yellow-600 transition-colors shadow-md">PAUSA</button>
-            <button onclick="resetTimer()" class="bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700 transition-colors shadow-md">RESET</button>
+            <button id="btn-reset" onclick="resetTimer()" class="bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700 transition-colors shadow-md">RESET</button>
         </div>
 
         <!-- Controles de Ajuste -->
@@ -173,6 +173,11 @@
         }
 
         function startTimer() {
+            if (timerSeconds <= 0) {
+                alert("EL TIEMPO DEBE SER MAYOR A CERO");
+                return;
+            }
+
             if (timerInterval || timerSeconds <= 0) return;
             timerInterval = setInterval(() => {
                 if (timerSeconds > 0) {
@@ -180,10 +185,16 @@
                     updateTimerDisplay();
                 } else {
                     pauseTimer();
+                    const audio = document.getElementById('gong-sound');
+                    if (audio) audio.play().catch(e => console.log("Audio play error:", e));
+                    setTimeout(() => {
+                        alert("TIEMPO FINALIZADO");
+                    }, 200);
                 }
             }, 1000);
             $('#btn-start').addClass('hidden');
             $('#btn-pause').removeClass('hidden');
+            $('#btn-reset').prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
         }
 
         function pauseTimer() {
@@ -191,6 +202,7 @@
             timerInterval = null;
             $('#btn-start').removeClass('hidden');
             $('#btn-pause').addClass('hidden');
+            $('#btn-reset').prop('disabled', false).removeClass('opacity-50 cursor-not-allowed');
         }
 
         function resetTimer() {
