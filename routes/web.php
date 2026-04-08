@@ -10,6 +10,9 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\WhatsappController;
 use App\Http\Controllers\TorneoController;
 use App\Http\Controllers\KumiteController;
+use App\Http\Controllers\AlumnoController;
+use Illuminate\Support\Facades\Artisan;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -37,6 +40,11 @@ Route::get('/info/{id?}', [ErrorController::class , 'error'])->name('errors');
 
 Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], function () {
     Voyager::routes();
+
+    // Rutas Alumnos
+    Route::get('alumnos', [AlumnoController::class, 'index'])->name('voyager.alumnos.index');
+    Route::get('alumnos/ajax/list', [AlumnoController::class, 'list']);
+
 
     Route::get('torneos', [TorneoController::class, 'index'])->name('voyager.torneos.index');
     Route::get('torneos/ajax/list', [TorneoController::class, 'list']);

@@ -8,12 +8,12 @@
             <div class="col-md-12">
                 <div class="panel panel-bordered">
                     <div class="panel-body" style="padding: 0px">
-                        <div class="col-md-8" style="padding: 0px">
+                        <div class="col-md-4" style="padding: 0px">
                             <h1 class="page-title">
-                                <i class="voyager-person"></i> Torneos
+                                <i class="fa-solid fa-trophy"></i> Torneos
                             </h1>
                         </div>
-                        <div class="col-md-4 text-right" style="margin-top: 30px">
+                        <div class="col-md-8 text-right" style="margin-top: 30px">
                             @if (auth()->user()->hasPermission('add_torneos'))
                             <a href="{{ route('voyager.torneos.create') }}" class="btn btn-success">
                                 <i class="voyager-plus"></i> <span>Crear</span>
@@ -54,16 +54,7 @@
             </div>
         </div>
     </div>
-
-
-
-    @include('partials.modal-delete')
-
-
-
-
-
-
+@include('partials.modal-delete')
  
 @stop
 

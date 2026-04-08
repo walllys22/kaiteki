@@ -236,7 +236,23 @@ class PermissionsTableSeeder extends Seeder
             ]);
         }
 
+        //Alumnos
+        $permissions = [
+            'browse_alumnos' => 'Ver lista de C',
+            'read_alumnos' => 'Ver detalles de una persona',
+            'edit_alumnos' => 'Editar información de C',
+            'add_alumnos' => 'Agregar nuevas C',
+            'delete_alumnos' => 'Eliminar C',
+        ];
 
+        foreach ($permissions as $key => $description) {
+            Permission::firstOrCreate([
+                'key'        => $key,
+                'keyDescription'=> $description,
+                'table_name' => 'alumnos',
+                'tableDescription'=>'alumnos'
+            ]);
+        }
 
         
     }
