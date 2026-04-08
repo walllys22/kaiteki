@@ -25,6 +25,8 @@
     </div>
 @stop
 
+
+
 @section('content')
     @php
         // Usamos $dataTypeContent que es la variable por defecto que pasa Voyager para el registro actual
@@ -112,5 +114,56 @@
                 </div>
             </div>
         </div>
+
+        {{-- Sección de Categorías del Torneo --}}
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-bordered">
+                    <div class="panel-heading" style="border-bottom:0;">
+                        <h3 class="panel-title"><i class="voyager-categories"></i> Categorías del Torneo</h3>
+                    </div>
+                    <div class="panel-body" style="padding-top:0;">
+                        <div id="div-categories-list">
+                            <p class="text-center">Cargando categorías...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+@stop
+
+@section('javascript')
+    <script>
+        $(document).ready(function () {
+            listCategories();
+        });
+
+        function listCategories(page = 1) {
+            $('#div-categories-list').loading({message: 'Cargando...'});
+            let id = "{{ $torneo->id }}";
+            // Ajusta la URL según tu ruta definida para obtener el listado de categorías por torneo
+            let url = "{{ url('admin/torneos/categorias/list') }}/" + id;
+
+            $.ajax({
+                url: url + "?page=" + page,
+                type: 'get',
+                success: function(result){
+                    $("#div-categories-list").html(result);
+                    $('#div-categories-list').loading('toggle');
+                },
+                error: function(err) {
+                    $("#div-categories-list").html('<p class="text-center">No se pudieron cargar las categorías.</p>');
+                    $('#div-categories-list').loading('toggle');
+                }
+            });
+        }
+
+        function deleteCategory(id) {
+            if(confirm('¿Está seguro de eliminar esta categoría del torneo?')) {
+                // Aquí puedes implementar la lógica de eliminación vía AJAX si lo deseas
+                toastr.info('Funcionalidad de eliminación pendiente de implementar en el controlador.');
+            }
+        }
+    </script>
 @stop
