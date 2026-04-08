@@ -47,6 +47,10 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     Route::put('torneos/{id}', [TorneoController::class, 'update'])->name('voyager.torneos.update');
     // Nota: El index de torneos usualmente lo maneja el BREAD de Voyager
 
+    Route::get('torneos/{id}/categories/list', [TorneoController::class, 'categoryList'])->name('torneos.categories.list');
+    Route::post('torneos/categories/store', [TorneoController::class, 'categoryStore'])->name('torneos.categories.store');
+    Route::delete('torneos/categories/{id}/delete', [TorneoController::class, 'categoryDestroy'])->name('torneos.categories.destroy');
+
     Route::get('people', [PersonController::class, 'index'])->name('voyager.people.index');
     Route::get('people/ajax/list', [PersonController::class, 'list']);
     Route::post('people', [PersonController::class, 'store'])->name('voyager.people.store');

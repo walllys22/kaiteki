@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\Torneo;
 use App\Models\Person;
 use App\Models\Ciudad;
+use App\Models\Categoria;
+use App\Models\Modalida;
+use App\Models\TorneoCategoria;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 
@@ -145,7 +148,55 @@ class TorneoController extends Controller
     public function show($id)
     {
         $this->custom_authorize('read_torneos');
-        $dataTypeContent = Torneo::findOrFail($id);
-        return view('torneos.read', compact('dataTypeContent'));
+        $dataTypeContent = Torneo::with(['ciudad', 'person'])->findOrFail($id);
+        $categorias = Categoria::whereNull('deleted_at')->orderBy('nombre')->get();
+        $modalidades = Modalida::whereNull('deleted_at')->orderBy('nombre')->get();
+
+        return view('torneos.read', compact('dataTypeContent', 'categorias', 'modalidades'));
+    }
+
+    public function categoryList($id)
+    {
+        $search = request('search');
+        $paginate = request('paginate') ?? 10;
+
+        $data = TorneoCategoria::with(['categoria', 'modalidad'])
+            ->where('torneo_id', $id)
+            ->when($search, function ($query, $search) {
+                return $query->whereHas('categoria', function($q) use ($search) {
+                    $q->where('nombre', 'like', "%$search%");
+                })->orWhereHas('modalidad', function($q) use ($search) {
+                    $q->where('nombre', 'like', "%$search%");
+                });
+            })
+            ->orderBy('id', 'DESC')
+            ->paginate($paginate);
+
+        return view('torneos.categories.list', compact('data', 'id'));
+    }
+
+    public function categoryStore(Request $request)
+    {
+        try {
+            TorneoCategoria::create([
+                'torneo_id' => $request->torneo_id,
+                'categoria_id' => $request->categoria_id,
+                'modalidad_id' => $request->modalidad_id
+            ]);
+            return response()->json(['success' => true, 'message' => 'Categoría agregada correctamente']);
+        } catch (\Throwable $th) {
+            return response()->json(['success' => false, 'message' => $th->getMessage()], 500);
+        }
+    }
+
+    public function categoryDestroy($id)
+    {
+        try {
+            $item = TorneoCategoria::findOrFail($id);
+            $item->delete();
+            return response()->json(['success' => true]);
+        } catch (\Throwable $th) {
+            return response()->json(['success' => false, 'message' => $th->getMessage()], 500);
+        }
     }
 }
