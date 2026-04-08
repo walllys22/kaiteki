@@ -10,6 +10,7 @@
                     <th style="text-align: center">Fecha Final</th>
                     <th style="text-align: center">Responsable</th>
                     <th style="text-align: center">Modalidades</th>
+                    <th style="text-align: center">Estado</th>
                     <th style="text-align: center">Acciones</th>
                 </tr>
             </thead>
@@ -48,25 +49,25 @@
                     </td>
                  
                     <td style="text-align: center">
-                        @if ($item->status==1)  
-                            <label class="label label-success">Activo</label>
+                        @if ($item->estado=="En curso")  
+                            <label class="label label-success">{{$item->estado}}</label>
                         @else
-                            <label class="label label-warning">Inactivo</label>
+                            <label class="label label-warning">{{$item->estado}}</label>
                         @endif
                     </td>
                     <td style="width: 18%" class="no-sort no-click bread-actions text-right">
-                        @if (auth()->user()->hasPermission('read_people'))
-                            <a href="{{ route('voyager.people.show', ['id' => $item->id]) }}" title="Ver" class="btn btn-sm btn-warning view">
+                        @if (auth()->user()->hasPermission('read_torneos'))
+                            <a href="{{ route('voyager.torneos.show', ['id' => $item->id]) }}" title="Ver" class="btn btn-sm btn-warning view">
                                 <i class="voyager-eye"></i> <span class="hidden-xs hidden-sm"></span>
                             </a>
                         @endif
-                        @if (auth()->user()->hasPermission('edit_people'))
-                            <a href="{{ route('voyager.people.edit', ['id' => $item->id]) }}" title="Editar" class="btn btn-sm btn-primary edit">
+                        @if (auth()->user()->hasPermission('edit_torneos'))
+                            <a href="{{ route('voyager.torneos.edit', ['id' => $item->id]) }}" title="Editar" class="btn btn-sm btn-primary edit">
                                 <i class="voyager-edit"></i> <span class="hidden-xs hidden-sm"></span>
                             </a>
                         @endif
-                        @if (auth()->user()->hasPermission('delete_people'))
-                            <a href="#" onclick="deleteItem('{{ route('voyager.people.destroy', ['id' => $item->id]) }}')" title="Eliminar" data-toggle="modal" data-target="#modal-delete" class="btn btn-sm btn-danger delete">
+                        @if (auth()->user()->hasPermission('delete_torneos'))
+                            <a href="#" onclick="deleteItem('{{ route('voyager.torneos.destroy', ['id' => $item->id]) }}')" title="Eliminar" data-toggle="modal" data-target="#modal-delete" class="btn btn-sm btn-danger delete">
                                 <i class="voyager-trash"></i> <span class="hidden-xs hidden-sm"></span>
                             </a>
                         @endif
@@ -74,7 +75,7 @@
                 </tr>
                 @empty
                     <tr>
-                        <td colspan="8">
+                        <td colspan="9">
                             <h5 class="text-center" style="margin-top: 50px">
                                 <img src="{{ asset('images/empty.png') }}" width="120px" alt="" style="opacity: 0.8">
                                 <br><br>

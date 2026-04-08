@@ -91,7 +91,7 @@
                                     <label for="archivo">Archivo / Convocatoria (PDF o Imagen)</label>
                                     @if($dataTypeContent->archivo)
                                         <div class="m-b-10">
-                                            <a href="{{ Storage::url($dataTypeContent->archivo) }}" target="_blank" class="btn btn-sm btn-info">Ver archivo actual</a>
+                                            <a href="{{ asset('storage/'.$dataTypeContent->archivo) }}" target="_blank" class="btn btn-sm btn-info">Ver archivo actual</a>
                                         </div>
                                     @endif
                                     <input type="file" name="archivo" class="form-control">
