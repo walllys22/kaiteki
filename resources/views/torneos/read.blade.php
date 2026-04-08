@@ -193,6 +193,8 @@
             </div>
         </div>
     </div>
+    @include('partials.modal-delete')
+
 @stop
 
 @section('javascript')
@@ -264,22 +266,8 @@
             });
         }
 
-        function deleteCategory(id) {
-            if(confirm('¿Está seguro de eliminar esta categoría del torneo?')) {
-                $.ajax({
-                    url: "{{ url('admin/torneos/categories') }}/" + id + "/delete",
-                    type: 'delete',
-                    data: { _token: "{{ csrf_token() }}" },
-                    success: function(res){
-                        if(res.success){
-                            toastr.success('Categoría eliminada del torneo.');
-                            listCategories();
-                        }else{
-                            toastr.error('Ocurrió un error al intentar eliminar.');
-                        }
-                    }
-                });
-            }
+        function deleteItem(url){
+            $('#delete_form').attr('action', url);
         }
     </script>
 @stop

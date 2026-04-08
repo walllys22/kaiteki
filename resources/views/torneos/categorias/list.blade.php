@@ -15,9 +15,10 @@
                     <td>{{ $item->categoria->sexo }}</td>
                     <td>{{ $item->modalidad->nombre }}</td>
                     <td class="text-right">
-                        <button onclick="deleteCategory({{ $item->id }})" class="btn btn-sm btn-danger">
-                            <i class="voyager-trash"></i>
-                        </button>
+                   
+                        <a href="#" onclick="deleteItem('{{ route('torneos.categories.destroy', ['id' => $item->id]) }}')" title="Eliminar" data-toggle="modal" data-target="#modal-delete" class="btn btn-sm btn-danger delete">
+                                <i class="voyager-trash"></i> <span class="hidden-xs hidden-sm"></span>
+                        </a>
                     </td>
                 </tr>
             @empty

@@ -203,9 +203,9 @@ class TorneoController extends Controller
         try {
             $item = TorneoCategoria::findOrFail($id);
             $item->delete();
-            return response()->json(['success' => true]);
+            return redirect()->back();
         } catch (\Throwable $th) {
-            return response()->json(['success' => false, 'message' => $th->getMessage()], 500);
+            return redirect()->back
         }
     }
 }
