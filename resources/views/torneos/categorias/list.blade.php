@@ -14,8 +14,7 @@
                     <td>{{ $item->categoria->nombre }}</td>
                     <td>{{ $item->categoria->sexo }}</td>
                     <td>{{ $item->modalidad->nombre }}</td>
-                    <td class="text-right">
-                   
+                    <td class="text-right">                   
                         <a href="#" onclick="deleteItem('{{ route('torneos.categories.destroy', ['id' => $item->id]) }}')" title="Eliminar" data-toggle="modal" data-target="#modal-delete" class="btn btn-sm btn-danger delete">
                                 <i class="voyager-trash"></i> <span class="hidden-xs hidden-sm"></span>
                         </a>
@@ -23,7 +22,13 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="4" class="text-center">No hay categorías configuradas para este torneo.</td>
+                        <td colspan="4">
+                            <h5 class="text-center" style="margin-top: 50px">
+                                <img src="{{ asset('images/empty.png') }}" width="120px" alt="" style="opacity: 0.8">
+                                <br><br>
+                                No hay resultados
+                            </h5>
+                        </td>
                 </tr>
             @endforelse
         </tbody>

@@ -155,15 +155,16 @@
     </div>
 
     {{-- Modal para agregar categoría --}}
-    <div class="modal fade" tabindex="-1" id="modal-add-category" role="dialog">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title"><i class="voyager-plus"></i> Agregar Categoría</h4>
-                </div>
-                <form id="form-add-category" action="{{ route('torneos.categories.store') }}" method="POST">
-                    @csrf
+    <form id="form-add-category" class="form-edit-add" action="{{ route('torneos.categories.store') }}" method="POST">
+        @csrf
+        <div class="modal fade" tabindex="-1" id="modal-add-category" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title"><i class="voyager-plus"></i> Agregar Categoría</h4>
+                    </div>
+                
                     <input type="hidden" name="torneo_id" value="{{ $torneo->id }}">
                     <div class="modal-body">
                         <div class="form-group">
@@ -186,18 +187,20 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-default btn-cancel" data-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-success btn-submit">Guardar</button>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
-    </div>
+    </form>
+
     @include('partials.modal-delete')
 
 @stop
 
 @section('javascript')
+    <script src="{{ asset('js/btn-submit.js') }}"></script> 
     <script>
         var countPageCat = 10;
         var timeoutCat = null;

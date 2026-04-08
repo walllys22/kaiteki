@@ -202,10 +202,14 @@ class TorneoController extends Controller
     {
         try {
             $item = TorneoCategoria::findOrFail($id);
+            $torneo_id = $item->torneo_id;
             $item->delete();
-            return redirect()->back();
+
+            return redirect()->route('voyager.torneos.show', ['id' => $torneo_id])
+                ->with(['message' => 'Categoría eliminada del torneo.', 'alert-type' => 'success']);
         } catch (\Throwable $th) {
-            return redirect()->back
+            return redirect()->back()
+                ->with(['message' => 'Error al intentar eliminar: ' . $th->getMessage(), 'alert-type' => 'error']);
         }
     }
 }
