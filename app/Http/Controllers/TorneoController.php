@@ -192,9 +192,12 @@ class TorneoController extends Controller
                 'categoria_id' => $request->categoria_id,
                 'modalidad_id' => $request->modalidad_id
             ]);
-            return response()->json(['success' => true, 'message' => 'Categoría agregada correctamente']);
+            return redirect()->route('voyager.torneos.show', ['id' => $request->torneo_id])
+                ->with(['message' => 'Categoría eliminada del torneo.', 'alert-type' => 'success']);
+            
         } catch (\Throwable $th) {
-            return response()->json(['success' => false, 'message' => $th->getMessage()], 500);
+            return redirect()->back()
+                ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
         }
     }
 

@@ -227,25 +227,7 @@
                 }, 1000); // Retardo de 1 segundo para la búsqueda automática
             });
 
-            // Guardar nueva categoría mediante AJAX
-            $('#form-add-category').submit(function(e){
-                e.preventDefault();
-                $('.btn-submit').attr('disabled', true);
-                let url = $(this).attr('action');
-                let data = $(this).serialize();
-                $.post(url, data, function(res){
-                    $('.btn-submit').attr('disabled', false);
-                    if(res.success){
-                        toastr.success(res.message);
-                        $('#modal-add-category').modal('hide');
-                        $('#form-add-category')[0].reset();
-                        $('.select2').val(null).trigger('change');
-                        listCategories();
-                    }else{
-                        toastr.error(res.message);
-                    }
-                });
-            });
+           
         });
 
         function listCategories(page = 1) {
