@@ -21,4 +21,14 @@ class Dojo extends Model
             'status',
             'deleted_at'
           ];
+
+    public function person()
+    {
+        return $this->belongsTo(Person::class, 'person_id');
+    }
+
+    public function ciudad()
+    {
+        return $this->belongsTo(Ciudad::class, 'ciudad_id');
+    }
 }

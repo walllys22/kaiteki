@@ -103,12 +103,11 @@
 
 <!-- MARCADOR ROJO -->
  <div class="marcador-aka">
-    <div id="contenedor-s-rojo"></div>
     <div class="pantalla-puntos">
+        <div id="contenedor-s-rojo"></div>
             <span style="color: white; font-weight: bold; display: block; text-align: Left; width: 100%;">
                Walter Landivar Limpias - L.J.P. ZABALA DOJO
             </span>
-        <div id="contenedor-s-rojo"></div>
         <div id="puntosRojo" class="puntos-gigantes">0</div>
     </div>
     <div class="panel-control-rojo">
@@ -144,6 +143,15 @@
     </div> 
 </div>
 
+
+<!-- Modal para aviso de Senshu -->
+<div id="modal-senshu" class="overlay-ganador">
+    <div class="mensaje-contenedor" style="border-color: #ffff00; box-shadow: 0 0 50px rgba(255, 255, 0, 0.5);">
+        <p class="texto-arriba" style="color: #000; font-size: 50px;">AVISO</p>
+        <p class="texto-debajo">EL OTRO COMPETIDOR YA TIENE SENSHU</p>
+        <button onclick="cerrarModalSenshu()" class="btn-cerrar-anuncio" style="background-color: #ffff00; color: black; border: 2px solid black;">Cerrar</button>
+    </div>
+</div>
 
 
     <script>
@@ -212,25 +220,36 @@
 
         // --- SENSHU (VENTAJA) ---
         function toggleSenshu(side) {
+            const mapping = { 'ao': 'azul', 'aka': 'rojo' };
             const otherSide = side === 'ao' ? 'aka' : 'ao';
+            const btnOther = document.getElementById(`btn-senshu-${mapping[otherSide]}`);
+            const styleOther = window.getComputedStyle(btnOther);
+
+            // Verificar si el oponente ya tiene el Senshu (su botón NO es transparente)
+            if (styleOther.backgroundColor !== 'rgba(0, 0, 0, 0)' && styleOther.backgroundColor !== 'transparent') {
+                $('#modal-senshu').css('display', 'flex');
+                return;
+            }
             
             if (activeSenshu === side) {
                 // Quitar
                 activeSenshu = null;
-                $(`#btn-senshu-${side}`).css('background-color', 'transparent');
-                $(`#contenedor-s-${side}`).empty();
-            } else if (activeSenshu === otherSide) {
-                alert("EL OTRO COMPETIDOR YA TIENE EL SENSHU");
+                $(`#btn-senshu-${mapping[side]}`).css('background-color', 'transparent');
+                $(`#contenedor-s-${mapping[side]}`).empty();
             } else {
                 // Activar
                 activeSenshu = side;
-                $(`#btn-senshu-${side}`).css('background-color', 'yellow');
-                $(`#contenedor-s-${side}`).html(`
+                $(`#btn-senshu-${mapping[side]}`).css('background-color', 'yellow');
+                $(`#contenedor-s-${mapping[side]}`).html(`
                     <div style="position: absolute; top: 5px; right: 5px; width: 80px; height: 80px; background-color: yellow; color: black; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Arial Black', sans-serif; font-weight: bold; font-size: 50px; border: 2px solid #000; z-index: 100;">
                         S
                     </div>
                 `);
             }
+        }
+
+        function cerrarModalSenshu() {
+            $('#modal-senshu').css('display', 'none');
         }
 
         // --- PENALIZACIONES (Lógica Jerárquica) ---

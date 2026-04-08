@@ -182,10 +182,59 @@ class PermissionsTableSeeder extends Seeder
             ]);
         }
         
+        //Parentesco
+        $permissions = [
+            'browse_parentescos' => 'Ver lista de C',
+            'read_parentescos' => 'Ver detalles de una persona',
+            'edit_parentescos' => 'Editar información de C',
+            'add_parentescos' => 'Agregar nuevas C',
+            'delete_parentescos' => 'Eliminar C',
+        ];
 
+        foreach ($permissions as $key => $description) {
+            Permission::firstOrCreate([
+                'key'        => $key,
+                'keyDescription'=> $description,
+                'table_name' => 'parentescos',
+                'tableDescription'=>'parentescos'
+            ]);
+        }
 
+        //Dojo
+        $permissions = [
+            'browse_dojos' => 'Ver lista de C',
+            'read_dojos' => 'Ver detalles de una persona',
+            'edit_dojos' => 'Editar información de C',
+            'add_dojos' => 'Agregar nuevas C',
+            'delete_dojos' => 'Eliminar C',
+        ];
 
+        foreach ($permissions as $key => $description) {
+            Permission::firstOrCreate([
+                'key'        => $key,
+                'keyDescription'=> $description,
+                'table_name' => 'dojos',
+                'tableDescription'=>'dojos'
+            ]);
+        }
 
+        //Horarios
+        $permissions = [
+            'browse_horarios' => 'Ver lista de C',
+            'read_horarios' => 'Ver detalles de una persona',
+            'edit_horarios' => 'Editar información de C',
+            'add_horarios' => 'Agregar nuevas C',
+            'delete_horarios' => 'Eliminar C',
+        ];
+
+        foreach ($permissions as $key => $description) {
+            Permission::firstOrCreate([
+                'key'        => $key,
+                'keyDescription'=> $description,
+                'table_name' => 'horarios',
+                'tableDescription'=>'horarios'
+            ]);
+        }
 
 
 
