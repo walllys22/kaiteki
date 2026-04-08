@@ -1040,7 +1040,7 @@ class DataRowsTableSeeder extends Seeder
                 'edit' => 1,
                 'add' => 1,
                 'delete' => 0,
-                'details' => '{"validation":{"rule":"required|date|after_or_equal:fechainicio"},"display":{"width":3}}',
+                'details' => '{"validation":{"rule":"required|date|after:fechainicio"},"display":{"width":3}}',
                 'order' => 8,
             ),
             64 => 

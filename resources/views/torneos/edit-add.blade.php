@@ -125,15 +125,34 @@
             let $fechaInicio = $('input[name="fechainicio"]');
             let $fechaFinal = $('input[name="fechafinal"]');
 
-            // Actualizar el atributo 'min' de la fecha final cuando cambie la inicial
-            $fechaInicio.on('change', function() {
-                $fechaFinal.attr('min', $(this).val());
-            });
+            function validarFechas() {
+                let inicio = $fechaInicio.val();
+                let final = $fechaFinal.val();
+
+                if (inicio && final) {
+                    if (final <= inicio) {
+                        // Mostrar Toast de error (Voyager usa toastr)
+                        toastr.error('La fecha final debe ser estrictamente posterior a la fecha de inicio.');
+                        
+                        // Limpiar el campo de fecha final
+                        $fechaFinal.val('');
+                    }
+                }
+
+                // Ajustar el atributo 'min' para ayudar al usuario (día siguiente al inicio)
+                if (inicio) {
+                    let date = new Date(inicio);
+                    date.setDate(date.getDate() + 1); // +2 para compensar zona horaria y saltar el día actual
+                    let minDate = date.toISOString().split('T')[0];
+                    $fechaFinal.attr('min', minDate);
+                }
+            }
+
+            $fechaInicio.on('change', validarFechas);
+            $fechaFinal.on('change', validarFechas);
 
             // Ejecutar al cargar la página por si ya hay valores (en edición)
-            if($fechaInicio.val()) {
-                $fechaFinal.attr('min', $fechaInicio.val());
-            }
+            validarFechas();
         });
     </script>
 @stop

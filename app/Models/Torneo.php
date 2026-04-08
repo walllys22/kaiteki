@@ -26,6 +26,7 @@ class Torneo extends Model
         'fechafinal',
         'archivo',
         'modalidad_id',
+        'estado',
         'deleted_at'
     ];
 

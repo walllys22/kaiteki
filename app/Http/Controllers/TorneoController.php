@@ -19,6 +19,34 @@ class TorneoController extends Controller
         $this->storageController = new StorageController();
     }
 
+    public function index()
+    {
+        $this->custom_authorize('browse_torneos');
+        return view('torneos.browse');
+    }
+
+    public function list(){
+
+        $search = request('search') ?? null;
+        $paginate = request('paginate') ?? 10;
+
+        $data = Torneo::query()
+            // El método when() hace lo mismo que tu "if($search)"
+            ->when($search, function ($query, $search) {
+                return $query->where(function($q) use ($search) {
+                    $q->where('id', $search)
+                      ->orWhere('nombre', 'like', "%$search%");
+                });
+            })
+            ->whereNull('deleted_at')
+            ->orderBy('id', 'DESC')
+            ->paginate($paginate);
+
+        return view('torneos.list', compact('data'));
+    }
+
+
+
     public function create()
     {
         $this->custom_authorize('add_torneos');

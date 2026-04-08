@@ -38,6 +38,8 @@ Route::get('/info/{id?}', [ErrorController::class , 'error'])->name('errors');
 Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], function () {
     Voyager::routes();
 
+    Route::get('torneos', [TorneoController::class, 'index'])->name('voyager.torneos.index');
+    Route::get('torneos/ajax/list', [TorneoController::class, 'list']);
     Route::get('torneos/create', [TorneoController::class, 'create'])->name('voyager.torneos.create');
     Route::post('torneos/store', [TorneoController::class, 'store'])->name('voyager.torneos.store');
     Route::get('torneos/{id}/edit', [TorneoController::class, 'edit'])->name('voyager.torneos.edit');
