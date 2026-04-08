@@ -123,6 +123,21 @@
                         <h3 class="panel-title"><i class="voyager-categories"></i> Categorías del Torneo</h3>
                     </div>
                     <div class="panel-body" style="padding-top:0;">
+                        <div class="row">
+                            <div class="col-sm-9">
+                                <div class="dataTables_length">
+                                    <label>Mostrar <select id="select-paginate-cat" class="form-control input-sm">
+                                        <option value="10">10</option>
+                                        <option value="25">25</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </select> registros</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-3" style="margin-bottom: 10px">
+                                <input type="text" id="input-search-cat" placeholder="🔍 Buscar..." class="form-control">
+                            </div>
+                        </div>
                         <div id="div-categories-list">
                             <p class="text-center">Cargando categorías...</p>
                         </div>
@@ -135,18 +150,41 @@
 
 @section('javascript')
     <script>
+        var countPageCat = 10;
+        var timeoutCat = null;
+
         $(document).ready(function () {
             listCategories();
+
+            $('#input-search-cat').on('keyup', function(e){
+                if(e.keyCode == 13) {
+                    clearTimeout(timeoutCat);
+                    listCategories();
+                }
+            });
+
+            $('#select-paginate-cat').change(function(){
+                countPageCat = $(this).val();
+                listCategories();
+            });
+
+            $('#input-search-cat').on('input', function() {
+                clearTimeout(timeoutCat);
+                timeoutCat = setTimeout(function() {
+                    listCategories();
+                }, 1000); // Retardo de 1 segundo para la búsqueda automática
+            });
         });
 
         function listCategories(page = 1) {
             $('#div-categories-list').loading({message: 'Cargando...'});
             let id = "{{ $torneo->id }}";
-            // Ajusta la URL según tu ruta definida para obtener el listado de categorías por torneo
-            let url = "{{ url('admin/torneos/categorias/list') }}/" + id;
+            let search = $('#input-search-cat').val() ? $('#input-search-cat').val() : '';
+            // URL corregida según la ruta: torneos/{id}/categories/list
+            let url = "{{ url('admin/torneos') }}/" + id + "/categories/list";
 
             $.ajax({
-                url: url + "?page=" + page,
+                url: `${url}?search=${search}&paginate=${countPageCat}&page=${page}`,
                 type: 'get',
                 success: function(result){
                     $("#div-categories-list").html(result);
