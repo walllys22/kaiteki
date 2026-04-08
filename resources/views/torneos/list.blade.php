@@ -45,7 +45,13 @@
                         {{ $item->person->first_name }}
                     </td>
                     <td style="text-align: center">
-                     
+                        @php
+                            $ids = is_array($item->modalidad_id) ? $item->modalidad_id : [];
+                            $nombres = \App\Models\Modalida::whereIn('id', $ids)->pluck('nombre');
+                        @endphp
+                        @foreach ($nombres as $nombre)
+                            <span class="label label-info" style="display: inline-block; margin-bottom: 2px;">{{ $nombre }}</span>
+                        @endforeach
                     </td>
                  
                     <td style="text-align: center">
