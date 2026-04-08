@@ -11,6 +11,7 @@
                     <th style="text-align: center">Responsable</th>
                     <th style="text-align: center">Modalidades</th>
                     <th style="text-align: center">Estado</th>
+                    <th style="text-align: center">Registrado</th>
                     <th style="text-align: center">Acciones</th>
                 </tr>
             </thead>
@@ -61,6 +62,9 @@
                             <label class="label label-warning">{{$item->estado}}</label>
                         @endif
                     </td>
+                    <td style="text-align: center">
+                        {{ \Carbon\Carbon::parse($item->created_at)->format('d/m/Y H:i') }}
+                    </td>
                     <td style="width: 18%" class="no-sort no-click bread-actions text-right">
                         @if (auth()->user()->hasPermission('read_torneos'))
                             <a href="{{ route('voyager.torneos.show', ['id' => $item->id]) }}" title="Ver" class="btn btn-sm btn-warning view">
@@ -81,7 +85,7 @@
                 </tr>
                 @empty
                     <tr>
-                        <td colspan="9">
+                        <td colspan="10">
                             <h5 class="text-center" style="margin-top: 50px">
                                 <img src="{{ asset('images/empty.png') }}" width="120px" alt="" style="opacity: 0.8">
                                 <br><br>
