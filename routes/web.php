@@ -49,6 +49,10 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     Route::get('alumnos/{id}/edit', [AlumnoController::class, 'edit'])->name('voyager.alumnos.edit');
     Route::get('alumnos/{id}', [AlumnoController::class, 'show'])->name('voyager.alumnos.show');
 
+    // Rutas Alumnos Historial    Route::get('torneos/{id}/categories/list', [TorneoController::class, 'categoryList'])->name('torneos.categories.list');
+    Route::get('alumnos/{id}/historial/list', [AlumnoController::class, 'historialList'])->name('alumnos.historial.list');
+
+
 
     // Rutas Torneos
     Route::get('torneos', [TorneoController::class, 'index'])->name('voyager.torneos.index');

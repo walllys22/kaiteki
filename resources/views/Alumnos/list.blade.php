@@ -4,6 +4,7 @@
             <thead>
                 <tr>
                     <th style="text-align: center">ID</th>
+                    <th style="text-align: center">Nombre Dojo</th>                    
                     <th style="text-align: center">Nombre Completo</th>
                     <th style="text-align: center">Ingreso</th>                    
                     <th style="text-align: center">Horario</th>
@@ -22,6 +23,7 @@
                 @endphp
                 <tr>
                     <td>{{ $item->id }}</td>
+                    <td style="text-align: center">{{ $item->dojo->nombre }} </td>
                     <td>
                         <div style="display: flex; align-items: center;">
                             <img src="{{ $image }}" alt="{{ $item->person->first_name }}" class="image-expandable" style="width: 60px; height: 60px; border-radius: 30px; margin-right: 10px; object-fit: cover;">
@@ -62,7 +64,7 @@
                 </tr>
                 @empty
                     <tr>
-                        <td colspan="7">
+                        <td colspan="8">
                             <h5 class="text-center" style="margin-top: 50px">
                                 <img src="{{ asset('images/empty.png') }}" width="120px" alt="" style="opacity: 0.8">
                                 <br><br>

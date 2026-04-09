@@ -11,6 +11,7 @@ class Alumno extends Model
         use HasFactory, SoftDeletes;
 
         protected $fillable = [
+            'dojo_id',     
             'person_id',    
             'entry_date',
             'horario_id',
@@ -21,6 +22,13 @@ class Alumno extends Model
             'deleted_at'
         
           ];
+
+
+
+    public function dojo()
+    {
+        return $this->belongsTo(Dojo::class, 'dojo_id');
+    }
 
     public function person()
     {

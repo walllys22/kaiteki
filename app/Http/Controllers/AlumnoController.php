@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Alumno;
 use App\Models\Person;
-
+use App\Models\Dojo;
 use App\Models\Grado;
 use App\Models\Horario;
 use Illuminate\Http\Request;
@@ -57,8 +57,9 @@ class AlumnoController extends Controller
         $people = Person::whereNull('deleted_at')->get();
         $horario = Horario::whereNull('deleted_at')->get();
         $grado = Grado::whereNull('deleted_at')->get();
+        $cdojo = Dojo::whereNull('deleted_at')->get();
         $dataTypeContent = new Alumno(); // Objeto vacío para la vista
-        return view('alumnos.edit-add', compact('people', 'grado', 'horario', 'dataTypeContent'));
+        return view('alumnos.edit-add', compact('cdojo', 'people', 'grado', 'horario', 'dataTypeContent'));
     }
 
 
@@ -66,7 +67,7 @@ class AlumnoController extends Controller
     {
         $this->custom_authorize('add_alumnos');
         $request->validate([
-
+            'dojo_id' => 'required|exists:dojo,id',
             'person_id' => 'required|exists:people,id',
             'entry_date' => 'required|date',
             'horario_id' => 'required|exists:horarios,id',
@@ -120,8 +121,9 @@ class AlumnoController extends Controller
         $people = Person::whereNull('deleted_at')->get();
         $horario = Horario::whereNull('deleted_at')->get();
         $grado = Grado::whereNull('deleted_at')->get();
+        $dojo = Dojo::whereNull('deleted_at')->get();
 
-        return view('alumnos.read', compact('people', 'grado', 'horario', 'dataTypeContent'));
+        return view('alumnos.read', compact('dojo', 'people', 'grado', 'horario', 'dataTypeContent'));
     }
 
     public function update(Request $request, $id)
@@ -134,6 +136,7 @@ class AlumnoController extends Controller
         }
 
         $request->validate([
+            'dojo_id' => 'required|exists:dojo,id',
             'person_id' => 'required|exists:people,id',
             'entry_date' => 'required|date',
             'horario_id' => 'required|exists:horarios,id',
@@ -148,6 +151,7 @@ class AlumnoController extends Controller
             $alumno = Alumno::findOrFail($id);
             
             // Asignación manual de atributos para evitar problemas de mass assignment ($fillable)
+            $alumno->dojo_id = $request->dojo_id;
             $alumno->person_id = $request->person_id;
             $alumno->entry_date = $request->entry_date;
             $alumno->horario_id = $request->horario_id;
@@ -180,6 +184,25 @@ class AlumnoController extends Controller
         }
     }
 
+    public function historialList($id)
+    {
+        $search = request('search');
+        $paginate = request('paginate') ?? 10;
+
+        $data = AlumnoHistorial::with(['categoria', 'modalidad'])
+            ->where('torneo_id', $id)
+            ->when($search, function ($query, $search) {
+                return $query->whereHas('categoria', function($q) use ($search) {
+                    $q->where('nombre', 'like', "%$search%");
+                })->orWhereHas('modalidad', function($q) use ($search) {
+                    $q->where('nombre', 'like', "%$search%");
+                });
+            })
+            ->orderBy('id', 'DESC')
+            ->paginate($paginate);
+
+        return view('torneos.categorias.list', compact('data', 'id'));
+    }
 
 
 }
