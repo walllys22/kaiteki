@@ -5,12 +5,10 @@
                 <tr>
                     <th style="text-align: center">ID</th>
                     <th style="text-align: center">Nombre Completo</th>
-                    <th style="text-align: center">Fecha Ingrero</th>                    
+                    <th style="text-align: center">Ingreso</th>                    
                     <th style="text-align: center">Horario</th>
                     <th style="text-align: center">Grado</th>
-                    <th style="text-align: center">Responsable</th>
                     <th style="text-align: center">Estado</th>
-                    <th style="text-align: center">Registrado</th>
                     <th style="text-align: center">Acciones</th>
                 </tr>
             </thead>
@@ -18,17 +16,53 @@
                 @forelse ($data as $item)
                 @php
                     $image = asset('images/default.jpg');
-                    if($item->archivo){
-                        $image = asset('storage/' . str_replace('.avif', '', $item->archivo) . '-cropped.webp');
+                    if($item->foto){
+                        $image = asset('storage/' . str_replace('.avif', '', $item->foto) . '-cropped.webp');
                     }
                 @endphp
                 <tr>
                     <td>{{ $item->id }}</td>
-                    <td>{{ $item->nombre }}</td>       
+                    <td>
+                        <div style="display: flex; align-items: center;">
+                            <img src="{{ $image }}" alt="{{ $item->person->first_name }}" class="image-expandable" style="width: 60px; height: 60px; border-radius: 30px; margin-right: 10px; object-fit: cover;">
+                            <div>
+                                {{ $item->person->first_name }} 
+                            </div>
+                        </div>
+                    </td>
+                    <td style="text-align: center">
+                        {{ \Carbon\Carbon::parse($item->entry_date)->format('d/m/Y') }}
+                    </td>
+                    <td style="text-align: center"> {{ $item->Horario->tipo }} {{ $item->Horario->nombre }}</td>
+                    <td style="text-align: center"> {{ $item->grado->numero}} {{ $item->grado->tipo }} {{ $item->grado->nombre}} </td>
+                    <td style="text-align: center">
+                        @if ($item->status==1)  
+                            <label class="label label-success">Activo</label>
+                        @else
+                            <label class="label label-warning">Inactivo</label>
+                        @endif
+                    </td>
+                    <td style="width: 18%" class="no-sort no-click bread-actions text-right">
+                        @if (auth()->user()->hasPermission('read_alumnos'))
+                            <a href="{{ route('voyager.alumnos.show', ['id' => $item->id]) }}" title="Ver" class="btn btn-sm btn-warning view">
+                                <i class="voyager-eye"></i> <span class="hidden-xs hidden-sm"></span>
+                            </a>
+                        @endif
+                        @if (auth()->user()->hasPermission('edit_alumnos'))
+                            <a href="{{ route('voyager.alumnos.edit', ['id' => $item->id]) }}" title="Editar" class="btn btn-sm btn-primary edit">
+                                <i class="voyager-edit"></i> <span class="hidden-xs hidden-sm"></span>
+                            </a>
+                        @endif
+                        @if (auth()->user()->hasPermission('delete_alumnos'))
+                            <a href="#" onclick="deleteItem('{{ route('voyager.alumnos.destroy', ['id' => $item->id]) }}')" title="Eliminar" data-toggle="modal" data-target="#modal-delete" class="btn btn-sm btn-danger delete">
+                                <i class="voyager-trash"></i> <span class="hidden-xs hidden-sm"></span>
+                            </a>
+                        @endif
+                    </td>
                 </tr>
                 @empty
                     <tr>
-                        <td colspan="9">
+                        <td colspan="7">
                             <h5 class="text-center" style="margin-top: 50px">
                                 <img src="{{ asset('images/empty.png') }}" width="120px" alt="" style="opacity: 0.8">
                                 <br><br>

@@ -2,8 +2,16 @@
 
 namespace App\Http\Controllers;
 
+
 use App\Models\Alumno;
+use App\Models\Person;
+
+use App\Models\Grado;
+use App\Models\Horario;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+
 
 class AlumnoController extends Controller
 {
@@ -27,11 +35,13 @@ class AlumnoController extends Controller
         $paginate = request('paginate') ?? 10;
 
         $data = Alumno::query()
-            // El método when() hace lo mismo que tu "if($search)"
+            ->with(['person', 'horario', 'grado'])
             ->when($search, function ($query, $search) {
                 return $query->where(function($q) use ($search) {
                     $q->where('id', $search)
-                      ->orWhere('nombre', 'like', "%$search%");
+                      ->orWhereHas('person', function($sq) use ($search) {
+                          $sq->where('first_name', 'like', "%$search%");
+                      });
                 });
             })
             ->whereNull('deleted_at')
@@ -41,7 +51,134 @@ class AlumnoController extends Controller
         return view('alumnos.list', compact('data'));
     }
 
+    public function create()
+    {
+        $this->custom_authorize('add_alumnos');
+        $people = Person::whereNull('deleted_at')->get();
+        $horario = Horario::whereNull('deleted_at')->get();
+        $grado = Grado::whereNull('deleted_at')->get();
+        $dataTypeContent = new Alumno(); // Objeto vacío para la vista
+        return view('alumnos.edit-add', compact('people', 'grado', 'horario', 'dataTypeContent'));
+    }
 
+
+    public function store(Request $request)
+    {
+        $this->custom_authorize('add_alumnos');
+        $request->validate([
+
+            'person_id' => 'required|exists:people,id',
+            'entry_date' => 'required|date',
+            'horario_id' => 'required|exists:horarios,id',
+            'grado_id' => 'required|exists:grados,id',
+            'status' => 'required|integer',
+            'observacion' => 'nullable|string|max:255',
+            'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:5120'
+        ]);
+
+        try {
+            $data = $request->all();
+
+            if ($request->hasFile('foto')) {
+                $file = $request->file('foto');
+                // Si el archivo es una imagen, usamos el StorageController para optimizarla
+                if (str_starts_with($file->getMimeType(), 'image/')) {
+                    $data['foto'] = $this->storageController->store_image($file, 'alumnos');
+                } else {
+                    // Si es un PDF u otro tipo de archivo, usamos el guardado tradicional
+                    $data['foto'] = $file->store('alumnos', 'public');
+                }
+            }
+
+            Alumno::create($data);
+
+            return redirect()->route('voyager.alumnos.index')
+                ->with(['message' => 'Alumno creado exitosamente', 'alert-type' => 'success']);
+        } catch (\Throwable $th) {
+            return redirect()->back()
+                ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
+        }
+    }
+
+    public function edit($id)
+    {
+        $this->custom_authorize('edit_alumnos');
+        $dataTypeContent = Alumno::findOrFail($id);
+        $people = Person::whereNull('deleted_at')->get();
+        $horario = Horario::whereNull('deleted_at')->get();
+        $grado = Grado::whereNull('deleted_at')->get();
+
+
+        return view('alumnos.edit-add', compact('people', 'grado', 'horario', 'dataTypeContent'));
+        
+    }
+
+    public function show($id)
+    {
+        $this->custom_authorize('read_alumnos');
+        $dataTypeContent = Alumno::with(['person', 'horario', 'grado'])->findOrFail($id);
+        $people = Person::whereNull('deleted_at')->get();
+        $horario = Horario::whereNull('deleted_at')->get();
+        $grado = Grado::whereNull('deleted_at')->get();
+
+        return view('alumnos.read', compact('people', 'grado', 'horario', 'dataTypeContent'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $this->custom_authorize('edit_alumnos');
+
+        // Manejo de status (si viene de un checkbox envía "on")
+        if ($request->has('status')) {
+            $request->merge(['status' => $request->status == 'on' ? 1 : $request->status]);
+        }
+
+        $request->validate([
+            'person_id' => 'required|exists:people,id',
+            'entry_date' => 'required|date',
+            'horario_id' => 'required|exists:horarios,id',
+            'grado_id' => 'required|exists:grados,id',
+            'status' => 'nullable', // Permitimos nullable para manejar el checkbox desmarcado
+            'observacion' => 'nullable|string|max:255',
+            'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:5120'
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $alumno = Alumno::findOrFail($id);
+            
+            // Asignación manual de atributos para evitar problemas de mass assignment ($fillable)
+            $alumno->person_id = $request->person_id;
+            $alumno->entry_date = $request->entry_date;
+            $alumno->horario_id = $request->horario_id;
+            $alumno->grado_id = $request->grado_id;
+            $alumno->status = $request->status ? 1 : 0;
+            $alumno->observacion = $request->observacion;
+
+            if ($request->hasFile('foto')) {
+                if ($alumno->foto) {
+                    Storage::disk('public')->delete($alumno->foto);
+                }
+                
+                $file = $request->file('foto');
+                if (str_starts_with($file->getMimeType(), 'image/')) {
+                    $alumno->foto = $this->storageController->store_image($file, 'alumnos');
+                } else {
+                    $alumno->foto = $file->store('alumnos', 'public');
+                }
+            }
+
+            $alumno->update();
+            DB::commit();
+
+            return redirect()->route('voyager.alumnos.index')
+                ->with(['message' => 'Alumno actualizado exitosamente', 'alert-type' => 'success']);
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return redirect()->back()
+                ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
+        }
+    }
 
 
 

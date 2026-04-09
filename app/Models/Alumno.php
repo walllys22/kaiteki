@@ -16,7 +16,7 @@ class Alumno extends Model
             'horario_id',
             'grado_id',
             'status',
-            'obsernacion',
+            'observacion',
             'foto',
             'deleted_at'
         

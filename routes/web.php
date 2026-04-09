@@ -44,8 +44,13 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     // Rutas Alumnos
     Route::get('alumnos', [AlumnoController::class, 'index'])->name('voyager.alumnos.index');
     Route::get('alumnos/ajax/list', [AlumnoController::class, 'list']);
+    Route::get('alumnos/create', [AlumnoController::class, 'create'])->name('voyager.alumnos.create');
+    Route::post('alumnos/store', [AlumnoController::class, 'store'])->name('voyager.alumnos.store');
+    Route::get('alumnos/{id}/edit', [AlumnoController::class, 'edit'])->name('voyager.alumnos.edit');
+    Route::get('alumnos/{id}', [AlumnoController::class, 'show'])->name('voyager.alumnos.show');
 
 
+    // Rutas Torneos
     Route::get('torneos', [TorneoController::class, 'index'])->name('voyager.torneos.index');
     Route::get('torneos/ajax/list', [TorneoController::class, 'list']);
     Route::get('torneos/create', [TorneoController::class, 'create'])->name('voyager.torneos.create');
