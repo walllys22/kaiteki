@@ -1,6 +1,6 @@
 @extends('voyager::master')
 
-@section('page_title', 'Viendo Torneos')
+@section('page_title', 'Viendo Alumnos')
 
 @section('page_header')
     <div class="container-fluid">

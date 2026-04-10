@@ -1,6 +1,6 @@
 @extends('voyager::master')
 
-@section('page_title', 'Ver Torneo')
+@section('page_title', 'Ver Alumnos')
 
 
 @section('page_header')
@@ -95,7 +95,7 @@
                                         <label class="control-label" style="font-weight:bold;">Grado</label>
                                         <p class="form-control-static">{{ $alumno->grado->numero}} {{ $alumno->grado->tipo }} {{ $alumno->grado->nombre}} </p>
                                     </div>
-                                    <div class="col-md-4 form-group">
+                                    <div class="col-md-2 form-group">
                                         <label class="control-label" style="font-weight:bold;">Estado</label>
                                         <p class="form-control-static">
                                             @if ($alumno->status==1)  

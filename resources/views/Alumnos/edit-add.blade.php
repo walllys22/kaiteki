@@ -17,8 +17,8 @@
                 <div class="panel panel-bordered">
                     <!-- FORM -->
                     <form role="form"
-                          action="{{ isset($dataTypeContent->id) ? route('voyager.alumnos.update', $dataTypeContent->id) : route('voyager.alumnos.store') }}"
-                          method="POST" enctype="multipart/form-data">
+                            action="{{ isset($dataTypeContent->id) ? route('voyager.alumnos.update', $dataTypeContent->id) : route('voyager.alumnos.store') }}"
+                            method="POST" enctype="multipart/form-data">
                         @csrf
                         @if(isset($dataTypeContent->id))
                             @method('PUT')
@@ -27,12 +27,12 @@
                         <div class="panel-body">
                             {{-- lista de Dojos --}}
                             <div class="form-group col-md-6">       
-                                <label for="$dojos_id">Nombre del Dojo</label>
-                                <select name="$dojos_id" class="form-control select2" required>
+                                <label for="dojo_id">Nombre del Dojo</label>
+                                <select name="dojo_id" class="form-control select2" required>
                                     <option value="">Seleccione un Dojo</option>
-                                    @foreach($cdojo as $dojos)
-                                        <option value="{{$dojos->id }}" {{ old('$dojos_id', $dataTypeContent->dojos_id) == $dojos->id ? 'selected' : '' }}>
-                                            {{ $dojos->id }} {{ $dojos->nombre }}
+                                    @foreach($dojo as $dojos)
+                                        <option value="{{$dojos->id }}" {{ old('dojo_id', $dataTypeContent->dojo_id) == $dojos->id ? 'selected' : '' }}>
+                                            {{ $dojos->nombre }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -62,9 +62,8 @@
                                 <select name="horario_id" class="form-control select2" required>
                                     <option value="">Seleccione un Horario</option>
                                     @foreach($horario as $horarios)
-                                        <option value="{{ $horarios->id }} " {{ old('horario_id', $dataTypeContent->horario_id) == $horarios->id ? 'selected' : '' }}>
                                         <option value="{{ $horarios->id }}" {{ old('horario_id', $dataTypeContent->horario_id) == $horarios->id ? 'selected' : '' }}>
-                                            {{ $horarios->id }} {{ $horarios->tipo }} {{ $horarios->nombre }}
+                                            {{ $horarios->tipo }} {{ $horarios->nombre }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -76,7 +75,6 @@
                                 <select name="grado_id" class="form-control select2" required>
                                     <option value="">Seleccione un Grado</option>
                                     @foreach($grado as $grados)
-                                        <option value="{{ $grados->id }} " {{ old('grado_id', $dataTypeContent->grado_id) == $grados->id ? 'selected' : '' }}>
                                         <option value="{{ $grados->id }}" {{ old('grado_id', $dataTypeContent->grado_id) == $grados->id ? 'selected' : '' }}>
                                             {{ $grados->tipo }} {{ $grados->numero }} {{ $grados->nombre }}
                                         </option>
@@ -94,7 +92,7 @@
                                         <input type="checkbox" 
                                             name="status" 
                                             id="status_toggle" 
-                                            value="$dataTypeContent->status"
+                                            value="1"
                                             onchange="updateStatusText(this)"
                                             {{ $dataTypeContent->status == 1 ? 'checked' : '' }}>
                                         <span class="slider round"></span>
@@ -119,10 +117,8 @@
                             {{-- Observaciones --}}
                             <div class="form-group col-md-12">
                                 <label for="observacion">Observaciones</label>
-                                <textarea class="form-control" name="observacion" placeholder="observacion" rows="3" required>{{ old('observacion', $dataTypeContent->observacion) }}</textarea>
+                                <textarea class="form-control" name="observacion" placeholder="observacion" rows="3">{{ old('observacion', $dataTypeContent->observacion) }}</textarea>
                             </div>
-                            {{-- Estado --}}
-                            <input type="hidden" name="status" value="1">
                         </div>
                         <div class="panel-footer">
                             <button type="submit" class="btn btn-primary save">{{ __('voyager::generic.save') }}</button>

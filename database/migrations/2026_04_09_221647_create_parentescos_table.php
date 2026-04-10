@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('parentescos', function (Blueprint $table) {
             $table->id();
             $table->string('nombre')->nullable();
+            
             $table->timestamps();
             $table->softDeletes();
         });

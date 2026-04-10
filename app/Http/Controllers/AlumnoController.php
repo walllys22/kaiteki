@@ -57,9 +57,9 @@ class AlumnoController extends Controller
         $people = Person::whereNull('deleted_at')->get();
         $horario = Horario::whereNull('deleted_at')->get();
         $grado = Grado::whereNull('deleted_at')->get();
-        $cdojo = Dojo::whereNull('deleted_at')->get();
+        $dojo = Dojo::whereNull('deleted_at')->get();
         $dataTypeContent = new Alumno(); // Objeto vacío para la vista
-        return view('alumnos.edit-add', compact('cdojo', 'people', 'grado', 'horario', 'dataTypeContent'));
+        return view('alumnos.edit-add', compact('dojo', 'people', 'grado', 'horario', 'dataTypeContent'));
     }
 
 
@@ -67,7 +67,7 @@ class AlumnoController extends Controller
     {
         $this->custom_authorize('add_alumnos');
         $request->validate([
-            'dojo_id' => 'required|exists:dojo,id',
+            'dojo_id' => 'required|exists:dojos,id',
             'person_id' => 'required|exists:people,id',
             'entry_date' => 'required|date',
             'horario_id' => 'required|exists:horarios,id',
@@ -108,9 +108,10 @@ class AlumnoController extends Controller
         $people = Person::whereNull('deleted_at')->get();
         $horario = Horario::whereNull('deleted_at')->get();
         $grado = Grado::whereNull('deleted_at')->get();
+        $dojo = Grado::whereNull('deleted_at')->get();
 
 
-        return view('alumnos.edit-add', compact('people', 'grado', 'horario', 'dataTypeContent'));
+        return view('alumnos.edit-add', compact('dojo', 'people', 'grado', 'horario', 'dataTypeContent'));
         
     }
 
@@ -184,25 +185,6 @@ class AlumnoController extends Controller
         }
     }
 
-    public function historialList($id)
-    {
-        $search = request('search');
-        $paginate = request('paginate') ?? 10;
-
-        $data = AlumnoHistorial::with(['categoria', 'modalidad'])
-            ->where('torneo_id', $id)
-            ->when($search, function ($query, $search) {
-                return $query->whereHas('categoria', function($q) use ($search) {
-                    $q->where('nombre', 'like', "%$search%");
-                })->orWhereHas('modalidad', function($q) use ($search) {
-                    $q->where('nombre', 'like', "%$search%");
-                });
-            })
-            ->orderBy('id', 'DESC')
-            ->paginate($paginate);
-
-        return view('torneos.categorias.list', compact('data', 'id'));
-    }
-
-
 }
+
+
