@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use App\Models\Alumno;
+use App\Models\alumnotutor;
 use App\Models\Person;
 use App\Models\Dojo;
 use App\Models\Grado;
@@ -183,6 +184,26 @@ class AlumnoController extends Controller
             return redirect()->back()
                 ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
         }
+    }
+
+    public function tutorList($id)
+    {
+        $search = request('search');
+        $paginate = request('paginate') ?? 10;
+
+        $data = AlumnoTutor::with(['alumno', 'person', 'pariente'])
+            ->where('alumno_id', $id) 
+            ->when($search, function ($query, $search) {
+            return $query->whereHas('person', function($q) use ($search) {
+                $q->where('nombres', 'like', "%$search%");
+                // Si quieres buscar también por apellido, descomenta la siguiente línea:
+                // ->orWhere('apaterno', 'like', "%$search%");
+            });
+        })
+        ->orderBy('id', 'DESC')
+        ->paginate($paginate);
+
+        return view('alumnos.parentesco.list', compact('data', 'id'));
     }
 
 }

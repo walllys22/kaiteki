@@ -183,7 +183,7 @@
                             </div>
                         </div>
                         <div id="div-historial-list">
-                            <p class="text-center">Cargando categorías...</p>
+                            <p class="text-center">Cargando tutores...</p>
                         </div>
                     </div>
                 </div>

@@ -20,8 +20,7 @@ class Alumno extends Model
             'observacion',
             'foto',
             'deleted_at'
-        
-          ];
+        ];
 
 
 
