@@ -3,31 +3,29 @@
         <table id="dataTable" class="table table-bordered table-hover">
             <thead>
                 <tr>
-                    <th style="text-align: center">ID</th>                   
-                    <th style="text-align: center">Nombre Completo</th>
-                    <th style="text-align: center">Parentesco</th>
-                    <th style="text-align: center">Telefono</th>
-                    <th style="text-align: center">Direccion</th>                     
+                    <th style="text-align: center">ID</th>
+                    <th style="text-align: center">Nombre</th>
+                    <th style="text-align: center">Responsable</th>
+                    <th style="text-align: center">Registrado</th>
                     <th style="text-align: center">Acciones</th>
                 </tr>
-            </thead>
-            <tbody>
                 @forelse($data as $item)
                     <tr>
-                        <td>{{ $item->id }}</td>    
-                        <td>{{ $item->tutor->first_name }}</td>
-                        <td>{{ $item->pariente->nombre }}</td>
-                        <td>{{ $item->tutor->phone }}</td>
-                        <td>{{ $item->tutor->address }}</td>
-                        <td>                            
-                            <a href="#" onclick="deleteItem('{{ route('alumno.tutores.destroy', ['id' => $item->id]) }}')" title="Eliminar" data-toggle="modal" data-target="#modal-delete" class="btn btn-sm btn-danger delete">
+                        <td>{{ $item->id }}</td>
+                        <td>{{ $item->dojo->nombre}}</td>
+                        <td>{{ $item->dojo->person->first_name}}</td>    
+                        <td style="text-align: center">
+                            {{ \Carbon\Carbon::parse($item->created_at)->format('d/m/Y H:i') }}
+                        </td>
+                        <td>
+                            <a href="#" onclick="deleteItem('{{ route('torneos.dojos.destroy', ['id' => $item->id]) }}')" title="Eliminar" data-toggle="modal" data-target="#modal-delete" class="btn btn-sm btn-danger delete">
                                 <i class="voyager-trash"></i> <span class="hidden-xs hidden-sm"></span>
                             </a>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6">
+                        <td colspan="5">
                             <h5 class="text-center" style="margin-top: 50px">
                                 <img src="{{ asset('images/empty.png') }}" width="120px" alt="" style="opacity: 0.8">
                                 <br><br>

@@ -56,9 +56,6 @@
                                         @endforeach
                                     </select>
                                 </div>
-
-                        
-
                                 {{-- Fecha Inicio --}}
                                 <div class="form-group col-md-3">
                                     <label for="fechainicio">Fecha de Inicio</label>

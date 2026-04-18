@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Dojo extends Model
 {
         use HasFactory, SoftDeletes;
+        protected $dates = ['deleted_at'];
 
         protected $fillable = [
             'nombre',

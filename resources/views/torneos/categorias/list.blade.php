@@ -14,7 +14,10 @@
                     <td>{{ $item->categoria->nombre }}</td>
                     <td>{{ $item->categoria->sexo }}</td>
                     <td>{{ $item->modalidad->nombre }}</td>
-                    <td class="text-right">                   
+                    <td class="text-right">
+                        <a href="{{ route('voyager.torneos.show', ['id' => $item->id]) }}" title="Ver" class="btn btn-sm btn-warning view">
+                            <i class="voyager-eye"></i> <span class="hidden-xs hidden-sm"></span>
+                        </a>                   
                         <a href="#" onclick="deleteItem('{{ route('torneos.categories.destroy', ['id' => $item->id]) }}')" title="Eliminar" data-toggle="modal" data-target="#modal-delete" class="btn btn-sm btn-danger delete">
                                 <i class="voyager-trash"></i> <span class="hidden-xs hidden-sm"></span>
                         </a>

@@ -23,14 +23,14 @@ class alumnotutor extends Model
         return $this->belongsTo(Alumno::class, 'alumno_id');
     }
 
-    public function person()
+    public function tutor()
     {
-        return $this->belongsTo(Person::class, 'person_id');
+        return $this->belongsTo(Person::class, 'tutor_id');
     }
 
     public function pariente()
     {
-        return $this->belongsTo(Parentesco::class, 'parentescos_id');
+        return $this->belongsTo(Parentesco::class, 'pariente_id');
     }
 
 

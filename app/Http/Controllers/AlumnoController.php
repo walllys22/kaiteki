@@ -4,11 +4,12 @@ namespace App\Http\Controllers;
 
 
 use App\Models\Alumno;
-use App\Models\alumnotutor;
+use App\Models\AlumnoTutor;
 use App\Models\Person;
 use App\Models\Dojo;
 use App\Models\Grado;
 use App\Models\Horario;
+use App\Models\Parentesco;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -109,7 +110,7 @@ class AlumnoController extends Controller
         $people = Person::whereNull('deleted_at')->get();
         $horario = Horario::whereNull('deleted_at')->get();
         $grado = Grado::whereNull('deleted_at')->get();
-        $dojo = Grado::whereNull('deleted_at')->get();
+        $dojo = Dojo::whereNull('deleted_at')->get();
 
 
         return view('alumnos.edit-add', compact('dojo', 'people', 'grado', 'horario', 'dataTypeContent'));
@@ -124,8 +125,9 @@ class AlumnoController extends Controller
         $horario = Horario::whereNull('deleted_at')->get();
         $grado = Grado::whereNull('deleted_at')->get();
         $dojo = Dojo::whereNull('deleted_at')->get();
+        $parientes = Parentesco::whereNull('deleted_at')->get();
 
-        return view('alumnos.read', compact('dojo', 'people', 'grado', 'horario', 'dataTypeContent'));
+        return view('alumnos.read', compact('dojo', 'people', 'grado', 'horario', 'parientes', 'dataTypeContent'));
     }
 
     public function update(Request $request, $id)
@@ -137,12 +139,13 @@ class AlumnoController extends Controller
             $request->merge(['status' => $request->status == 'on' ? 1 : $request->status]);
         }
 
+
         $request->validate([
-            'dojo_id' => 'required|exists:dojo,id',
-            'person_id' => 'required|exists:people,id',
+            'dojo_id' => 'required',
+            'person_id' => 'required',
             'entry_date' => 'required|date',
-            'horario_id' => 'required|exists:horarios,id',
-            'grado_id' => 'required|exists:grados,id',
+            'horario_id' => 'required',
+            'grado_id' => 'required',
             'status' => 'nullable', // Permitimos nullable para manejar el checkbox desmarcado
             'observacion' => 'nullable|string|max:255',
             'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:5120'
@@ -162,6 +165,7 @@ class AlumnoController extends Controller
             $alumno->observacion = $request->observacion;
 
             if ($request->hasFile('foto')) {
+        
                 if ($alumno->foto) {
                     Storage::disk('public')->delete($alumno->foto);
                 }
@@ -170,6 +174,7 @@ class AlumnoController extends Controller
                 if (str_starts_with($file->getMimeType(), 'image/')) {
                     $alumno->foto = $this->storageController->store_image($file, 'alumnos');
                 } else {
+                    return 
                     $alumno->foto = $file->store('alumnos', 'public');
                 }
             }
@@ -186,25 +191,61 @@ class AlumnoController extends Controller
         }
     }
 
-    public function tutorList($id)
+    public function tutorList($alumno_id)
     {
         $search = request('search');
         $paginate = request('paginate') ?? 10;
 
-        $data = AlumnoTutor::with(['alumno', 'person', 'pariente'])
-            ->where('alumno_id', $id) 
+        $data = alumnotutor::with(['tutor', 'pariente'])
+            ->where('alumno_id', $alumno_id)
             ->when($search, function ($query, $search) {
-            return $query->whereHas('person', function($q) use ($search) {
-                $q->where('nombres', 'like', "%$search%");
-                // Si quieres buscar también por apellido, descomenta la siguiente línea:
-                // ->orWhere('apaterno', 'like', "%$search%");
-            });
-        })
-        ->orderBy('id', 'DESC')
-        ->paginate($paginate);
+                return $query->whereHas('person', function($q) use ($search) {
+                    $q->where('first_name', 'like', "%$search%");
+                });
+            })
+            ->orderBy('id', 'DESC')
+            ->paginate($paginate);   
 
-        return view('alumnos.parentesco.list', compact('data', 'id'));
+        return view('alumnos.Parentesco.list', compact('data', 'alumno_id'));
     }
+
+    public function storeAlumnoTutor(Request $request)
+    {
+     //   $this->custom_authorize('add_alumnos');
+
+        try {
+            $data = $request->all();
+
+            alumnotutor::create($data);
+
+            return redirect()->route('voyager.alumnos.show', ['id' => $request->alumno_id])
+                ->with(['message' => 'Alumno creado exitosamente', 'alert-type' => 'success']);
+        } catch (\Throwable $th) {
+            return redirect()->back()
+                ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
+        }
+    }
+
+
+    public function tutorDestroy($id)
+    {
+        $alumnoTutor = alumnotutor::findOrFail($id);
+   
+        try {
+            
+            $alumnoTutor->delete();
+
+            return redirect()->route('voyager.alumnos.show', ['id' => $alumnoTutor->alumno_id])
+                ->with(['message' => 'Tutor eliminado del alumno.', 'alert-type' => 'success']);
+            
+        } catch (\Throwable $th) {
+            return redirect()->back()
+                ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
+        }
+    }
+
+
+
 
 }
 

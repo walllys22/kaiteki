@@ -47,13 +47,16 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     Route::get('alumnos/create', [AlumnoController::class, 'create'])->name('voyager.alumnos.create');
     Route::post('alumnos/store', [AlumnoController::class, 'store'])->name('voyager.alumnos.store');
     Route::get('alumnos/{id}/edit', [AlumnoController::class, 'edit'])->name('voyager.alumnos.edit');
+    Route::put('alumnos/{id}', [AlumnoController::class, 'update'])->name('voyager.alumnos.update');
     Route::get('alumnos/{id}', [AlumnoController::class, 'show'])->name('voyager.alumnos.show');
 
-    // Rutas Alumnos Historial
+    //Rutas Alumnos Historial
     Route::get('alumnos/{id}/historial/list', [AlumnoController::class, 'historialList'])->name('alumnos.historial.list');
 
-   // Rutas Alumnos Tutores
-    Route::get('alumnos/{id}/Parentesco/list', [AlumnoController::class, 'historialList'])->name('alumnos.tutores.list');
+    // Rutas Alumnos Tutores                                            metodo del controlador
+    Route::get('alumnos/{id}/parentesco/list', [AlumnoController::class, 'tutorList']);
+    Route::post('alumnos/tutores/store', [AlumnoController::class, 'storeAlumnoTutor'])->name('alumno.tutores.store');
+    Route::delete('alumnos/tutores/{id}/delete', [AlumnoController::class, 'tutorDestroy'])->name('alumno.tutores.destroy');
 
 
 
@@ -70,6 +73,11 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     Route::get('torneos/{id}/categories/list', [TorneoController::class, 'categoryList'])->name('torneos.categories.list');
     Route::post('torneos/categories/store', [TorneoController::class, 'categoryStore'])->name('torneos.categories.store');
     Route::delete('torneos/categories/{id}/delete', [TorneoController::class, 'categoryDestroy'])->name('torneos.categories.destroy');
+
+    // rutas del Toreno Dojos
+    Route::get('torneos/{id}/dojos/list', [TorneoController::class, 'listDojos']);
+    Route::post('torneos/dojos/store', [TorneoController::class, 'torneosDojosStore'])->name('torneos.torneosDojosStore.store'); 
+    Route::delete('torneos/dojos/{id}/delete', [TorneoController::class, 'dojoDestroy'])->name('torneos.dojos.destroy');   
 
     Route::get('people', [PersonController::class, 'index'])->name('voyager.people.index');
     Route::get('people/ajax/list', [PersonController::class, 'list']);

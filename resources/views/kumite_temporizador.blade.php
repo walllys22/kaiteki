@@ -46,19 +46,21 @@
                 <button id="btn-ao-hc" class="btn-falta" onclick="togglePenalty('ao', 4)">HC</button>
                 <button id="btn-ao-c" class="btn-falta" onclick="togglePenalty('ao', 5)">C</button>
             </div>
-            <br>
-            <span style="color: white; font-weight: bold; display: block; text-align: center; width: 100%;">
-                PROXIMO COMBATE
-            </span>
-            <span style="color: white; font-weight: bold; display: block; text-align: left; width: 100%;">
-                Competidor: Walter Landivar Limpias
-            </span>
-            <span style="color: white; font-weight: bold; display: block; text-align: center; width: 100%;">
-                L.J.P. ZABALA DOJO
-            </span>
+            <div class="fila">
+                <br>
+                <span style="color: white; font-weight: bold; display: block; text-align: center; width: 100%;">
+                    PROXIMO COMBATE
+                </span>
+                <div class="form-group w-100">
+                    <input type="text" 
+                        id="TxtRojoProximo"
+                        style="color: white; font-weight: bold; display: block; text-align: center; width: 100%;"
+                        class="form-control input-bajo-relieve w-100" 
+                        placeholder="Ingresa el valor...">
+                </div>
+            </div>
         </div>
     </div>
-
     <div class="bg-white p-2 rounded-3xl shadow-2xl text-center w-full max-w-md">
         <!-- Pantalla del Temporizador -->
         <div id="timer-display" class="font-mono mb-10 bg-gray-100 text-red-600 py-12 w-full max-w-5xl mx-auto rounded-3xl shadow-inner border-8 border-gray-200 text-center" 
@@ -94,8 +96,11 @@
                 <button onclick="window.history.back()" class="btn-personalizado">Cerrar</button>
             </div>
         </div>
-        <br>
-        <br>
+        <div class="mb-3">
+            <button type="button" onclick="trasladarDatosRojo()" class="btn-personalizado">
+                Nuevo Combate
+            </button>
+        </div>
         <br>
         <br>
     </div>
@@ -895,6 +900,31 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         transition: all 0.2s ease-in-out;
     }
+
+    .input-bajo-relieve {
+        background-color: #CCEEFF; /* Celeste */
+        color: #000000;            /* Letras negras */
+        font-weight: bold;         /* Tipo Bold */
+        border: none;
+        padding: 10px 10px;
+        border-radius: 8px;
+        
+        /* Efecto Bajo Relieve (Sombra interna) */
+        box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.2), 
+                    inset -2px -2px 5px rgba(255, 255, 255, 0.5);
+        
+        outline: none;
+        transition: all 0.3s ease;
+    }
+
+    /* Efecto cuando el usuario hace clic para escribir */
+    .input-bajo-relieve:focus {
+        box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.3), 
+                    0 0 5px rgba(0, 123, 255, 0.2);
+        background-color: #7cbcfc;
+    }
+
+
 </style>
 
 
@@ -1407,3 +1437,4 @@
     }
 
 </script>
+

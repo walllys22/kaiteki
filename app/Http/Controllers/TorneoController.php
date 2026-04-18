@@ -9,6 +9,8 @@ use App\Models\Ciudad;
 use App\Models\Categoria;
 use App\Models\Modalida;
 use App\Models\TorneoCategoria;
+use App\Models\TorneoDojo;
+use App\Models\Dojo;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 
@@ -151,8 +153,9 @@ class TorneoController extends Controller
         $dataTypeContent = Torneo::with(['ciudad', 'person'])->findOrFail($id);
         $categorias = Categoria::whereNull('deleted_at')->orderBy('nombre')->get();
         $modalidades = Modalida::whereNull('deleted_at')->orderBy('nombre')->get();
+        $dojos = Dojo::whereNull('deleted_at')->orderBy('nombre')->get();
 
-        return view('torneos.read', compact('dataTypeContent', 'categorias', 'modalidades'));
+        return view('torneos.read', compact('dataTypeContent', 'categorias', 'dojos', 'modalidades'));
     }
 
     public function categoryList($id)
@@ -215,4 +218,50 @@ class TorneoController extends Controller
                 ->with(['message' => 'Error al intentar eliminar: ' . $th->getMessage(), 'alert-type' => 'error']);
         }
     }
+
+    public function listDojos($campeonato_id)
+    {   
+        $search = request('search');
+        $paginate = request('paginate') ?? 10;
+                                // relCIONES DEL MODELO
+        $data = TorneoDojo::with(['torneo', 'dojo.person'])
+                        //campo de campeonato
+            ->where('torneo_id', $campeonato_id)
+        
+            ->orderBy('id', 'DESC')
+            ->paginate($paginate); 
+
+        return view('torneos.dojos.list', compact('data'));
+    }
+
+
+    public function torneosDojosStore(Request $request)
+    {
+        TorneoDojo::create([
+                'torneo_id' => $request->torneo_id,
+                'dojo_id' => $request->dojo_id
+            ]);
+        return redirect()->route('voyager.torneos.show', ['id' => $request->torneo_id])
+                ->with(['message' => 'El Dojo fue agregado al torneo.', 'alert-type' => 'success']);
+
+    }
+
+    public function dojoDestroy($id)
+    {
+        $torneoDojo = TorneoDojo::findOrFail($id);
+   
+        try {
+            
+            $torneoDojo->delete();
+
+            return redirect()->route('voyager.torneos.show', ['id' => $torneoDojo->dojo_id])
+                ->with(['message' => 'Dojo eliminado del Torneo.', 'alert-type' => 'success']);
+            
+        } catch (\Throwable $th) {
+            return redirect()->back()
+                ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
+        }
+    }
+
+
 }
