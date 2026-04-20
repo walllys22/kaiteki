@@ -31,9 +31,9 @@
                 <button id="btn-senshu-azul" class="btn-senshu btn-personalizadosenshuazul" onclick="toggleSenshu('ao')">Senshu</button>
             </div> 
             <div class="fila">
-                <span id="mirrorSpanYukoAzul" class="text-primary" style="color:black;">0</span>
-                <span id="mirrorSpanWazariAzul" class="text-primary" style="color:black;">0</span>
-                <span id="mirrorSpanIpponAzul" class="text-primary" style="color:black;">0</span>
+                <span id="mirrorSpanYukoAzul" class="text-primary" style="color:black; margin-left: 40px;">0</span>
+                <span id="mirrorSpanWazariAzul" class="text-primary" style="color:black; margin-left: 80px;">0</span>
+                <span id="mirrorSpanIpponAzul" class="text-primary" style="color:black; margin-left: 80px;">0</span>
             </div> 
             <div class="fila">
                 <button class="btn-personalizadoAzul resta" onclick="updateScore('ao', -1)">- YUKO</button>
@@ -127,7 +127,7 @@
                 EN COMBATE
             </span>
             <span id="mirrorSpanRojo" class="fw-bold text-primary" style="text-align: Center;">---</span>
-            <div id="puntosRojo" class="puntos-gigantes">0</div>
+            <div id="puntosRojo" style="text-align: Center;" class="puntos-gigantes">0</div>
         </div>
         <div class="panel-control-rojo">
             <div class="fila">
@@ -137,9 +137,9 @@
                 <button id="btn-senshu-rojo" class="btn-senshu btn-personalizadosenshurojo" onclick="toggleSenshu('aka')">Senshu</button>
             </div>
             <div class="fila">
-                <span id="mirrorSpanYukoRojo" class="text-primary" style="color:black;">0</span>
-                <span id="mirrorSpanWazariRojo" class="text-primary" style="color:black;">0</span>
-                <span id="mirrorSpanIpponRojo" class="text-primary" style="color:black;">0</span>
+                <span id="mirrorSpanYukoRojo" class="text-primary" style="color:black; margin-left: 40px;">0</span>
+                <span id="mirrorSpanWazariRojo" class="text-primary" style="color:black; margin-left: 80px;">0</span>
+                <span id="mirrorSpanIpponRojo" class="text-primary" style="color:black; margin-left: 80px;">0</span>
             </div> 
             <div class="fila">
                 <button class="btn-personalizadoRojo resta" onclick="updateScore('aka', -1)">- YUKO</button>
