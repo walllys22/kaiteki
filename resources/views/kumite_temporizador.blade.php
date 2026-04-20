@@ -307,6 +307,8 @@
                     mostrarModalGanador("GANADOR COMPETIDOR AZUL", nombreAo, "#004a99", "white");
                 }, 5000); // Esperar 5 segundos
             } else if (ptsAka >= ptsAo + 8) {
+                pauseTimer(); // Detener el tiempo inmediatamente
+                setTimeout(() => {
                     mostrarModalGanador("GANADOR COMPETIDOR ROJO", nombreAka, "#cc0000", "white");
                 }, 5000); // Esperar 5 segundos
             }
@@ -554,8 +556,8 @@
                 btnAka.style.backgroundColor = 'transparent';
             } else {
                 btnAka.style.backgroundColor = 'yellow';
-                // Fondo azul y letras blancas por requerimiento específico
-                mostrarModalGanador("GANADOR COMPETIDOR ROJO", nombreAka, "#004a99", "white");
+                // Fondo rojo y letras blancas
+                mostrarModalGanador("GANADOR COMPETIDOR ROJO", nombreAka, "#cc0000", "white");
             }
         }
 
