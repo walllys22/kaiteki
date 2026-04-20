@@ -15,12 +15,13 @@
 
     <!-- MARCADOR AZUL -->
     <div class="marcador-ao">
+        <div id="contenedor-s-azul"></div>
         <div class="pantalla-puntos">
-            <span style="color: white; font-weight: bold; display: block; text-align: Center; width: 100%;">
+            <span style="color: white;  display: block; text-align: Center; width: 100%;">
                 EN COMBATE
             </span>
-            <span id="mirrorSpanAzul" class="fw-bold text-primary">---</span></p>
-            <div id="puntosAzul" class="puntos-gigantes">0</div>
+            <span id="mirrorSpanAzul" class="fw-bold text-primary" style="text-align: Center;">---</span>
+            <div id="puntosAzul" style="text-align: Center;" class="puntos-gigantes">0</div>
         </div>
         <div class="panel-control">
             <div class="fila">
@@ -28,8 +29,12 @@
                 <button class="btn-personalizadoAzul suma" onclick="updateScore('ao', 2)">+ WAZARI</button>
                 <button class="btn-personalizadoAzul suma" onclick="updateScore('ao', 3)">+ IPPON</button>
                 <button id="btn-senshu-azul" class="btn-senshu btn-personalizadosenshuazul" onclick="toggleSenshu('ao')">Senshu</button>
-            </div>
-
+            </div> 
+            <div class="fila">
+                <span id="mirrorSpanYukoAzul" class="text-primary" style="color:black;">0</span>
+                <span id="mirrorSpanWazariAzul" class="text-primary" style="color:black;">0</span>
+                <span id="mirrorSpanIpponAzul" class="text-primary" style="color:black;">0</span>
+            </div> 
             <div class="fila">
                 <button class="btn-personalizadoAzul resta" onclick="updateScore('ao', -1)">- YUKO</button>
                 <button class="btn-personalizadoAzul resta" onclick="updateScore('ao', -2)">- WAZARI</button>
@@ -47,7 +52,6 @@
                 <button id="btn-ao-c" class="btn-falta" onclick="togglePenalty('ao', 5)">C</button>
             </div>
         </div>
-        <br>
         <div style="display: block; width: 100%; clear: both; margin-top: 2rem;">
             <label for="TxtAzulProximo" class="form-label fw-bold text-secondary">
                 Próximo Combate
@@ -60,9 +64,7 @@
                     name="TxtAzulProximo"
                     class="form-control form-control-lg text-black" 
                     placeholder="Ingrese el próximo combate..."
-                    style="width: 100% !important; min-width: 100% !important; display: block !important; color: #000000 !important; box-sizing: border-box !important;"
-                >
-                
+                    style="width: 100% !important; min-width: 100% !important; display: block !important; color: #000000 !important; box-sizing: border-box !important;">
                 @error('TxtAzulProximo')
                     <div class="invalid-feedback d-block">
                         {{ $message }}
@@ -71,11 +73,6 @@
             </div>
         </div>
     </div>
-
-
-
-
-
     </div>
 
     <div class="bg-white p-2 rounded-3xl shadow-2xl text-center w-full max-w-md">
@@ -124,11 +121,12 @@
 
     <!-- MARCADOR ROJO -->
     <div class="marcador-aka">
+        <div id="contenedor-s-rojo"></div>
         <div class="pantalla-puntos">
-            <span style="color: white; font-weight: bold; display: block; text-align: Center; width: 100%;">
+            <span style="color: white;  display: block; text-align: Center; width: 100%;">
                 EN COMBATE
             </span>
-            <span id="mirrorSpanRojo" class="fw-bold text-primary">---</span></p>
+            <span id="mirrorSpanRojo" class="fw-bold text-primary" style="text-align: Center;">---</span>
             <div id="puntosRojo" class="puntos-gigantes">0</div>
         </div>
         <div class="panel-control-rojo">
@@ -138,6 +136,11 @@
                 <button class="btn-personalizadoRojo suma" onclick="updateScore('aka', 3)">+ IPPON</button>
                 <button id="btn-senshu-rojo" class="btn-senshu btn-personalizadosenshurojo" onclick="toggleSenshu('aka')">Senshu</button>
             </div>
+            <div class="fila">
+                <span id="mirrorSpanYukoRojo" class="text-primary" style="color:black;">0</span>
+                <span id="mirrorSpanWazariRojo" class="text-primary" style="color:black;">0</span>
+                <span id="mirrorSpanIpponRojo" class="text-primary" style="color:black;">0</span>
+            </div> 
             <div class="fila">
                 <button class="btn-personalizadoRojo resta" onclick="updateScore('aka', -1)">- YUKO</button>
                 <button class="btn-personalizadoRojo resta" onclick="updateScore('aka', -2)">- WAZARI</button>
@@ -152,7 +155,6 @@
                 <button id="btn-aka-c" class="btn-falta" onclick="togglePenalty('aka', 5)">C</button>
             </div>
         </div>
-        <br>
         <div style="display: block; width: 100%; clear: both; margin-top: 2rem;">
             <label for="TxtRojoProximo" class="form-label fw-bold text-secondary">
                 Próximo Combate
@@ -176,7 +178,6 @@
             </div>
         </div>
     </div> 
-</div>
 
 
 <!-- Modal para aviso de Senshu -->
@@ -291,6 +292,18 @@
             if (scores[side] < 0) scores[side] = 0;
             const displayId = side === 'ao' ? 'puntosAzul' : 'puntosRojo';
             $(`#${displayId}`).text(scores[side]);
+
+            // Actualizar contadores individuales (Yuko, Wazari, Ippon)
+            const absVal = Math.abs(val);
+            const technique = absVal === 1 ? 'Yuko' : (absVal === 2 ? 'Wazari' : 'Ippon');
+            const sideName = side === 'ao' ? 'Azul' : 'Rojo';
+            const mirrorId = `#mirrorSpan${technique}${sideName}`;
+            
+            let currentMirrorVal = parseInt($(mirrorId).text()) || 0;
+            // Incrementa o decrementa de 1 en 1 según el signo de val
+            currentMirrorVal += (val > 0 ? 1 : -1);
+            if (currentMirrorVal < 0) currentMirrorVal = 0;
+            $(mirrorId).text(currentMirrorVal);
             
             // Animación
             $(`#${displayId}`).css('transform', 'scale(1.2)');
@@ -842,7 +855,6 @@
         filter: brightness(1.2);
     }
 
-
     .display-segundos {
         background-color: #374151; /* Gris oscuro elegante (tipo pizarra) */
         color: #ffffff;            /* Letras blancas para alto contraste */
@@ -872,7 +884,6 @@
     .senshu-activo {
         background-color: #ffff00 !important;
     }
-
 
     .texto-negro-bold {
         /* Color Negro Puro (Hexadecimal absoluto) */
@@ -1530,8 +1541,26 @@
         // 2. Resetear marcadores de puntos a 0
         if (puntosAzul) puntosAzul.textContent = "0";
         if (puntosRojo) puntosRojo.textContent = "0";
+        scores = { ao: 0, aka: 0 };
 
-        // 3. Limpiar inputs y devolver foco
+        // Resetear contadores de técnicas individuales
+        const mirrorIds = ['YukoAzul', 'WazariAzul', 'IpponAzul', 'YukoRojo', 'WazariRojo', 'IpponRojo'];
+        mirrorIds.forEach(id => $(`#mirrorSpan${id}`).text('0'));
+
+        // 3. Resetear faltas (volver a transparente y limpiar estado)
+        penalties = {
+            ao: [false, false, false, false, false],
+            aka: [false, false, false, false, false]
+        };
+        renderPenalties('ao');
+        renderPenalties('aka');
+
+        // 4. Quitar Senshu (ventaja)
+        activeSenshu = null;
+        $('#btn-senshu-azul, #btn-senshu-rojo').css('background-color', 'transparent');
+        $('#contenedor-s-azul, #contenedor-s-rojo').empty();
+
+        // 5. Limpiar inputs y devolver foco
         inputAzul.value = "";
         inputRojo.value = "";
         inputAzul.focus();
