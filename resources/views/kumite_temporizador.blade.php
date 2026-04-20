@@ -191,8 +191,8 @@
 <!-- Modal para el Ganador -->
 <div id="modal-ganador" class="overlay-ganador">
     <div id="contenedor-ganador" class="mensaje-contenedor">
-        <p id="texto-ganador-titulo" class="texto-arriba"></p>
-        <p id="texto-ganador-nombre" class="texto-debajo"></p>
+        <h3 id="texto-ganador-titulo" class="texto-arriba"></h3>
+        <h3 id="texto-ganador-nombre" class="texto-debajo"></h3>
         <button onclick="cerrarModalGanador()" class="btn-cerrar-anuncio">Cerrar</button>
     </div>
 </div>
@@ -294,6 +294,36 @@
             updateTimerDisplay();
         }
 
+        // Verifica si existe una diferencia de 8 puntos o más
+        function checkPointDifference() {
+            const ptsAo = scores.ao;
+            const ptsAka = scores.aka;
+            const nombreAo = $('#mirrorSpanAzul').text();
+            const nombreAka = $('#mirrorSpanRojo').text();
+
+            if (ptsAo >= ptsAka + 8) {
+                pauseTimer(); // Detener el tiempo inmediatamente
+                setTimeout(() => {
+                    mostrarModalGanador("GANADOR COMPETIDOR AZUL", nombreAo, "#004a99", "white");
+                }, 5000); // Esperar 5 segundos
+            } else if (ptsAka >= ptsAo + 8) {
+                    mostrarModalGanador("GANADOR COMPETIDOR ROJO", nombreAka, "#cc0000", "white");
+                }, 5000); // Esperar 5 segundos
+            }
+        }
+
+        // Función centralizada para mostrar el ganador y pausar el tiempo
+        function mostrarModalGanador(titulo, nombre, fondo, texto) {
+            $('#texto-ganador-titulo').text(titulo).css('color', texto);
+            $('#texto-ganador-nombre').text(nombre).css('color', texto);
+            $('#contenedor-ganador').css({
+                'background-color': fondo,
+                'border-color': texto === 'white' ? 'white' : 'black'
+            });
+            $('#modal-ganador').css('display', 'flex');
+            pauseTimer(); // El combate termina automáticamente al haber ganador
+        }
+
         // --- PUNTUACIÓN ---
         function updateScore(side, val) {
             scores[side] += val;
@@ -316,6 +346,9 @@
             // Animación
             $(`#${displayId}`).css('transform', 'scale(1.2)');
             setTimeout(() => $(`#${displayId}`).css('transform', 'scale(1)'), 100);
+
+            // Verificar victoria automática por diferencia de 8 puntos
+            checkPointDifference();
         }
 
         // --- SENSHU (VENTAJA) ---
@@ -400,58 +433,47 @@
             const nombreAo = $('#mirrorSpanAzul').text();
             const nombreAka = $('#mirrorSpanRojo').text();
 
-            // Helper para mostrar el modal
-            const mostrar = (titulo, nombre, fondo, texto) => {
-                $('#texto-ganador-titulo').text(titulo).css('color', texto);
-                $('#texto-ganador-nombre').text(nombre).css('color', texto);
-                $('#contenedor-ganador').css({
-                    'background-color': fondo,
-                    'border-color': texto === 'white' ? 'white' : 'black'
-                });
-                $('#modal-ganador').css('display', 'flex');
-            };
-
             // 1. Comparación por Puntos
             if (ptsAo > ptsAka) {
-                mostrar("GANADOR COMPETIDOR AZUL", nombreAo, "#004a99", "white");
+                mostrarModalGanador("GANADOR COMPETIDOR AZUL", nombreAo, "#004a99", "white");
             } else if (ptsAka > ptsAo) {
-                mostrar("GANADOR COMPETIDOR ROJO", nombreAka, "#cc0000", "white");
+                mostrarModalGanador("GANADOR COMPETIDOR ROJO", nombreAka, "#cc0000", "white");
             } else {
                 // 2. Empate en puntos -> Verificar Senshu
                 if (activeSenshu === 'ao') {
-                    mostrar("GANADOR COMPETIDOR AZUL", nombreAo, "#004a99", "white");
+                    mostrarModalGanador("GANADOR COMPETIDOR AZUL", nombreAo, "#004a99", "white");
                 } else if (activeSenshu === 'aka') {
-                    mostrar("GANADOR COMPETIDOR ROJO", nombreAka, "#cc0000", "white");
+                    mostrarModalGanador("GANADOR COMPETIDOR ROJO", nombreAka, "#cc0000", "white");
                 } else {
                     // 3. No hay Senshu -> Verificar Ippon
                     const ipponAo = parseInt($('#mirrorSpanIpponAzul').text()) || 0;
                     const ipponAka = parseInt($('#mirrorSpanIpponRojo').text()) || 0;
 
                     if (ipponAo > ipponAka) {
-                        mostrar("GANADOR COMPETIDOR AZUL", nombreAo, "#004a99", "white");
+                        mostrarModalGanador("GANADOR COMPETIDOR AZUL", nombreAo, "#004a99", "white");
                     } else if (ipponAka > ipponAo) {
-                        mostrar("GANADOR COMPETIDOR ROJO", nombreAka, "#cc0000", "white");
+                        mostrarModalGanador("GANADOR COMPETIDOR ROJO", nombreAka, "#cc0000", "white");
                     } else {
                         // 4. Ippon igual -> Verificar Wazari
                         const wazariAo = parseInt($('#mirrorSpanWazariAzul').text()) || 0;
                         const wazariAka = parseInt($('#mirrorSpanWazariRojo').text()) || 0;
 
                         if (wazariAo > wazariAka) {
-                            mostrar("GANADOR COMPETIDOR AZUL", nombreAo, "#004a99", "white");
+                            mostrarModalGanador("GANADOR COMPETIDOR AZUL", nombreAo, "#004a99", "white");
                         } else if (wazariAka > wazariAo) {
-                            mostrar("GANADOR COMPETIDOR ROJO", nombreAka, "#cc0000", "white");
+                            mostrarModalGanador("GANADOR COMPETIDOR ROJO", nombreAka, "#cc0000", "white");
                         } else {
                             // 5. Wazari igual -> Verificar Yuko
                             const yukoAo = parseInt($('#mirrorSpanYukoAzul').text()) || 0;
                             const yukoAka = parseInt($('#mirrorSpanYukoRojo').text()) || 0;
 
                             if (yukoAo > yukoAka) {
-                                mostrar("GANADOR COMPETIDOR AZUL", nombreAo, "#004a99", "white");
+                                mostrarModalGanador("GANADOR COMPETIDOR AZUL", nombreAo, "#004a99", "white");
                             } else if (yukoAka > yukoAo) {
-                                mostrar("GANADOR COMPETIDOR ROJO", nombreAka, "#cc0000", "white");
+                                mostrarModalGanador("GANADOR COMPETIDOR ROJO", nombreAka, "#cc0000", "white");
                             } else {
                                 // 6. Todo igual -> Hantei
-                                mostrar("DECISIÓN DE HANTEI", "DE LOS JUECES", "#ffffcc", "black");
+                                mostrarModalGanador("DECISIÓN DE HANTEI", "DE LOS JUECES", "#ffffcc", "black");
                             }
                         }
                     }
@@ -492,6 +514,48 @@
                     btnGanador.disabled = true;
                     btnGanador.style.opacity = "0.5";
                 }
+            }
+        }
+
+        function logicahanteiazul() {
+            const btnAo = document.getElementById('btn-hantei-azul');
+            const btnAka = document.getElementById('btn-hantei-rojo');
+            const nombreAo = $('#mirrorSpanAzul').text();
+
+            // Verificar si el otro ya es ganador
+            if (btnAka.style.backgroundColor === 'yellow' || window.getComputedStyle(btnAka).backgroundColor === 'rgb(255, 255, 0)') {
+                alert("SOLO PUEDE HABER UN GANADOR");
+                return;
+            }
+
+            // Toggle: si ya está amarillo, pasa a transparente. Si no, a amarillo y muestra mensaje.
+            if (btnAo.style.backgroundColor === 'yellow' || window.getComputedStyle(btnAo).backgroundColor === 'rgb(255, 255, 0)') {
+                btnAo.style.backgroundColor = 'transparent';
+            } else {
+                btnAo.style.backgroundColor = 'yellow';
+                // Fondo azul y letras blancas como se solicitó
+                mostrarModalGanador("GANADOR COMPETIDOR AZUL", nombreAo, "#004a99", "white");
+            }
+        }
+
+        function logicahanteirojo() {
+            const btnAo = document.getElementById('btn-hantei-azul');
+            const btnAka = document.getElementById('btn-hantei-rojo');
+            const nombreAka = $('#mirrorSpanRojo').text();
+
+            // Verificar si el otro ya es ganador
+            if (btnAo.style.backgroundColor === 'yellow' || window.getComputedStyle(btnAo).backgroundColor === 'rgb(255, 255, 0)') {
+                alert("SOLO PUEDE HABER UN GANADOR");
+                return;
+            }
+
+            // Toggle: si ya está amarillo, pasa a transparente. Si no, a amarillo y muestra mensaje.
+            if (btnAka.style.backgroundColor === 'yellow' || window.getComputedStyle(btnAka).backgroundColor === 'rgb(255, 255, 0)') {
+                btnAka.style.backgroundColor = 'transparent';
+            } else {
+                btnAka.style.backgroundColor = 'yellow';
+                // Fondo azul y letras blancas por requerimiento específico
+                mostrarModalGanador("GANADOR COMPETIDOR ROJO", nombreAka, "#004a99", "white");
             }
         }
 
