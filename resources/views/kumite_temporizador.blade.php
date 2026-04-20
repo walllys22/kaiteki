@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kumite Temporizador</title>
-    <!-- CDN para Tailwind y Alpine.js -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
@@ -186,6 +185,15 @@
         <p class="texto-arriba" style="color: #000; font-size: 50px;">AVISO</p>
         <p class="texto-debajo">EL OTRO COMPETIDOR YA TIENE SENSHU</p>
         <button onclick="cerrarModalSenshu()" class="btn-cerrar-anuncio" style="background-color: #ffff00; color: black; border: 2px solid black;">Cerrar</button>
+    </div>
+</div>
+
+<!-- Modal para el Ganador -->
+<div id="modal-ganador" class="overlay-ganador">
+    <div id="contenedor-ganador" class="mensaje-contenedor">
+        <p id="texto-ganador-titulo" class="texto-arriba"></p>
+        <p id="texto-ganador-nombre" class="texto-debajo"></p>
+        <button onclick="cerrarModalGanador()" class="btn-cerrar-anuncio">Cerrar</button>
     </div>
 </div>
 
@@ -385,14 +393,167 @@
             });
         }
 
+        // --- LÓGICA DE GANADOR ---
+        function declararGanador() {
+            const ptsAo = parseInt($('#puntosAzul').text()) || 0;
+            const ptsAka = parseInt($('#puntosRojo').text()) || 0;
+            const nombreAo = $('#mirrorSpanAzul').text();
+            const nombreAka = $('#mirrorSpanRojo').text();
+
+            // Helper para mostrar el modal
+            const mostrar = (titulo, nombre, fondo, texto) => {
+                $('#texto-ganador-titulo').text(titulo).css('color', texto);
+                $('#texto-ganador-nombre').text(nombre).css('color', texto);
+                $('#contenedor-ganador').css({
+                    'background-color': fondo,
+                    'border-color': texto === 'white' ? 'white' : 'black'
+                });
+                $('#modal-ganador').css('display', 'flex');
+            };
+
+            // 1. Comparación por Puntos
+            if (ptsAo > ptsAka) {
+                mostrar("GANADOR COMPETIDOR AZUL", nombreAo, "#004a99", "white");
+            } else if (ptsAka > ptsAo) {
+                mostrar("GANADOR COMPETIDOR ROJO", nombreAka, "#cc0000", "white");
+            } else {
+                // 2. Empate en puntos -> Verificar Senshu
+                if (activeSenshu === 'ao') {
+                    mostrar("GANADOR COMPETIDOR AZUL", nombreAo, "#004a99", "white");
+                } else if (activeSenshu === 'aka') {
+                    mostrar("GANADOR COMPETIDOR ROJO", nombreAka, "#cc0000", "white");
+                } else {
+                    // 3. No hay Senshu -> Verificar Ippon
+                    const ipponAo = parseInt($('#mirrorSpanIpponAzul').text()) || 0;
+                    const ipponAka = parseInt($('#mirrorSpanIpponRojo').text()) || 0;
+
+                    if (ipponAo > ipponAka) {
+                        mostrar("GANADOR COMPETIDOR AZUL", nombreAo, "#004a99", "white");
+                    } else if (ipponAka > ipponAo) {
+                        mostrar("GANADOR COMPETIDOR ROJO", nombreAka, "#cc0000", "white");
+                    } else {
+                        // 4. Ippon igual -> Verificar Wazari
+                        const wazariAo = parseInt($('#mirrorSpanWazariAzul').text()) || 0;
+                        const wazariAka = parseInt($('#mirrorSpanWazariRojo').text()) || 0;
+
+                        if (wazariAo > wazariAka) {
+                            mostrar("GANADOR COMPETIDOR AZUL", nombreAo, "#004a99", "white");
+                        } else if (wazariAka > wazariAo) {
+                            mostrar("GANADOR COMPETIDOR ROJO", nombreAka, "#cc0000", "white");
+                        } else {
+                            // 5. Wazari igual -> Verificar Yuko
+                            const yukoAo = parseInt($('#mirrorSpanYukoAzul').text()) || 0;
+                            const yukoAka = parseInt($('#mirrorSpanYukoRojo').text()) || 0;
+
+                            if (yukoAo > yukoAka) {
+                                mostrar("GANADOR COMPETIDOR AZUL", nombreAo, "#004a99", "white");
+                            } else if (yukoAka > yukoAo) {
+                                mostrar("GANADOR COMPETIDOR ROJO", nombreAka, "#cc0000", "white");
+                            } else {
+                                // 6. Todo igual -> Hantei
+                                mostrar("DECISIÓN DE HANTEI", "DE LOS JUECES", "#ffffcc", "black");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function cerrarModalGanador() {
+            $('#modal-ganador').css('display', 'none');
+        }
+
+        function controlarEstadoBoton() {
+            const btnNuevo = document.getElementById('btnNuevoCombate');
+            const btnGanador = document.getElementById('btnMuestraGanador');
+            const timerDisplay = document.getElementById('timer-display');
+
+            if (!btnNuevo || !timerDisplay) return;
+
+            if (timerDisplay.textContent.trim() === "00:00") {
+                // Habilitar Nuevo Combate
+                btnNuevo.disabled = false;
+                btnNuevo.style.background = "#16a34a";
+                btnNuevo.style.color = "white";
+                
+                // Habilitar botón Ganador
+                if (btnGanador) {
+                    btnGanador.disabled = false;
+                    btnGanador.style.opacity = "1";
+                }
+            } else {
+                // Deshabilitar Nuevo Combate
+                btnNuevo.disabled = true;
+                btnNuevo.style.background = "#dc2626";
+                btnNuevo.style.color = "white";
+
+                // Deshabilitar botón Ganador
+                if (btnGanador) {
+                    btnGanador.disabled = true;
+                    btnGanador.style.opacity = "0.5";
+                }
+            }
+        }
+
+        function trasladarDatos() {
+            const timerDisplay = document.getElementById('timer-display');
+            const inputAzul = document.getElementById('TxtAzulProximo');
+            const spanAzul = document.getElementById('mirrorSpanAzul');
+            const inputRojo = document.getElementById('TxtRojoProximo');
+            const spanRojo = document.getElementById('mirrorSpanRojo');
+            const puntosAzul = document.getElementById('puntosAzul');
+            const puntosRojo = document.getElementById('puntosRojo');
+
+            if (!inputAzul || !inputRojo || !spanAzul || !spanRojo) {
+                console.error("Error: IDs no encontrados.");
+                return;
+            }
+
+            const nombreAzul = inputAzul.value.trim();
+            const nombreRojo = inputRojo.value.trim();
+
+            if (nombreAzul === "" || nombreRojo === "") {
+                alert("Por favor, ingresa los nombres de ambos competidores.");
+                return;
+            }
+
+            // 1. Trasladar nombres
+            spanAzul.textContent = nombreAzul;
+            spanRojo.textContent = nombreRojo;
+
+            // 2. Resetear marcadores
+            if (puntosAzul) puntosAzul.textContent = "0";
+            if (puntosRojo) puntosRojo.textContent = "0";
+            scores = { ao: 0, aka: 0 };
+
+            // Resetear contadores de técnicas individuales
+            const mirrorIds = ['YukoAzul', 'WazariAzul', 'IpponAzul', 'YukoRojo', 'WazariRojo', 'IpponRojo'];
+            mirrorIds.forEach(id => $(`#mirrorSpan${id}`).text('0'));
+
+            // 3. Resetear faltas
+            penalties = {
+                ao: [false, false, false, false, false],
+                aka: [false, false, false, false, false]
+            };
+            renderPenalties('ao');
+            renderPenalties('aka');
+
+            // 4. Quitar Senshu
+            activeSenshu = null;
+            $('#btn-senshu-azul, #btn-senshu-rojo').css('background-color', 'transparent');
+            $('#contenedor-s-azul, #contenedor-s-rojo').empty();
+
+            inputAzul.value = "";
+            inputRojo.value = "";
+            inputAzul.focus();
+        }
+
         $(document).ready(() => {
             updateTimerDisplay();
         });
     </script>
 </body>
 </html>
-
-<!--********************* Estilos ***********************-->
 <style>
     .hidden {
         display: none !important;
@@ -1573,27 +1734,33 @@
     // Esta función debe llamarse cada vez que el tiempo cambie
     function controlarEstadoBoton() {
         const btnNuevo = document.getElementById('btnNuevoCombate');
+        const btnGanador = document.getElementById('btnMuestraGanador');
         const timerDisplay = document.getElementById('timer-display');
 
         if (!btnNuevo || !timerDisplay) return;
 
         if (timerDisplay.textContent.trim() === "00:00") {
+            // Habilitar Nuevo Combate
             btnNuevo.disabled = false;
             btnNuevo.style.background = "#16a34a"; // Verde
             btnNuevo.style.color = "white";
+
+            // Habilitar botón Ganador
+            if (btnGanador) {
+                btnGanador.disabled = false;
+                btnGanador.style.opacity = "1";
+            }
         } else {
+            // Deshabilitar Nuevo Combate
             btnNuevo.disabled = true;
             btnNuevo.style.background = "#dc2626"; // Rojo
             btnNuevo.style.color = "white";
+
+            // Deshabilitar botón Ganador
+            if (btnGanador) {
+                btnGanador.disabled = true;
+                btnGanador.style.opacity = "0.5";
+            }
         }
     }
-
-    // Ejemplo de integración: Si usas un intervalo para el tiempo, llama ahí a controlarEstadoBoton()
-
-
-
-
-
-
-
 </script>
