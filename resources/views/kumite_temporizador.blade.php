@@ -12,6 +12,106 @@
 
 <body class="bg-slate-900 flex items-center justify-center h-screen">
 
+    <!-- MARCADOR ROJO -->
+    <div class="marcador-aka">
+        <div id="contenedor-s-rojo"></div>
+        <div class="pantalla-puntos">
+            <span style="color: white;  display: block; text-align: Center; width: 100%;">
+                EN COMBATE
+            </span>
+            <span id="mirrorSpanRojo" class="fw-bold text-primary" style="text-align: Center;">---</span>
+            <div id="puntosRojo" style="text-align: Center;" class="puntos-gigantes">0</div>
+        </div>
+        <div class="panel-control-rojo">
+            <div class="fila">
+                <button class="btn-personalizadoRojo suma" onclick="updateScore('aka', 1)">+ YUKO</button>
+                <button class="btn-personalizadoRojo suma" onclick="updateScore('aka', 2)">+ WAZARI</button>
+                <button class="btn-personalizadoRojo suma" onclick="updateScore('aka', 3)">+ IPPON</button>
+                <button id="btn-senshu-rojo" class="btn-senshu btn-personalizadosenshurojo" onclick="toggleSenshu('aka')">Senshu</button>
+            </div>
+            <div class="fila">
+                <span id="mirrorSpanYukoRojo" class="text-primary" style="color:black; margin-left: 40px;">0</span>
+                <span id="mirrorSpanWazariRojo" class="text-primary" style="color:black; margin-left: 80px;">0</span>
+                <span id="mirrorSpanIpponRojo" class="text-primary" style="color:black; margin-left: 80px;">0</span>
+            </div> 
+            <div class="fila">
+                <button class="btn-personalizadoRojo resta" onclick="updateScore('aka', -1)">- YUKO</button>
+                <button class="btn-personalizadoRojo resta" onclick="updateScore('aka', -2)">- WAZARI</button>
+                <button class="btn-personalizadoRojo resta" onclick="updateScore('aka', -3)">- IPPON</button>
+                <button id="btn-hantei-rojo" class="btn-personalizadosenshurojo" onclick="logicahanteirojo()">Hantei</button>
+            </div>
+            <div class="fila">
+                <button id="btn-aka-c1" class="btn-falta" onclick="togglePenalty('aka', 1)">C1</button>
+                <button id="btn-aka-c2" class="btn-falta" onclick="togglePenalty('aka', 2)">C2</button>
+                <button id="btn-aka-c3" class="btn-falta" onclick="togglePenalty('aka', 3)">C3</button>
+                <button id="btn-aka-hc" class="btn-falta" onclick="togglePenalty('aka', 4)">HC</button>
+                <button id="btn-aka-c" class="btn-falta" onclick="togglePenalty('aka', 5)">C</button>
+            </div>
+        </div>
+        <div style="display: block; width: 100%; clear: both; margin-top: 2rem;">
+            <label for="TxtRojoProximo" class="form-label fw-bold text-secondary">
+                Próximo Combate
+            </label>
+            
+            <div class="shadow-lg" style="width: 100%; display: block;">
+                <input 
+                    type="text" 
+                    id="TxtRojoProximo" 
+                    name="TxtRojoProximo"
+                    class="form-control form-control-lg text-black" 
+                    placeholder="Ingrese el próximo combate..."
+                    style="width: 100% !important; min-width: 100% !important; display: block !important; color: #000000 !important; box-sizing: border-box !important;"
+                >
+                
+                @error('TxtRojoProximo')
+                    <div class="invalid-feedback d-block">
+                        {{ $message }}
+                    </div>
+                @enderror
+            </div>
+        </div>
+    </div> 
+
+    <div class="bg-white p-2 rounded-3xl shadow-2xl text-center w-full max-w-md">
+        <!-- Pantalla del Temporizador -->
+        <div id="timer-display" class="font-mono mb-10 bg-gray-100 text-red-600 py-12 w-full max-w-5xl mx-auto rounded-3xl shadow-inner border-8 border-gray-200 text-center" 
+            style="font-size: 9rem; line-height: 1;">
+            00:00
+        </div>
+        <!-- Controles de Ejecución -->
+        <div class="grid grid-cols-2 gap-4 mb-8">
+            <button id="btn-start" onclick="startTimer()" class="bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition-colors shadow-md">INICIO</button>
+            <button id="btn-pause" onclick="pauseTimer()" class="hidden bg-yellow-500 text-white py-3 rounded-xl font-bold hover:bg-yellow-600 transition-colors shadow-md">PAUSA</button>
+            <button id="btn-reset" onclick="resetTimer()" class="bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700 transition-colors shadow-md">RESET</button>
+        </div>
+
+        <!-- Controles de Ajuste -->
+        <div class="grid grid-cols-3 gap-6 mb-6">
+            <!-- Minutos -->
+            <div class="flex flex-col gap-3">
+                <span class="text-xl font-bold text-gray-800 uppercase">Minutos</span>
+                <button onclick="adjustTime(60)" class="btn-Reloj ">+</button>
+                <button onclick="adjustTime(-60)" class="btn-Reloj ">-</button>
+            </div>
+            <!-- Segundos -->
+            <div class="flex flex-col gap-3">
+                <span class="text-xl font-bold text-gray-800 uppercase">Segundos</span>
+                <button onclick="adjustTime(1)" class="btn-Reloj ">+</button>
+                <button onclick="adjustTime(-1)" class="btn-Reloj ">-</button>   
+            </div>
+            <!-- botones -->            
+            <div class="flex flex-col gap-3">
+                <span class="text-xl font-bold text-gray-100 uppercase">.</span>
+                <button id="btnMuestraGanador" class="btn-personalizado" onclick="declararGanador()" disabled>GANADOR</button>
+                <button onclick="window.history.back()" class="btn-personalizado">Cerrar</button>
+            </div>
+        </div>
+        <div class="mb-3">
+            <button type="button" id="btnNuevoCombate" onclick="trasladarDatos()" class="btn-personalizado" style="background: #16a34a; color: white;">
+                Nuevo Combate
+            </button>
+        </div>
+    </div>
     <!-- MARCADOR AZUL -->
     <div class="marcador-ao">
         <div id="contenedor-s-azul"></div>
@@ -72,111 +172,8 @@
             </div>
         </div>
     </div>
-    </div>
 
-    <div class="bg-white p-2 rounded-3xl shadow-2xl text-center w-full max-w-md">
-        <!-- Pantalla del Temporizador -->
-        <div id="timer-display" class="font-mono mb-10 bg-gray-100 text-red-600 py-12 w-full max-w-5xl mx-auto rounded-3xl shadow-inner border-8 border-gray-200 text-center" 
-            style="font-size: 9rem; line-height: 1;">
-            00:00
-        </div>
-        <!-- Controles de Ejecución -->
-        <div class="grid grid-cols-2 gap-4 mb-8">
-            <button id="btn-start" onclick="startTimer()" class="bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition-colors shadow-md">INICIO</button>
-            <button id="btn-pause" onclick="pauseTimer()" class="hidden bg-yellow-500 text-white py-3 rounded-xl font-bold hover:bg-yellow-600 transition-colors shadow-md">PAUSA</button>
-            <button id="btn-reset" onclick="resetTimer()" class="bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700 transition-colors shadow-md">RESET</button>
-        </div>
-
-        <!-- Controles de Ajuste -->
-        <div class="grid grid-cols-3 gap-6 mb-6">
-            <!-- Minutos -->
-            <div class="flex flex-col gap-3">
-                <span class="text-xl font-bold text-gray-800 uppercase">Minutos</span>
-                <button onclick="adjustTime(60)" class="btn-Reloj ">+</button>
-                <button onclick="adjustTime(-60)" class="btn-Reloj ">-</button>
-                
-            </div>
-            <!-- Segundos -->
-            <div class="flex flex-col gap-3">
-                <span class="text-xl font-bold text-gray-800 uppercase">Segundos</span>
-                <button onclick="adjustTime(1)" class="btn-Reloj ">+</button>
-                <button onclick="adjustTime(-1)" class="btn-Reloj ">-</button>   
-            </div>
-
-            <div class="flex flex-col gap-3">
-                <span class="text-xl font-bold text-gray-100 uppercase">.</span>
-                <button id="btnMuestraGanador" class="btn-personalizado" onclick="declararGanador()" disabled>GANADOR</button>
-                <button onclick="window.history.back()" class="btn-personalizado">Cerrar</button>
-            </div>
-        </div>
-        <div class="mb-3">
-            <button type="button" id="btnNuevoCombate" onclick="trasladarDatos()" class="btn-personalizado" style="background: #16a34a; color: white;">
-                Nuevo Combate
-            </button>
-        </div>
-        <br>
-    </div>
-
-
-    <!-- MARCADOR ROJO -->
-    <div class="marcador-aka">
-        <div id="contenedor-s-rojo"></div>
-        <div class="pantalla-puntos">
-            <span style="color: white;  display: block; text-align: Center; width: 100%;">
-                EN COMBATE
-            </span>
-            <span id="mirrorSpanRojo" class="fw-bold text-primary" style="text-align: Center;">---</span>
-            <div id="puntosRojo" style="text-align: Center;" class="puntos-gigantes">0</div>
-        </div>
-        <div class="panel-control-rojo">
-            <div class="fila">
-                <button class="btn-personalizadoRojo suma" onclick="updateScore('aka', 1)">+ YUKO</button>
-                <button class="btn-personalizadoRojo suma" onclick="updateScore('aka', 2)">+ WAZARI</button>
-                <button class="btn-personalizadoRojo suma" onclick="updateScore('aka', 3)">+ IPPON</button>
-                <button id="btn-senshu-rojo" class="btn-senshu btn-personalizadosenshurojo" onclick="toggleSenshu('aka')">Senshu</button>
-            </div>
-            <div class="fila">
-                <span id="mirrorSpanYukoRojo" class="text-primary" style="color:black; margin-left: 40px;">0</span>
-                <span id="mirrorSpanWazariRojo" class="text-primary" style="color:black; margin-left: 80px;">0</span>
-                <span id="mirrorSpanIpponRojo" class="text-primary" style="color:black; margin-left: 80px;">0</span>
-            </div> 
-            <div class="fila">
-                <button class="btn-personalizadoRojo resta" onclick="updateScore('aka', -1)">- YUKO</button>
-                <button class="btn-personalizadoRojo resta" onclick="updateScore('aka', -2)">- WAZARI</button>
-                <button class="btn-personalizadoRojo resta" onclick="updateScore('aka', -3)">- IPPON</button>
-                <button id="btn-hantei-rojo" class="btn-personalizadosenshurojo" onclick="logicahanteirojo()">Hantei</button>
-            </div>
-            <div class="fila">
-                <button id="btn-aka-c1" class="btn-falta" onclick="togglePenalty('aka', 1)">C1</button>
-                <button id="btn-aka-c2" class="btn-falta" onclick="togglePenalty('aka', 2)">C2</button>
-                <button id="btn-aka-c3" class="btn-falta" onclick="togglePenalty('aka', 3)">C3</button>
-                <button id="btn-aka-hc" class="btn-falta" onclick="togglePenalty('aka', 4)">HC</button>
-                <button id="btn-aka-c" class="btn-falta" onclick="togglePenalty('aka', 5)">C</button>
-            </div>
-        </div>
-        <div style="display: block; width: 100%; clear: both; margin-top: 2rem;">
-            <label for="TxtRojoProximo" class="form-label fw-bold text-secondary">
-                Próximo Combate
-            </label>
-            
-            <div class="shadow-lg" style="width: 100%; display: block;">
-                <input 
-                    type="text" 
-                    id="TxtRojoProximo" 
-                    name="TxtRojoProximo"
-                    class="form-control form-control-lg text-black" 
-                    placeholder="Ingrese el próximo combate..."
-                    style="width: 100% !important; min-width: 100% !important; display: block !important; color: #000000 !important; box-sizing: border-box !important;"
-                >
-                
-                @error('TxtRojoProximo')
-                    <div class="invalid-feedback d-block">
-                        {{ $message }}
-                    </div>
-                @enderror
-            </div>
-        </div>
-    </div> 
+</div>
 
 
 <!-- Modal para aviso de Senshu -->
@@ -608,6 +605,9 @@
             activeSenshu = null;
             $('#btn-senshu-azul, #btn-senshu-rojo').css('background-color', 'transparent');
             $('#contenedor-s-azul, #contenedor-s-rojo').empty();
+
+            // 5. Resetear botones de Hantei
+            $('#btn-hantei-azul, #btn-hantei-rojo').css('background-color', 'transparent');
 
             inputAzul.value = "";
             inputRojo.value = "";
