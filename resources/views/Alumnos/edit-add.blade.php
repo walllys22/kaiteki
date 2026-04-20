@@ -44,7 +44,7 @@
                                     <option value="">Seleccione una persona</option>
                                     @foreach($people as $person)
                                         <option value="{{ $person->id }}" {{ old('person_id', $dataTypeContent->person_id) == $person->id ? 'selected' : '' }}>
-                                            {{ $person->id }} {{ $person->first_name }}
+                                            {{ $person->first_name }}
                                         </option>
                                     @endforeach
                                 </select>

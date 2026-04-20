@@ -13,13 +13,13 @@
 
 <body class="bg-slate-900 flex items-center justify-center h-screen">
 
-<!-- MARCADOR AZUL -->
+    <!-- MARCADOR AZUL -->
     <div class="marcador-ao">
         <div class="pantalla-puntos">
-            <span style="color: white; font-weight: bold; display: block; text-align: Left; width: 100%;">
-               Walter Landivar Limpias - L.J.P. ZABALA DOJO
+            <span style="color: white; font-weight: bold; display: block; text-align: Center; width: 100%;">
+                EN COMBATE
             </span>
-            <div id="contenedor-s-azul"></div>
+            <span id="mirrorSpanAzul" class="fw-bold text-primary">---</span></p>
             <div id="puntosAzul" class="puntos-gigantes">0</div>
         </div>
         <div class="panel-control">
@@ -46,21 +46,38 @@
                 <button id="btn-ao-hc" class="btn-falta" onclick="togglePenalty('ao', 4)">HC</button>
                 <button id="btn-ao-c" class="btn-falta" onclick="togglePenalty('ao', 5)">C</button>
             </div>
-            <div class="fila">
-                <br>
-                <span style="color: white; font-weight: bold; display: block; text-align: center; width: 100%;">
-                    PROXIMO COMBATE
-                </span>
-                <div class="form-group w-100">
-                    <input type="text" 
-                        id="TxtRojoProximo"
-                        style="color: white; font-weight: bold; display: block; text-align: center; width: 100%;"
-                        class="form-control input-bajo-relieve w-100" 
-                        placeholder="Ingresa el valor...">
-                </div>
+        </div>
+        <br>
+        <div style="display: block; width: 100%; clear: both; margin-top: 2rem;">
+            <label for="TxtAzulProximo" class="form-label fw-bold text-secondary">
+                Próximo Combate
+            </label>
+            
+            <div class="shadow-lg" style="width: 100%; display: block;">
+                <input 
+                    type="text" 
+                    id="TxtAzulProximo" 
+                    name="TxtAzulProximo"
+                    class="form-control form-control-lg text-black" 
+                    placeholder="Ingrese el próximo combate..."
+                    style="width: 100% !important; min-width: 100% !important; display: block !important; color: #000000 !important; box-sizing: border-box !important;"
+                >
+                
+                @error('TxtAzulProximo')
+                    <div class="invalid-feedback d-block">
+                        {{ $message }}
+                    </div>
+                @enderror
             </div>
         </div>
     </div>
+
+
+
+
+
+    </div>
+
     <div class="bg-white p-2 rounded-3xl shadow-2xl text-center w-full max-w-md">
         <!-- Pantalla del Temporizador -->
         <div id="timer-display" class="font-mono mb-10 bg-gray-100 text-red-600 py-12 w-full max-w-5xl mx-auto rounded-3xl shadow-inner border-8 border-gray-200 text-center" 
@@ -97,54 +114,67 @@
             </div>
         </div>
         <div class="mb-3">
-            <button type="button" onclick="trasladarDatosRojo()" class="btn-personalizado">
+            <button type="button" id="btnNuevoCombate" onclick="trasladarDatos()" class="btn-personalizado" style="background: #16a34a; color: white;">
                 Nuevo Combate
             </button>
         </div>
         <br>
-        <br>
     </div>
 
 
-<!-- MARCADOR ROJO -->
- <div class="marcador-aka">
-    <div class="pantalla-puntos">
-        <div id="contenedor-s-rojo"></div>
-            <span style="color: white; font-weight: bold; display: block; text-align: Left; width: 100%;">
-               Walter Landivar Limpias - L.J.P. ZABALA DOJO
+    <!-- MARCADOR ROJO -->
+    <div class="marcador-aka">
+        <div class="pantalla-puntos">
+            <span style="color: white; font-weight: bold; display: block; text-align: Center; width: 100%;">
+                EN COMBATE
             </span>
-        <div id="puntosRojo" class="puntos-gigantes">0</div>
-    </div>
-    <div class="panel-control-rojo">
-        <div class="fila">
-            <button class="btn-personalizadoRojo suma" onclick="updateScore('aka', 1)">+ YUKO</button>
-            <button class="btn-personalizadoRojo suma" onclick="updateScore('aka', 2)">+ WAZARI</button>
-            <button class="btn-personalizadoRojo suma" onclick="updateScore('aka', 3)">+ IPPON</button>
-            <button id="btn-senshu-rojo" class="btn-senshu btn-personalizadosenshurojo" onclick="toggleSenshu('aka')">Senshu</button>
+            <span id="mirrorSpanRojo" class="fw-bold text-primary">---</span></p>
+            <div id="puntosRojo" class="puntos-gigantes">0</div>
         </div>
-        <div class="fila">
-            <button class="btn-personalizadoRojo resta" onclick="updateScore('aka', -1)">- YUKO</button>
-            <button class="btn-personalizadoRojo resta" onclick="updateScore('aka', -2)">- WAZARI</button>
-            <button class="btn-personalizadoRojo resta" onclick="updateScore('aka', -3)">- IPPON</button>
-            <button id="btn-hantei-rojo" class="btn-personalizadosenshurojo" onclick="logicahanteirojo()">Hantei</button>
-        </div>
-        <div class="fila">
-            <button id="btn-aka-c1" class="btn-falta" onclick="togglePenalty('aka', 1)">C1</button>
-            <button id="btn-aka-c2" class="btn-falta" onclick="togglePenalty('aka', 2)">C2</button>
-            <button id="btn-aka-c3" class="btn-falta" onclick="togglePenalty('aka', 3)">C3</button>
-            <button id="btn-aka-hc" class="btn-falta" onclick="togglePenalty('aka', 4)">HC</button>
-            <button id="btn-aka-c" class="btn-falta" onclick="togglePenalty('aka', 5)">C</button>
+        <div class="panel-control-rojo">
+            <div class="fila">
+                <button class="btn-personalizadoRojo suma" onclick="updateScore('aka', 1)">+ YUKO</button>
+                <button class="btn-personalizadoRojo suma" onclick="updateScore('aka', 2)">+ WAZARI</button>
+                <button class="btn-personalizadoRojo suma" onclick="updateScore('aka', 3)">+ IPPON</button>
+                <button id="btn-senshu-rojo" class="btn-senshu btn-personalizadosenshurojo" onclick="toggleSenshu('aka')">Senshu</button>
+            </div>
+            <div class="fila">
+                <button class="btn-personalizadoRojo resta" onclick="updateScore('aka', -1)">- YUKO</button>
+                <button class="btn-personalizadoRojo resta" onclick="updateScore('aka', -2)">- WAZARI</button>
+                <button class="btn-personalizadoRojo resta" onclick="updateScore('aka', -3)">- IPPON</button>
+                <button id="btn-hantei-rojo" class="btn-personalizadosenshurojo" onclick="logicahanteirojo()">Hantei</button>
+            </div>
+            <div class="fila">
+                <button id="btn-aka-c1" class="btn-falta" onclick="togglePenalty('aka', 1)">C1</button>
+                <button id="btn-aka-c2" class="btn-falta" onclick="togglePenalty('aka', 2)">C2</button>
+                <button id="btn-aka-c3" class="btn-falta" onclick="togglePenalty('aka', 3)">C3</button>
+                <button id="btn-aka-hc" class="btn-falta" onclick="togglePenalty('aka', 4)">HC</button>
+                <button id="btn-aka-c" class="btn-falta" onclick="togglePenalty('aka', 5)">C</button>
+            </div>
         </div>
         <br>
-        <span style="color: white; font-weight: bold; display: block; text-align: center; width: 100%;">
-            PROXIMO COMBATE
-        </span>
-        <span style="color: white; font-weight: bold; display: block; text-align: Left; width: 100%;">
-            Competidor: Walter Landivar Limpias
-        </span>
-        <span style="color: white; font-weight: bold; display: block; text-align: center; width: 100%;">
-            L.J.P. ZABALA DOJO
-        </span>
+        <div style="display: block; width: 100%; clear: both; margin-top: 2rem;">
+            <label for="TxtRojoProximo" class="form-label fw-bold text-secondary">
+                Próximo Combate
+            </label>
+            
+            <div class="shadow-lg" style="width: 100%; display: block;">
+                <input 
+                    type="text" 
+                    id="TxtRojoProximo" 
+                    name="TxtRojoProximo"
+                    class="form-control form-control-lg text-black" 
+                    placeholder="Ingrese el próximo combate..."
+                    style="width: 100% !important; min-width: 100% !important; display: block !important; color: #000000 !important; box-sizing: border-box !important;"
+                >
+                
+                @error('TxtRojoProximo')
+                    <div class="invalid-feedback d-block">
+                        {{ $message }}
+                    </div>
+                @enderror
+            </div>
+        </div>
     </div> 
 </div>
 
@@ -159,7 +189,7 @@
 </div>
 
 
-    <script>
+<script>
         // ESTADO GLOBAL
         let timerInterval = null;
         let timerSeconds = 0;
@@ -170,37 +200,69 @@
             aka: [false, false, false, false, false]
         };
 
+        document.addEventListener('DOMContentLoaded', function() {
+            // Llamamos a la función para que verifique el tiempo al cargar
+            controlarEstadoBoton();
+        });
+
+        document.getElementById('TxtAzulProximo').addEventListener('input', function(e) {
+            // Ejemplo: Convertir a mayúsculas en tiempo real
+            e.target.value = e.target.value.toUpperCase();
+            
+            // Ejemplo: Cambiar el borde dinámicamente si hay contenido
+            if(e.target.value.length > 0) {
+                e.target.classList.add('border-primary');
+            }
+        });
+
+        document.getElementById('TxtRojoProximo').addEventListener('input', function(e) {
+            // Ejemplo: Convertir a mayúsculas en tiempo real
+            e.target.value = e.target.value.toUpperCase();
+            
+            // Ejemplo: Cambiar el borde dinámicamente si hay contenido
+            if(e.target.value.length > 0) {
+                e.target.classList.add('border-primary');
+            }
+        });
+
+
         // --- TEMPORIZADOR ---
         function updateTimerDisplay() {
             const m = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
             const s = (timerSeconds % 60).toString().padStart(2, '0');
             $('#timer-display').text(`${m}:${s}`);
+            // Centralizamos la llamada aquí para que sea automática ante cualquier cambio
+            controlarEstadoBoton();
         }
 
-        function startTimer() {
-            if (timerSeconds <= 0) {
-                alert("EL TIEMPO DEBE SER MAYOR A CERO");
-                return;
+    function startTimer() {
+        if (timerSeconds <= 0) {
+            alert("EL TIEMPO DEBE SER MAYOR A CERO");
+            return;
+        }
+
+        if (timerInterval || timerSeconds <= 0) return;
+
+        timerInterval = setInterval(() => {
+            if (timerSeconds > 0) {
+                timerSeconds--;
+                updateTimerDisplay();
+            } else {
+                pauseTimer();
+                
+                const audio = document.getElementById('gong-sound');
+                if (audio) audio.play().catch(e => console.log("Audio play error:", e));
+                
+                setTimeout(() => {
+                    alert("TIEMPO FINALIZADO");
+                }, 200);
             }
+        }, 1000);
 
-            if (timerInterval || timerSeconds <= 0) return;
-            timerInterval = setInterval(() => {
-                if (timerSeconds > 0) {
-                    timerSeconds--;
-                    updateTimerDisplay();
-                } else {
-                    pauseTimer();
-                    const audio = document.getElementById('gong-sound');
-                    if (audio) audio.play().catch(e => console.log("Audio play error:", e));
-                    setTimeout(() => {
-                        alert("TIEMPO FINALIZADO");
-                    }, 200);
-                }
-            }, 1000);
-            $('#btn-start').addClass('hidden');
-            $('#btn-pause').removeClass('hidden');
-            $('#btn-reset').prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
-        }
+        $('#btn-start').addClass('hidden');
+        $('#btn-pause').removeClass('hidden');
+        $('#btn-reset').prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
+    }
 
         function pauseTimer() {
             clearInterval(timerInterval);
@@ -1436,5 +1498,73 @@
         }
     }
 
-</script>
+    function trasladarDatos() {
+        const timerDisplay = document.getElementById('timer-display');
+        
+        const inputAzul = document.getElementById('TxtAzulProximo');
+        const spanAzul = document.getElementById('mirrorSpanAzul');
+        const inputRojo = document.getElementById('TxtRojoProximo');
+        const spanRojo = document.getElementById('mirrorSpanRojo');
+        
+        // Referencias para resetear puntos
+        const puntosAzul = document.getElementById('puntosAzul');
+        const puntosRojo = document.getElementById('puntosRojo');
 
+        if (!inputAzul || !inputRojo || !spanAzul || !spanRojo) {
+            console.error("Error: IDs no encontrados.");
+            return;
+        }
+
+        const nombreAzul = inputAzul.value.trim();
+        const nombreRojo = inputRojo.value.trim();
+
+        if (nombreAzul === "" || nombreRojo === "") {
+            alert("Por favor, ingresa los nombres de ambos competidores.");
+            return;
+        }
+
+        // 1. Trasladar nombres
+        spanAzul.textContent = nombreAzul;
+        spanRojo.textContent = nombreRojo;
+
+        // 2. Resetear marcadores de puntos a 0
+        if (puntosAzul) puntosAzul.textContent = "0";
+        if (puntosRojo) puntosRojo.textContent = "0";
+
+        // 3. Limpiar inputs y devolver foco
+        inputAzul.value = "";
+        inputRojo.value = "";
+        inputAzul.focus();
+        
+        console.log("Nuevo combate iniciado. Marcadores reseteados.");
+    }
+
+
+
+    // Esta función debe llamarse cada vez que el tiempo cambie
+    function controlarEstadoBoton() {
+        const btnNuevo = document.getElementById('btnNuevoCombate');
+        const timerDisplay = document.getElementById('timer-display');
+
+        if (!btnNuevo || !timerDisplay) return;
+
+        if (timerDisplay.textContent.trim() === "00:00") {
+            btnNuevo.disabled = false;
+            btnNuevo.style.background = "#16a34a"; // Verde
+            btnNuevo.style.color = "white";
+        } else {
+            btnNuevo.disabled = true;
+            btnNuevo.style.background = "#dc2626"; // Rojo
+            btnNuevo.style.color = "white";
+        }
+    }
+
+    // Ejemplo de integración: Si usas un intervalo para el tiempo, llama ahí a controlarEstadoBoton()
+
+
+
+
+
+
+
+</script>
