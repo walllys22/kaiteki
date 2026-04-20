@@ -10,8 +10,10 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\WhatsappController;
 use App\Http\Controllers\TorneoController;
 use App\Http\Controllers\KumiteController;
+use App\Http\Controllers\TableroKataController;
 use App\Http\Controllers\AlumnoController;
 use Illuminate\Support\Facades\Artisan;
+use TCG\Voyager\Facades\Voyager;
 
 
 /*
@@ -103,6 +105,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
 });
 
 Route::get('/kumite-temporizador', [KumiteController::class, 'index'])->name('kumite.temporizador');
+Route::get('/tablero-kata', [TableroKataController::class, 'index'])->name('tablero.kata');
 
 // Clear cache
 Route::get('/admin/clear-cache', function() {
