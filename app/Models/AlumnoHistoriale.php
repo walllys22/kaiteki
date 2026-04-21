@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class AlumnoHistoriale extends Model
 {
         use HasFactory, SoftDeletes;
+        protected $table = 'alumnohistoriales';
         protected $fillable = [
             'alumno_id',
             'grado_id',

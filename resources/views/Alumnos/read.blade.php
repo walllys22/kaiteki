@@ -72,11 +72,11 @@
                             </div>
                             <div class="panel-body" style="padding-top:0;">
                                 <div class="row">
-                                    <div class="col-md-5 form-group">
+                                    <div class="col-md-4 form-group">
                                         <label class="control-label" style="font-weight:bold;">Nombre del Dojo</label>
                                         <p class="form-control-static">{{ $alumno->dojo->nombre }} </p>
                                     </div>
-                                    <div class="col-md-5 form-group">
+                                    <div class="col-md-4 form-group">
                                         <label class="control-label" style="font-weight:bold;">Nombre del Alumno</label>
                                         <p class="form-control-static">{{ $alumno->person->first_name }} </p>
                                     </div>
@@ -94,7 +94,7 @@
                                         <p class="form-control-static">{{ $alumno->horario->tipo }}
                                             {{ $alumno->horario->nombre }}</p>
                                     </div>
-                                    <div class="col-md-6 form-group">
+                                    <div class="col-md-4 form-group">
                                         <label class="control-label" style="font-weight:bold;">Grado</label>
                                         <p class="form-control-static">{{ $alumno->grado->numero }}
                                             {{ $alumno->grado->tipo }} {{ $alumno->grado->nombre }} </p>

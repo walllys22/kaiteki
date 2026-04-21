@@ -12,6 +12,7 @@ use App\Http\Controllers\TorneoController;
 use App\Http\Controllers\KumiteController;
 use App\Http\Controllers\TableroKataController;
 use App\Http\Controllers\AlumnoController;
+use App\Http\Controllers\AlumnoHistorialController;
 use Illuminate\Support\Facades\Artisan;
 use TCG\Voyager\Facades\Voyager;
 
@@ -52,8 +53,15 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     Route::put('alumnos/{id}', [AlumnoController::class, 'update'])->name('voyager.alumnos.update');
     Route::get('alumnos/{id}', [AlumnoController::class, 'show'])->name('voyager.alumnos.show');
 
+
+
+
     //Rutas Alumnos Historial
-    Route::get('alumnos/{id}/historial/list', [AlumnoController::class, 'historialList'])->name('alumnos.historial.list');
+    Route::get('alumnos/{id}/historial/browse', [AlumnoHistorialController::class, 'show'])->name('alumnos.historial.show');
+    
+
+
+
 
     // Rutas Alumnos Tutores                                            metodo del controlador
     Route::get('alumnos/{id}/parentesco/list', [AlumnoController::class, 'tutorList']);

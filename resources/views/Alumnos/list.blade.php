@@ -45,10 +45,10 @@
                         @endif
                     </td>
                     <td style="width: 18%" class="no-sort no-click bread-actions text-right">
-                              <a href="#" title="Historial" class="btn btn-sm btn-success">
+                            <a href="{{ route('alumnos.historial.show', $item->id) }}" title="Historial" class="btn btn-sm btn-success">
                                 <i class="fa-solid fa-file-pen"></i> <span class="hidden-xs hidden-sm"></span>
-                            </a>                      
-                        @if (auth()->user()->hasPermission('read_alumnos'))
+                            </a>
+                            @if (auth()->user()->hasPermission('read_alumnos'))
                             <a href="{{ route('voyager.alumnos.show', ['id' => $item->id]) }}" title="Ver" class="btn btn-sm btn-warning view">
                                 <i class="voyager-eye"></i> <span class="hidden-xs hidden-sm"></span>
                             </a>
