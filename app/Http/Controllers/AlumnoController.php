@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Alumno;
 use App\Models\AlumnoTutor;
+use App\Models\AlumnoEnfermedade;
 use App\Models\Person;
 use App\Models\Dojo;
 use App\Models\Grado;
@@ -126,8 +127,9 @@ class AlumnoController extends Controller
         $grado = Grado::whereNull('deleted_at')->get();
         $dojo = Dojo::whereNull('deleted_at')->get();
         $parientes = Parentesco::whereNull('deleted_at')->get();
+        $enfermedades = AlumnoEnfermedade::whereNull('deleted_at')->get();
 
-        return view('alumnos.read', compact('dojo', 'people', 'grado', 'horario', 'parientes', 'dataTypeContent'));
+        return view('alumnos.read', compact('dojo', 'people', 'enfermedades', 'grado', 'horario', 'parientes', 'dataTypeContent'));
     }
 
     public function update(Request $request, $id)
@@ -226,6 +228,22 @@ class AlumnoController extends Controller
         }
     }
 
+    public function storeAlumnoEnfermedad(Request $request)
+    {
+
+        try {
+            $data = $request->all();
+
+            AlumnoEnfermedade::create($data);
+
+            return redirect()->route('voyager.alumnos.show', ['id' => $request->alumno_id])
+                ->with(['message' => 'Alumno creado exitosamente', 'alert-type' => 'success']);
+        } catch (\Throwable $th) {
+            return redirect()->back()
+                ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
+        }
+    }
+    
 
     public function tutorDestroy($id)
     {
@@ -244,9 +262,42 @@ class AlumnoController extends Controller
         }
     }
 
+    public function enfermedadList($alumno_id)
+    {
+        $search = request('search');
+        $paginate = request('paginate') ?? 10;
+
+        $data = AlumnoEnfermedade::with(['alumno'])
+            ->where('alumno_id', $alumno_id)
+            ->when($search, function ($query, $search) {
+                return $query->where(function($q) use ($search) {
+                    $q->where('enfermedad', 'like', "%$search%")
+                      ->orWhere('medicamento', 'like', "%$search%");
+                });
+            })
+            ->orderBy('id', 'DESC')
+            ->paginate($paginate);   
+
+        return view('alumnos.enfermedad.list', compact('data', 'alumno_id'));
+    }
+
+    public function enfermedadDestroy($id)
+    {
+        $alumnoEnfer = AlumnoEnfermedade::findOrFail($id);
+   
+        try {
+            
+            $alumnoEnfer->delete();
+
+            return redirect()->route('voyager.alumnos.show', ['id' => $alumnoEnfer->alumno_id])
+                ->with(['message' => 'Tutor eliminado del alumno.', 'alert-type' => 'success']);
+            
+        } catch (\Throwable $th) {
+            return redirect()->back()
+                ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
+        }
+    }
 
 
 
 }
-
-

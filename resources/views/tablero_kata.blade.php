@@ -6,6 +6,7 @@
     <title>Tablero Kata</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body class="bg-transparent flex flex-col items-center justify-center h-screen">
 
@@ -20,6 +21,11 @@
             Cerrar
         </button>
     </div>
+
+    <!-- Botón Juez 1 en la esquina inferior izquierda -->
+    <button onclick="mostrarQR()" class="fixed bottom-6 left-6 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all uppercase z-40">
+        Juez 1
+    </button>
 
     <div id="modal-kata" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center z-50">
         <div class="bg-yellow-400 w-full max-w-2xl p-10 rounded-3xl border-8 border-yellow-600 shadow-[0_0_50px_rgba(250,204,21,0.4)] text-center">
@@ -41,6 +47,18 @@
         </div>
     </div>
 
+    <!-- Modal para el Código QR -->
+    <div id="modal-qr" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center z-[60]">
+        <div class="bg-white p-10 rounded-3xl text-center shadow-2xl max-w-sm">
+            <h3 class="text-2xl font-bold mb-4 text-gray-800 uppercase tracking-tight">Acceso Juez 1</h3>
+            <div id="qrcode" class="flex justify-center p-4 bg-white mb-6 border-2 border-gray-100 rounded-xl"></div>
+            <p class="text-gray-500 text-sm mb-6">Escanea para conectar un dispositivo móvil</p>
+            <button onclick="cerrarModalQR()" class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold transition-colors">
+                CERRAR
+            </button>
+        </div>
+    </div>
+
     <script>
         let timerInterval = null;
         let secondsRemaining = 35;
@@ -54,6 +72,25 @@
         function cerrarModal() {
             detenerTimer();
             $('#modal-kata').hide();
+        }
+
+        function mostrarQR() {
+            // Limpiar el contenedor del QR si ya existía uno
+            $('#qrcode').empty();
+            
+            // Generar el código QR con la URL actual
+            new QRCode(document.getElementById("qrcode"), {
+                text: window.location.href,
+                width: 256,
+                height: 256,
+                correctLevel : QRCode.CorrectLevel.H
+            });
+            
+            $('#modal-qr').css('display', 'flex');
+        }
+
+        function cerrarModalQR() {
+            $('#modal-qr').hide();
         }
 
         function updateDisplay() {

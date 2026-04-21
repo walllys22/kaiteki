@@ -60,6 +60,11 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     Route::post('alumnos/tutores/store', [AlumnoController::class, 'storeAlumnoTutor'])->name('alumno.tutores.store');
     Route::delete('alumnos/tutores/{id}/delete', [AlumnoController::class, 'tutorDestroy'])->name('alumno.tutores.destroy');
 
+    // Rutas Alumno Enfermedad
+    Route::get('alumnos/{id}/enfermedade/list', [AlumnoController::class, 'enfermedadList']);
+    Route::post('alumnos/enfermedade/store', [AlumnoController::class, 'storeAlumnoEnfermedad'])->name('alumno.enfermedade.store');
+    Route::delete('alumnos/enfermedade/{id}/delete', [AlumnoController::class, 'enfermedadDestroy'])->name('alumno.enfermedade.destroy');
+
 
 
     // Rutas Torneos

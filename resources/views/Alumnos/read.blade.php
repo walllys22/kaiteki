@@ -123,7 +123,8 @@
                     <div class="panel panel-bordered">
                         <div class="panel-heading"
                             style="border-bottom:0; display: flex; align-items: center; justify-content: space-between;">
-                            <h3 class="panel-title" style="margin: 0;"><i class="voyager-categories"></i> Padres o Tutores
+                            <h3 class="panel-title" style="margin: 0;">
+                                <i class="fa-solid fa-people-pulling"></i> Padres o Tutores
                             </h3>
                             <div style="padding-right: 20px;">
                                 @if (auth()->user()->hasPermission('add_alumnos'))
@@ -160,28 +161,27 @@
             </div>
 
 
-            {{-- Sección de Historial del Alumno --}}
+            {{-- Sección de Enfermedad del Alumno --}}
             <div class="row">
                 <div class="col-md-12">
                     <div class="panel panel-bordered">
                         <div class="panel-heading"
                             style="border-bottom:0; display: flex; align-items: center; justify-content: space-between;">
-                            <h3 class="panel-title" style="margin: 0;"><i class="voyager-categories"></i> Historial del
-                                alumno</h3>
+                            <h3 class="panel-title" style="margin: 0;">
+                                <i class="fa-solid fa-briefcase-medical"></i> Enfermedad del Alumno
+                            </h3>
                             <div style="padding-right: 20px;">
-                                @if (auth()->user()->hasPermission('add_alumnos'))
-                                    <button class="btn btn-success btn-sm" data-toggle="modal"
-                                        data-target="#modal-add-category">
-                                        <i class="voyager-plus"></i> <span>Agregar</span>
-                                    </button>
-                                @endif
+                                <button class="btn btn-success btn-sm" data-toggle="modal"
+                                    data-target="#modal-add-enfermedad">
+                                    <i class="voyager-plus"></i> <span>Agregar</span>
+                                </button>
                             </div>
                         </div>
                         <div class="panel-body" style="padding-top:0;">
                             <div class="row">
                                 <div class="col-sm-9">
                                     <div class="dataTables_length">
-                                        <label>Mostrar <select id="select-paginate-cat" class="form-control input-sm">
+                                        <label>Mostrar <select id="select-paginate-enfer" class="form-control input-sm">
                                                 <option value="10">10</option>
                                                 <option value="25">25</option>
                                                 <option value="50">50</option>
@@ -190,12 +190,12 @@
                                     </div>
                                 </div>
                                 <div class="col-sm-3" style="margin-bottom: 10px">
-                                    <input type="text" id="input-search-cat" placeholder="🔍 Buscar..."
+                                    <input type="text" id="input-search-enfermedad" placeholder="🔍 Buscar..."
                                         class="form-control">
                                 </div>
                             </div>
-                            <div id="div-categories-list">
-                                <p class="text-center">Cargando categorías...</p>
+                            <div id="div-enfermedad-list">
+                                <p class="text-center">Cargando enfermedad...</p>
                             </div>
                         </div>
                     </div>
@@ -256,6 +256,56 @@
             </div>
         </form>
 
+
+        {{-- Modal para agregar Enfermedad del Alumno--}}
+        <form id="form-add-enfermedad" class="form-edit-add" action="{{ route('alumno.enfermedade.store') }}" method="POST">
+            @csrf
+            <div class="modal fade" tabindex="-1" id="modal-add-enfermedad" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span
+                                    aria-hidden="true">&times;</span></button>
+                            <h4 class="modal-title"><i class="voyager-plus"></i> Agregar Enfermedad</h4>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="alumno_id" value="{{ $alumno->id }}">
+
+                            <div class="form-group col-md-12">
+                                <label for="nombre">Nombre de la Enfermedad</label>
+                                <input type="text" class="form-control" name="enfermedad" placeholder="enfermedad" value="{{ old('enfermedad', $dataTypeContent->enfermedad) }}">
+                            </div>
+
+                            <div class="form-group col-md-12">
+                                <label for="nombre">Nombre del Medicamento</label>
+                                <input type="text" class="form-control" name="medicamento" placeholder="Medicamento" value="{{ old('medicamento', $dataTypeContent->medicamento) }}">
+                            </div>
+
+
+                            <div class="form-group col-md-12">
+                                <label for="nombre">Administración del Medicamento</label>
+                                <input type="text" class="form-control" name="dosis" placeholder="Administración del Medicamento" value="{{ old('dosis', $dataTypeContent->dosis) }}">
+                            </div>
+
+                            <div class="form-group col-md-12">
+                                <label for="address">Obervaciones</label>
+                                <textarea name="observaciones" class="form-control" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default btn-cancel"
+                                data-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success btn-submit">Guardar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+
+
+
+
         @include('partials.modal-delete')
 
     @stop
@@ -265,9 +315,12 @@
         <script>
             var countPageTutor = 10;
             var timeoutTutor = null;
+            var countPageEnfer = 10;
+            var timeoutEnfer = null;
 
             $(document).ready(function() {
                 listTutores();
+                enfermedadList();
 
                 // Eventos para Tutores
                 $('#input-search-tutor').on('keyup', function(e) {
@@ -277,10 +330,23 @@
                     }
                 });
 
+                $('#input-search-enfermedad').on('keyup', function(e) {
+                    if (e.keyCode == 13) {
+                        clearTimeout(timeoutEnfer);
+                        enfermedadList();
+                    }
+                });
+
                 $('#select-paginate-tutor').change(function() {
                     countPageTutor = $(this).val();
                     listTutores();
                 });
+
+                $('#select-paginate-enfer').change(function() {
+                    countPageEnfer = $(this).val();
+                    enfermedadList();
+                });
+
 
                 $('#input-search-tutor').on('input', function() {
                     clearTimeout(timeoutTutor);
@@ -288,6 +354,15 @@
                         listTutores();
                     }, 1000);
                 });
+
+                $('#input-search-enfermedad').on('input', function() {
+                    clearTimeout(timeoutEnfer);
+                    timeoutEnfer = setTimeout(function() {
+                    enfermedadList();
+                    }, 1000);
+                });
+
+
             });
 
             function listTutores(page = 1) {
@@ -316,5 +391,31 @@
             function deleteItem(url) {
                 $('#delete_form').attr('action', url);
             }
+
+            
+            function enfermedadList(page = 1) {
+                $('#div-enfermedad-list').loading({
+                    message: 'Cargando...'
+                });
+                let id = "{{ $alumno->id }}";
+                let search = $('#input-search-enfermedad').val() ? $('#input-search-enfermedad').val() : '';
+                let url = "{{ url('admin/alumnos') }}/" + id + "/enfermedade/list";
+
+                $.ajax({
+                    url: `${url}?search=${search}&paginate=${countPageEnfer}&page=${page}`,
+                    type: 'get',
+                    success: function(result) {
+                        $("#div-enfermedad-list").html(result);
+                        $('#div-enfermedad-list').loading('toggle');
+                    },
+                    error: function(err) {
+                        $("#div-enfermedad-list").html(
+                            '<p class="text-center">No se pudieron cargar los datos de la enfermedad.</p>');
+                        $('#div-enfermedad-list').loading('toggle');
+                    }
+                });
+            }
+
+        
         </script>
     @stop
