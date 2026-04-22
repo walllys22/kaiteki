@@ -17,8 +17,8 @@
                 @forelse ($data as $item)
                 @php
                     $image = asset('images/default.jpg');
-                    if($item->foto){
-                        $image = asset('storage/' . str_replace('.avif', '', $item->foto) . '-cropped.webp');
+                    if($item->person->image){
+                        $image = asset('storage/' . str_replace('.avif', '', $item->person->image) . '-cropped.webp');
                     }
                 @endphp
                 <tr>

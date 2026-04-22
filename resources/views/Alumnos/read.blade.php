@@ -37,8 +37,8 @@
 
         // Lógica de imagen similar a tu list.blade.php
         $image = asset('images/default.jpg');
-        if ($alumno->foto && Str::endsWith($alumno->foto, ['.jpg', '.jpeg', '.png', '.webp', '.avif'])) {
-            $image = asset('storage/' . str_replace('.avif', '', $alumno->foto) . '-cropped.webp');
+        if ($alumno->person->image) {
+            $image = asset('storage/' . str_replace('.avif', '', $alumno->person->image) . '-cropped.webp');
         }
     @endphp
 
@@ -53,7 +53,7 @@
                                 <h3 class="panel-title">Foto del Alumno</h3>
                             </div>
                             <div class="panel-body" style="padding-top:0;">
-                                @if ($alumno->foto && Str::endsWith($alumno->foto, ['.jpg', '.jpeg', '.png', '.webp', '.avif']))
+                                @if ($alumno->person->image && Str::endsWith($alumno->person->image, ['.jpg', '.jpeg', '.png', '.webp', '.avif']))
                                     <img src="{{ $image }}"
                                         style="width:150%; max-width:150px; border-radius: 5px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" />
                                 @else
@@ -222,7 +222,8 @@
                                 <select name="tutor_id" class="form-control select2" required>
                                     <option value="">Seleccione una persona</option>
                                     @foreach ($people as $person)
-                                        <option value="{{ $person->id }}">
+                                        <option value="{{ $person->id }}"
+                                            {{ old('tutor_id') == $person->id ? 'selected' : '' }}>
                                             {{ $person->first_name }}
                                         </option>
                                     @endforeach
@@ -235,7 +236,7 @@
                                     <option value="">Seleccione un Parentesco</option>
                                     @foreach ($parientes as $pariente)
                                         <option value="{{ $pariente->id }}"
-                                            {{ old('pariente', $dataTypeContent->pariente_id) == $pariente->id ? 'selected' : '' }}>
+                                            {{ old('pariente_id') == $pariente->id ? 'selected' : '' }}>
                                             {{ $pariente->nombre }}
                                         </option>
                                     @endforeach
@@ -257,8 +258,9 @@
         </form>
 
 
-        {{-- Modal para agregar Enfermedad del Alumno--}}
-        <form id="form-add-enfermedad" class="form-edit-add" action="{{ route('alumno.enfermedade.store') }}" method="POST">
+        {{-- Modal para agregar Enfermedad del Alumno --}}
+        <form id="form-add-enfermedad" class="form-edit-add" action="{{ route('alumno.enfermedade.store') }}"
+            method="POST">
             @csrf
             <div class="modal fade" tabindex="-1" id="modal-add-enfermedad" role="dialog">
                 <div class="modal-dialog">
@@ -273,18 +275,22 @@
 
                             <div class="form-group col-md-12">
                                 <label for="nombre">Nombre de la Enfermedad</label>
-                                <input type="text" class="form-control" name="enfermedad" placeholder="enfermedad" value="{{ old('enfermedad', $dataTypeContent->enfermedad) }}">
+                                <input type="text" class="form-control" name="enfermedad" placeholder="enfermedad"
+                                    value="{{ old('enfermedad', $dataTypeContent->enfermedad) }}">
                             </div>
 
                             <div class="form-group col-md-12">
                                 <label for="nombre">Nombre del Medicamento</label>
-                                <input type="text" class="form-control" name="medicamento" placeholder="Medicamento" value="{{ old('medicamento', $dataTypeContent->medicamento) }}">
+                                <input type="text" class="form-control" name="medicamento" placeholder="Medicamento"
+                                    value="{{ old('medicamento', $dataTypeContent->medicamento) }}">
                             </div>
 
 
                             <div class="form-group col-md-12">
                                 <label for="nombre">Administración del Medicamento</label>
-                                <input type="text" class="form-control" name="dosis" placeholder="Administración del Medicamento" value="{{ old('dosis', $dataTypeContent->dosis) }}">
+                                <input type="text" class="form-control" name="dosis"
+                                    placeholder="Administración del Medicamento"
+                                    value="{{ old('dosis', $dataTypeContent->dosis) }}">
                             </div>
 
                             <div class="form-group col-md-12">
@@ -302,12 +308,22 @@
             </div>
         </form>
 
-
-
-
-
         @include('partials.modal-delete')
 
+    @stop
+
+    @section('css')
+        <style>
+            /* Asegura que el select ocupe todo el ancho y el buscador sea visible en el modal */
+            .select2-container {
+                width: 100% !important;
+            }
+
+            /* Evita conflictos de profundidad (z-index) con el modal de Bootstrap */
+            .select2-dropdown {
+                z-index: 10001;
+            }
+        </style>
     @stop
 
     @section('javascript')
@@ -319,6 +335,14 @@
             var timeoutEnfer = null;
 
             $(document).ready(function() {
+                // Inicializar Select2 específicamente cuando el modal se muestra
+                $('#modal-add-tutor').on('shown.bs.modal', function() {
+                    $(this).find('.select2').select2({
+                        dropdownParent: $('#modal-add-tutor'),
+                        width: '100%'
+                    });
+                });
+
                 listTutores();
                 enfermedadList();
 
@@ -358,7 +382,7 @@
                 $('#input-search-enfermedad').on('input', function() {
                     clearTimeout(timeoutEnfer);
                     timeoutEnfer = setTimeout(function() {
-                    enfermedadList();
+                        enfermedadList();
                     }, 1000);
                 });
 
@@ -392,7 +416,7 @@
                 $('#delete_form').attr('action', url);
             }
 
-            
+
             function enfermedadList(page = 1) {
                 $('#div-enfermedad-list').loading({
                     message: 'Cargando...'
@@ -415,7 +439,5 @@
                     }
                 });
             }
-
-        
         </script>
     @stop

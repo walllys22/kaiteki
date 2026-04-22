@@ -18,7 +18,6 @@ class Alumno extends Model
             'grado_id',
             'status',
             'observacion',
-            'foto',
             'deleted_at'
         ];
 

@@ -133,55 +133,46 @@ class AlumnoHistorialController extends Controller
         $exclude_id = $request->id; // Obtenemos el ID actual si estamos editando
         $dojo_id = $request->dojo_id; // El Dojo seleccionado en el formulario
     
-        // 1. Verificamos si el alumno está ACTIVO (status = 1).
-        // Si está activo, NO se puede registrar en ningún dojo (bloqueo total).
-        $alumno = Alumno::with('dojo')
+        // 1. Verificamos si la persona ya tiene un registro en el Dojo seleccionado.
+        // Independientemente de si está activo o inactivo, bloqueamos para evitar duplicados en el mismo Dojo.
+        $alumnoMismoDojo = Alumno::with('dojo')
             ->where('person_id', $person_id)
-            ->where('status', 1)
-            ->when($exclude_id, function ($q) use ($exclude_id) {
-                return $q->where('id', '!=', $exclude_id);
-            })
-            ->first();
-    
-        if ($alumno) {
-            // Si el registro activo es del mismo Dojo que el seleccionado en el formulario
-            if ($alumno->dojo_id == $dojo_id) {
-                return response()->json(['status' => 'exists', 'dojo' => $alumno->dojo->nombre ?? 'N/A']);
-            }
-            // Si es un Dojo diferente, disparamos la advertencia de "registrado en otro dojo"
-            return response()->json(['status' => 'other_dojo', 'dojo' => $alumno->dojo->nombre ?? 'N/A']);
-        }
-
-        // 2. Verificamos si el alumno está INACTIVO (status = 0).
-        // El requerimiento dice: "debe dejar registrarlo siempre y cuando el dojo sea diferente".
-        // Por lo tanto, si es el MISMO dojo, bloqueamos el registro por duplicidad.
-        $alumnoInactivo = Alumno::with('dojo')
-            ->where('person_id', $person_id)
-            ->where('status', 0)
             ->where('dojo_id', $dojo_id)
             ->when($exclude_id, function ($q) use ($exclude_id) {
                 return $q->where('id', '!=', $exclude_id);
             })
             ->first();
-
-        if ($alumnoInactivo) {
-            return response()->json(['status' => 'exists', 'dojo' => $alumnoInactivo->dojo->nombre ?? 'N/A']);
+    
+        if ($alumnoMismoDojo) {
+            return response()->json(['status' => 'exists', 'dojo' => $alumnoMismoDojo->dojo->nombre ?? 'N/A']);
         }
 
-        // Verificamos si la persona está vinculada a un Dojo activo (status = 1)
-        // Pero excluimos el Dojo que se ha seleccionado en el formulario para permitir el registro
-        $dojo = \App\Models\Dojo::where('person_id', $person_id)
+        // 2. Verificamos si el alumno está ACTIVO (status = 1) en cualquier otro dojo.
+        // Si el alumno está activo en otro lugar, bloqueamos según el requerimiento.
+        $alumnoActivoOtroDojo = Alumno::with('dojo')
+            ->where('person_id', $person_id)
             ->where('status', 1)
-            ->when($dojo_id, function ($q) use ($dojo_id) {
-                return $q->where('id', '!=', $dojo_id);
+            ->when($exclude_id, function ($q) use ($exclude_id) {
+                return $q->where('id', '!=', $exclude_id);
             })
             ->first();
-            
-        if ($dojo) {
-            return response()->json(['status' => 'other_dojo', 'dojo' => $dojo->nombre]);
+
+        if ($alumnoActivoOtroDojo) {
+            return response()->json(['status' => 'other_dojo', 'dojo' => $alumnoActivoOtroDojo->dojo->nombre ?? 'N/A']);
         }
 
-    
+        // 3. NUEVA REGLA: Verificar si la persona es responsable del Dojo seleccionado.
+        // Un responsable de un Dojo no puede ser alumno en su propio Dojo.
+        $dojoResponsable = \App\Models\Dojo::where('person_id', $person_id)
+                                            ->where('id', $dojo_id)
+                                            ->first();
+
+        if ($dojoResponsable) {
+            return response()->json(['status' => 'responsible_same_dojo', 'dojo' => $dojoResponsable->nombre ?? 'N/A']);
+        }
+        
+        // Nota: Si el alumno está inactivo (status = 0) en otros dojos, o si es encargado en la tabla Dojo,
+        // la validación permitirá el registro devolviendo 'ok'.
         return response()->json(['status' => 'ok']);
     }
 }

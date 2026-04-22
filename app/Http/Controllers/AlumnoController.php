@@ -77,23 +77,10 @@ class AlumnoController extends Controller
             'grado_id' => 'required|exists:grados,id',
             'status' => 'required|integer',
             'observacion' => 'nullable|string|max:255',
-            'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:5120'
         ]);
 
         try {
             $data = $request->all();
-
-            if ($request->hasFile('foto')) {
-                $file = $request->file('foto');
-                // Si el archivo es una imagen, usamos el StorageController para optimizarla
-                if (str_starts_with($file->getMimeType(), 'image/')) {
-                    $data['foto'] = $this->storageController->store_image($file, 'alumnos');
-                } else {
-                    // Si es un PDF u otro tipo de archivo, usamos el guardado tradicional
-                    $data['foto'] = $file->store('alumnos', 'public');
-                }
-            }
-
             Alumno::create($data);
 
             return redirect()->route('voyager.alumnos.index')
@@ -150,7 +137,6 @@ class AlumnoController extends Controller
             'grado_id' => 'required',
             'status' => 'nullable', // Permitimos nullable para manejar el checkbox desmarcado
             'observacion' => 'nullable|string|max:255',
-            'foto' => 'nullable|image|mimes:jpg,jpeg,png|max:5120'
         ]);
 
         DB::beginTransaction();
@@ -165,21 +151,6 @@ class AlumnoController extends Controller
             $alumno->grado_id = $request->grado_id;
             $alumno->status = $request->status ? 1 : 0;
             $alumno->observacion = $request->observacion;
-
-            if ($request->hasFile('foto')) {
-        
-                if ($alumno->foto) {
-                    Storage::disk('public')->delete($alumno->foto);
-                }
-                
-                $file = $request->file('foto');
-                if (str_starts_with($file->getMimeType(), 'image/')) {
-                    $alumno->foto = $this->storageController->store_image($file, 'alumnos');
-                } else {
-                    return 
-                    $alumno->foto = $file->store('alumnos', 'public');
-                }
-            }
 
             $alumno->update();
             DB::commit();

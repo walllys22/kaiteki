@@ -20,7 +20,6 @@ return new class extends Migration
             $table->foreignId('grado_id')->nullable()->constrained('grados');
             $table->smallInteger('status')->default(1);
             $table->text('observacion')->nullable();
-            $table->string('foto',600)->nullable();
 
             $table->softDeletes();
             $table->timestamps();

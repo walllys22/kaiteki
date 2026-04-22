@@ -34,8 +34,8 @@
 
         // Lógica de imagen similar a tu list.blade.php
         $image = asset('images/default.jpg');
-        if ($alumno->foto && Str::endsWith($alumno->foto, ['.jpg', '.jpeg', '.png', '.webp', '.avif'])) {
-            $image = asset('storage/' . str_replace('.avif', '', $alumno->foto) . '-cropped.webp');
+        if ($alumno->person->image) {
+            $image = asset('storage/' . str_replace('.avif', '', $alumno->person->image) . '-cropped.webp');
         }
     @endphp
     <div class="page-content read container-fluid">
@@ -49,7 +49,7 @@
                                 <h3 class="panel-title">Foto del Alumno</h3>
                             </div>
                             <div class="panel-body" style="padding-top:0;">
-                                @if ($alumno->foto && Str::endsWith($alumno->foto, ['.jpg', '.jpeg', '.png', '.webp', '.avif']))
+                                @if ($alumno->person->image && Str::endsWith($alumno->person->image, ['.jpg', '.jpeg', '.png', '.webp', '.avif']))
                                     <img src="{{ $image }}"
                                         style="width:150%; max-width:150px; border-radius: 5px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" />
                                 @else
