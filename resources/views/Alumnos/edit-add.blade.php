@@ -128,6 +128,42 @@
                 </div>
             </div>
         </div>
+
+        {{-- Modales de validación amarillos --}}
+        <div class="modal modal-warning fade" tabindex="-1" id="modal-alumno-exists" role="dialog">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title">Validación</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>Alumno ya existe <span class="nombre-dojo" style="font-weight: bold;"></span></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal modal-warning fade" tabindex="-1" id="modal-alumno-other-dojo" role="dialog">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title">Validación</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>Alumno registrado en el Dojo <span class="nombre-dojo" style="font-weight: bold;"></span></p>
+                        <p>para reistrar el alumno inactiva del Dojo <span class="nombre-dojo" style="font-weight: bold;"></span></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 @stop
 
@@ -157,25 +193,56 @@
         input:checked + .slider:before { transform: translateX(24px); }
 
         .status-label { font-weight: bold; font-size: 14px; transition: 0.3s; }
-
-
     </style>
+@stop
 
+@section('javascript')
     <script>
         function updateStatusText(checkbox) {
             const textLabel = document.getElementById('status-text');
-            
             if (checkbox.checked) {
-                // Estado Activo (1)
                 textLabel.innerText = 'Activo';
-                textLabel.style.color = '#5cb85c'; // Verde
+                textLabel.style.color = '#5cb85c';
             } else {
-                // Estado Inactivo (0)
                 textLabel.innerText = 'Inactivo';
-                textLabel.style.color = '#d9534f'; // Rojo
+                textLabel.style.color = '#d9534f';
             }
         }
+
+        $(document).ready(function() {
+            // Lógica de validación AJAX al cambiar de persona o de dojo
+            $('select[name="person_id"], select[name="dojo_id"]').on('change', function() {
+                // Siempre capturamos los valores actuales de ambos selectores
+                var person_id = $('select[name="person_id"]').val() || null;
+                var dojo_id = $('select[name="dojo_id"]').val();
+                
+                if (person_id && dojo_id) {
+                    // Obtenemos el ID del registro actual (vacío si es nuevo)
+                    let currentId = '{{ $dataTypeContent->id ?? "" }}';
+                    
+                    // Construimos la URL con los parámetros necesarios
+                    let url = '{{ route("alumnos.check_registration", ["person_id" => "TEMP_ID"]) }}'.replace('TEMP_ID', person_id);
+                    let params = [];
+                    if (currentId) params.push('id=' + currentId);
+                    if (dojo_id) params.push('dojo_id=' + dojo_id);
+                    
+                    if (params.length > 0) url += '?' + params.join('&');
+
+                    $.get(url, function(data) {
+                        // Actualizamos el nombre del dojo en todos los spans de los modales
+                        $('.nombre-dojo').text(data.dojo);
+
+                        if (data.status == 'exists') {
+                            $('#modal-alumno-exists').modal('show');
+                            // Limpiamos la selección para obligar a elegir otra persona
+                            $('select[name="person_id"]').val('').trigger('change');
+                        } else if (data.status == 'other_dojo') {
+                            $('#modal-alumno-other-dojo').modal('show');
+                            $('select[name="person_id"]').val('').trigger('change');
+                        }
+                    });
+                }
+            });
+        });
     </script>
-
-
 @stop

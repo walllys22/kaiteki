@@ -124,4 +124,64 @@ class AlumnoHistorialController extends Controller
 
         return back()->with(['message' => "El estado del alumno se cambió a $msg.", 'alert-type' => 'success']);
     }
+
+    /**
+     * Verifica si una persona ya está registrada como alumno activo o en la tabla de Dojos.
+     */
+    public function checkRegistration(Request $request, $person_id)
+    {
+        $exclude_id = $request->id; // Obtenemos el ID actual si estamos editando
+        $dojo_id = $request->dojo_id; // El Dojo seleccionado en el formulario
+    
+        // 1. Verificamos si el alumno está ACTIVO (status = 1).
+        // Si está activo, NO se puede registrar en ningún dojo (bloqueo total).
+        $alumno = Alumno::with('dojo')
+            ->where('person_id', $person_id)
+            ->where('status', 1)
+            ->when($exclude_id, function ($q) use ($exclude_id) {
+                return $q->where('id', '!=', $exclude_id);
+            })
+            ->first();
+    
+        if ($alumno) {
+            // Si el registro activo es del mismo Dojo que el seleccionado en el formulario
+            if ($alumno->dojo_id == $dojo_id) {
+                return response()->json(['status' => 'exists', 'dojo' => $alumno->dojo->nombre ?? 'N/A']);
+            }
+            // Si es un Dojo diferente, disparamos la advertencia de "registrado en otro dojo"
+            return response()->json(['status' => 'other_dojo', 'dojo' => $alumno->dojo->nombre ?? 'N/A']);
+        }
+
+        // 2. Verificamos si el alumno está INACTIVO (status = 0).
+        // El requerimiento dice: "debe dejar registrarlo siempre y cuando el dojo sea diferente".
+        // Por lo tanto, si es el MISMO dojo, bloqueamos el registro por duplicidad.
+        $alumnoInactivo = Alumno::with('dojo')
+            ->where('person_id', $person_id)
+            ->where('status', 0)
+            ->where('dojo_id', $dojo_id)
+            ->when($exclude_id, function ($q) use ($exclude_id) {
+                return $q->where('id', '!=', $exclude_id);
+            })
+            ->first();
+
+        if ($alumnoInactivo) {
+            return response()->json(['status' => 'exists', 'dojo' => $alumnoInactivo->dojo->nombre ?? 'N/A']);
+        }
+
+        // Verificamos si la persona está vinculada a un Dojo activo (status = 1)
+        // Pero excluimos el Dojo que se ha seleccionado en el formulario para permitir el registro
+        $dojo = \App\Models\Dojo::where('person_id', $person_id)
+            ->where('status', 1)
+            ->when($dojo_id, function ($q) use ($dojo_id) {
+                return $q->where('id', '!=', $dojo_id);
+            })
+            ->first();
+            
+        if ($dojo) {
+            return response()->json(['status' => 'other_dojo', 'dojo' => $dojo->nombre]);
+        }
+
+    
+        return response()->json(['status' => 'ok']);
+    }
 }
