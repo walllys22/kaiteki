@@ -58,6 +58,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
 
     //Rutas Alumnos Historial
     Route::get('alumnos/{id}/historial/browse', [AlumnoHistorialController::class, 'show'])->name('alumnos.historial.show');
+    Route::get('alumnos/{id}/historial/list', [AlumnoHistorialController::class, 'historialList']);
     
 
 

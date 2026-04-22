@@ -1,58 +1,60 @@
-<div class="col-md-12">
-    <div class="table-responsive">
-        <table id="dataTable" class="table table-bordered table-hover">
-            <thead>
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Grado</th>
+                <th>Aprobó</th>
+                <th>Observaciones</th>
+                <th class="actions text-right">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($historial as $item)
                 <tr>
-                    <th style="text-align: center">ID</th>
-                    <th style="text-align: center">Nombre Dojo</th>                    
-                    <th style="text-align: center">Nombre Completo</th>
-                    <th style="text-align: center">Ingreso</th>                    
-                    <th style="text-align: center">Horario</th>
-                    <th style="text-align: center">Grado</th>
-                    <th style="text-align: center">Estado</th>
-                    <th style="text-align: center">Acciones</th>
+                    <td>{{ \Carbon\Carbon::parse($item->fecha)->format('d/m/Y') }}</td>
+                    <td>{{ $item->tipo }}</td>
+                    <td>
+                        @if($item->grado)
+                            {{ $item->grado->tipo }} {{ $item->grado->numero }} {{ $item->grado->nombre }}
+                        @else
+                            <span class="text-muted">N/A</span>
+                        @endif
+                    </td>
+                    <td>
+                        @if(is_null($item->aprobo) || $item->aprobo === '')
+                            <span class="label label-default">Pendiente</span>
+                        @else
+                            <span class="label label-{{ $item->aprobo ? 'success' : 'danger' }}">
+                                {{ $item->aprobo ? 'Sí' : 'No' }}
+                            </span>
+                        @endif
+                    </td>
+                    <td>{{ $item->observaciones }}</td>
+                    <td class="no-sort no-click text-right">
+                        <button title="Eliminar" class="btn btn-sm btn-danger delete" onclick="deleteItem('{{ url('admin/alumnos/historial/delete/'.$item->id) }}')" data-toggle="modal" data-target="#delete_modal">
+                            <i class="voyager-trash"></i>
+                        </button>
+                    </td>
                 </tr>
-            </thead>
-            <tbody>
-                @forelse ($data as $item)
-                @php
-                    $image = asset('images/default.jpg');
-                    if($item->foto){
-                        $image = asset('storage/' . str_replace('.avif', '', $item->foto) . '-cropped.webp');
-                    }
-                @endphp
+            @empty
                 <tr>
-
+                    <td colspan="6" class="text-center">No hay registros de historial para este alumno.</td>
                 </tr>
-                @empty
-                    <tr>
-                        <td colspan="8">
-                            <h5 class="text-center" style="margin-top: 50px">
-                                <img src="{{ asset('images/empty.png') }}" width="120px" alt="" style="opacity: 0.8">
-                                <br><br>
-                                No hay resultados
-                            </h5>
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+            @endforelse
+        </tbody>
+    </table>
 </div>
 
-
+<div class="pull-right">
+    {{ $historial->appends(['search' => request('search'), 'paginate' => request('paginate')])->links() }}
+</div>
 
 <script>
-   
-   var page = "{{ request('page') }}";
-    $(document).ready(function(){
-        $('.page-link').click(function(e){
-            e.preventDefault();
-            let link = $(this).attr('href');
-            if(link){
-                page = link.split('=')[1];
-                list(page);
-            }
-        });
+    $('.pagination a').on('click', function(e) {
+        e.preventDefault();
+        let page = $(this).attr('href').split('page=')[1];
+        listHistorial(page);
     });
 </script>

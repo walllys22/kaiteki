@@ -124,7 +124,7 @@
                             <div style="padding-right: 20px;">
                                 @if (auth()->user()->hasPermission('add_alumnos'))
                                     <button class="btn btn-success btn-sm" data-toggle="modal"
-                                        data-target="#modal-add-tutor">
+                                        data-target="#modal-add-historial">
                                         <i class="voyager-plus"></i> <span>Agregar</span>
                                     </button>
                                 @endif
@@ -134,7 +134,7 @@
                             <div class="row">
                                 <div class="col-sm-9">
                                     <div class="dataTables_length">
-                                        <label>Mostrar <select id="select-paginate-tutor" class="form-control input-sm">
+                                        <label>Mostrar <select id="select-paginate-historial" class="form-control input-sm">
                                                 <option value="10">10</option>
                                                 <option value="25">25</option>
                                                 <option value="50">50</option>
@@ -156,4 +156,59 @@
             </div>
         </div>
     </div>
+@stop
+
+@section('javascript')
+    <script>
+        var countPageHistorial = 10;
+        var timeoutHistorial = null;
+
+        $(document).ready(function() {
+            listHistorial();
+
+            // Búsqueda en tiempo real
+            $('#input-search-historial').on('input', function() {
+                clearTimeout(timeoutHistorial);
+                timeoutHistorial = setTimeout(function() {
+                    listHistorial();
+                }, 1000);
+            });
+
+            // Búsqueda al presionar Enter
+            $('#input-search-historial').on('keyup', function(e) {
+                if (e.keyCode == 13) {
+                    clearTimeout(timeoutHistorial);
+                    listHistorial();
+                }
+            });
+
+            // Cambio de paginación
+            $('#select-paginate-historial').change(function() {
+                countPageHistorial = $(this).val();
+                listHistorial();
+            });
+        });
+
+        function listHistorial(page = 1) {
+            $('#div-historial-list').loading({
+                message: 'Cargando historial...'
+            });
+            let id = "{{ $alumno->id }}";
+            let search = $('#input-search-historial').val() ? $('#input-search-historial').val() : '';
+            let url = "{{ url('admin/alumnos') }}/" + id + "/historial/list";
+
+            $.ajax({
+                url: `${url}?search=${search}&paginate=${countPageHistorial}&page=${page}`,
+                type: 'get',
+                success: function(result) {
+                    $("#div-historial-list").html(result);
+                    $('#div-historial-list').loading('toggle');
+                },
+                error: function(err) {
+                    $("#div-historial-list").html('<p class="text-center">No se pudieron cargar los registros del historial.</p>');
+                    $('#div-historial-list').loading('toggle');
+                }
+            });
+        }
+    </script>
 @stop

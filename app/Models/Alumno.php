@@ -23,6 +23,24 @@ class Alumno extends Model
         ];
 
 
+    /**
+     * Los eventos "booted" del modelo.
+     */
+    protected static function booted()
+    {
+        static::created(function ($alumno) {
+            // Al crear un nuevo alumno, registramos automáticamente su historial de ingreso
+            \App\Models\AlumnoHistoriale::create([
+                'alumno_id'     => $alumno->id,
+                'grado_id'      => $alumno->grado_id,
+                'tipo'          => 'Ingreso',
+                'aprobo'        => null, // Se guarda vacío
+                'fecha'         => $alumno->entry_date,
+                'observaciones' => 'ingreso al dojo',
+            ]);
+        });
+    }
+
 
     public function dojo()
     {

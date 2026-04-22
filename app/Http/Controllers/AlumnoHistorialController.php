@@ -27,6 +27,27 @@ class AlumnoHistorialController extends Controller
         return view('alumnos.historial.browse', compact('grado', 'historial', 'dataTypeContent'));
     }
 
+    /**
+     * Obtiene la lista filtrada del historial para la petición AJAX.
+     */
+    public function historialList(Request $request, $id)
+    {
+        $this->custom_authorize('read_alumnos');
 
+        $search = $request->input('search');
+        $paginate = $request->input('paginate', 10);
 
+        $historial = AlumnoHistoriale::where('alumno_id', $id)
+            ->where(function($query) use ($search) {
+                if ($search) {
+                    $query->where('tipo', 'like', "%$search%")
+                          ->orWhere('observaciones', 'like', "%$search%");
+                }
+            })
+            ->with(['grado'])
+            ->orderBy('fecha', 'desc')
+            ->paginate($paginate);
+
+        return view('alumnos.historial.list', compact('historial'));
+    }
 }
