@@ -1,5 +1,5 @@
 <div class="table-responsive">
-    <table class="table table-hover">
+    <table id="dataTable" class="table table-bordered table-hover">
         <thead>
             <tr>
                 <th>Fecha</th>
@@ -10,7 +10,7 @@
                 <th class="actions text-right">Acciones</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody style="color: black;">
             @forelse($historial as $item)
                 <tr>
                     <td>{{ \Carbon\Carbon::parse($item->fecha)->format('d/m/Y') }}</td>
@@ -24,7 +24,7 @@
                     </td>
                     <td>
                         @if(is_null($item->aprobo) || $item->aprobo === '')
-                            <span class="label label-default">Pendiente</span>
+                            <span class="label label-default"></span>
                         @else
                             <span class="label label-{{ $item->aprobo ? 'success' : 'danger' }}">
                                 {{ $item->aprobo ? 'Sí' : 'No' }}

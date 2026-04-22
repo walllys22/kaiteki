@@ -13,7 +13,7 @@
                     <th style="text-align: center">Acciones</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody style="color: black;">
                 @forelse ($data as $item)
                 @php
                     $image = asset('images/default.jpg');
@@ -45,9 +45,7 @@
                         @endif
                     </td>
                     <td style="width: 18%" class="no-sort no-click bread-actions text-right">
-                            <a href="{{ route('alumnos.historial.show', $item->id) }}" title="Historial" class="btn btn-sm btn-success">
-                                <i class="fa-solid fa-file-pen"></i> <span class="hidden-xs hidden-sm"></span>
-                            </a>
+
                             @if (auth()->user()->hasPermission('read_alumnos'))
                             <a href="{{ route('voyager.alumnos.show', ['id' => $item->id]) }}" title="Ver" class="btn btn-sm btn-warning view">
                                 <i class="voyager-eye"></i> <span class="hidden-xs hidden-sm"></span>
@@ -59,10 +57,20 @@
                             </a>
                         @endif
                         @if (auth()->user()->hasPermission('delete_alumnos'))
-                            <a href="#" onclick="deleteItem('{{ route('voyager.alumnos.destroy', ['id' => $item->id]) }}')" title="Eliminar" data-toggle="modal" data-target="#modal-delete" class="btn btn-sm btn-danger delete">
+                            <a href="#" onclick="deleteItem('{{ route('voyager.alumnos.destroy', ['id' => $item->id]) }}')" title="Eliminar" class="btn btn-sm btn-danger delete">
                                 <i class="voyager-trash"></i> <span class="hidden-xs hidden-sm"></span>
                             </a>
                         @endif
+                        <div class="row" >
+                            <div class="btn group">
+                                <a href="{{ route('alumnos.historial.show', $item->id) }}" title="Historial" class="btn btn-sm btn-success">
+                                    <i class="fa-solid fa-file-pen"></i> <span class="hidden-xs hidden-sm"></span>
+                                </a>
+                                <a href="#" onclick="statusItem('{{ $item->id }}', '{{ $item->person->first_name }}', '{{ $item->dojo->nombre }}')" title="Estado" class="btn btn-sm btn-dark">
+                                    <i class="fa-solid fa-person-circle-xmark"></i> <span class="hidden-xs hidden-sm"></span>
+                                </a>
+                            </div>
+                        </div>
                     </td>
                 </tr>
                 @empty

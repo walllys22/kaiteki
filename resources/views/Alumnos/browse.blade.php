@@ -53,6 +53,72 @@
                 </div>
             </div>
         </div>
+
+        {{-- Custom modal for cannot delete --}}
+        <div class="modal modal-warning fade" tabindex="-1" id="modal-cannot-delete" role="dialog">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header" style="background-color: #f0ad4e; color: black;">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                    aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" style="color: black;"><i class="voyager-warning"></i> Advertencia</h4>
+                    </div>
+                    <div class="modal-body" style="color: black;">
+                        <p>El Alumno no se puede eliminar porque tiene un Historial.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default pull-right" data-dismiss="modal">Cancelar</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </div><!-- /.modal -->
+
+        {{-- Modal cambio de estado --}}
+        <div class="modal modal-warning fade" tabindex="-1" id="modal-status" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" style="color: black;"><i class="fa-solid fa-person-circle-xmark"></i> Cambio de esta del Alumno</h4>
+                    </div>
+                    <div class="modal-body" style="color: black;">
+                        <p><strong>Alumno:</strong> <span id="status-alumno-name"></span></p>
+                        <p><strong>Dojo:</strong> <span id="status-alumno-dojo"></span></p>
+                    </div>
+                    <div class="modal-footer" style="text-align: center; color: black;">
+                        <p>Esta seguro de cambiar el estado del alumno</p>
+                        <br>
+                        <form action="#" id="status_form" method="POST">
+                            @csrf
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-dark">cambiar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        {{-- Single delete modal --}}
+        <div class="modal modal-danger fade" tabindex="-1" id="modal-delete" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                    aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title"><i class="voyager-trash"></i> ¿Estás seguro de que quieres eliminar esto?</h4>
+                    </div>
+                    <div class="modal-footer">
+                        <form action="#" id="delete_form" method="POST">
+                            {{ method_field('DELETE') }}
+                            {{ csrf_field() }}
+                            <input type="submit" class="btn btn-danger pull-right delete-confirm" value="Sí, eliminar esto">
+                        </form>
+                        <button type="button" class="btn btn-default pull-right" data-dismiss="modal">Cancelar</button>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </div><!-- /.modal -->
     </div>
 @stop
 
@@ -108,8 +174,35 @@
             });
 
         }
+
+        function statusItem(id, name, dojo) {
+            let url = '{{ route("alumnos.status.update", ["id" => "TEMP_ID"]) }}'.replace('TEMP_ID', id);
+            $('#status_form').attr('action', url);
+            $('#status-alumno-name').text(name);
+            $('#status-alumno-dojo').text(dojo);
+            $('#modal-status').modal('show');
+        }
+
         function deleteItem(url){
-            $('#delete_form').attr('action', url);
+            // Extraer el ID del alumno de la URL de eliminación
+            const urlParts = url.split('/');
+            const alumnoId = urlParts[urlParts.length - 1];
+
+            $.ajax({
+                url: `{{ route('alumnos.check_historial', ['id' => 'TEMP_ID']) }}`.replace('TEMP_ID', alumnoId),
+                type: 'GET',
+                success: function(response) {
+                    if (response.has_historial) {
+                        $('#modal-cannot-delete').modal('show');
+                    } else {
+                        $('#delete_form').attr('action', url);
+                        $('#modal-delete').modal('show');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert('Ocurrió un error al verificar el historial del alumno. Por favor, inténtelo de nuevo.');
+                }
+            });
         }
     </script>
 @stop

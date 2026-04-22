@@ -50,4 +50,78 @@ class AlumnoHistorialController extends Controller
 
         return view('alumnos.historial.list', compact('historial'));
     }
+
+    /**
+     * Guarda un nuevo registro en el historial.
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'alumno_id' => 'required|exists:alumnos,id',
+            'grado_id'  => 'required|exists:grados,id',
+            'tipo'      => 'required|in:Repaso,Examen',
+            'aprobo'    => 'required|in:Si,No',
+            'fecha'     => 'required|date|after:today',
+        ]);
+
+        // Lógica: No duplicar grado si aprobo == "Si"
+        if ($request->aprobo == 'Si') {
+            $existeAprobado = AlumnoHistoriale::where('alumno_id', $request->alumno_id)
+                ->where('grado_id', $request->grado_id)
+                ->where('aprobo', 'Si')
+                ->exists();
+
+            if ($existeAprobado) {
+                return back()->with(['message' => 'Este alumno ya aprobó el grado seleccionado.', 'alert-type' => 'error']);
+            }
+        }
+
+        AlumnoHistoriale::create($request->all());
+
+        return back()->with(['message' => 'Historial registrado correctamente', 'alert-type' => 'success']);
+    }
+
+    /**
+     * Verifica si un alumno tiene registros en su historial.
+     */
+    public function checkHistorial($alumno_id)
+    {
+        $this->custom_authorize('read_alumnos'); // O el permiso adecuado para esta verificación
+
+        $hasHistorial = AlumnoHistoriale::where('alumno_id', $alumno_id)->exists();
+        return response()->json(['has_historial' => $hasHistorial]);
+    }
+
+    /**
+     * Cambia el estado del alumno y registra en el historial.
+     */
+    public function updateStatus($id)
+    {
+        $alumno = Alumno::findOrFail($id);
+        
+        // Alternar estado y definir observación
+        if ($alumno->status == 1) {
+            $alumno->status = 0;
+            $observacion = "Inactivacion";
+            $msg = "Inactivo";
+        } else {
+            $alumno->status = 1;
+            $observacion = "Activacion";
+            $msg = "Activo";
+        }
+
+        $alumno->save();
+
+        // Graba en AlumnoHistoriale.php
+        AlumnoHistoriale::create([
+            'alumno_id'     => $alumno->id,
+            'grado_id'      => $alumno->grado_id,
+            'tipo'          => '',
+            'aprobo'        => '',
+            'fecha'         => date('Y-m-d'),
+            'observaciones' => $observacion,
+        ]);
+
+        return back()->with(['message' => "El estado del alumno se cambió a $msg.", 'alert-type' => 'success']);
+    }
 }

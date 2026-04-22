@@ -138,6 +138,18 @@ class Controller extends BaseVoyagerBaseController
 
         $data->save();
 
+        // Registrar historial inicial si es un alumno nuevo
+        if ($slug == 'alumnos' && $data->wasRecentlyCreated) {
+            \App\Models\AlumnoHistoriale::create([
+                'alumno_id'     => $data->id,
+                'grado_id'      => $data->grado_id,
+                'tipo'          => 'Ingreso',
+                'aprobo'        => '',
+                'fecha'         => date('Y-m-d'),
+                'observaciones' => 'Ingreso al Dojo'
+            ]);
+        }
+
         // Save translations
         if (count($translations) > 0) {
             $data->saveTranslations($translations);

@@ -64,7 +64,7 @@
                         {{-- Columna de Datos --}}
                         <div class="col-md-9">
                             <div class="panel-heading" style="border-bottom:0;">
-                                <h3 class="panel-title">Información General {{ $alumno->id }}</h3>
+                                <h3 class="panel-title">Información General</h3>
                             </div>
                             <div class="panel-body" style="padding-top:0;">
                                 <div class="row">
@@ -147,12 +147,71 @@
                                         class="form-control">
                                 </div>
                             </div>
-                            <div id="div-historial-list">
+                            <div id="div-historial-list" style="color: black;">
                                 <p class="text-center">Cargando historial...</p>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal Agregar Historial --}}
+    <div class="modal fade" id="modal-add-historial" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form action="{{ route('alumnos.historial.store') }}" method="POST">
+                    @csrf
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title"><i class="voyager-plus"></i> Agregar Registro de Historial</h4>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="id" value=""> {{-- Campo ID oculto --}}
+                        <input type="hidden" name="alumno_id" value="{{ $alumno->id }}">
+
+                        <div class="form-group">
+                            <label for="grado_id">Grado</label>
+                            <select name="grado_id" class="form-control select2" required>
+                                <option value="">Seleccione un Grado</option>
+                                @foreach($grado as $item)
+                                    <option value="{{ $item->id }}">{{ $item->tipo }} {{ $item->numero }} {{ $item->nombre }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="tipo">Tipo</label>
+                            <select name="tipo" class="form-control" required>
+                                <option value="Repaso">Repaso</option>
+                                <option value="Examen">Examen</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="aprobo">¿Aprobó?</label>
+                            <select name="aprobo" class="form-control" required>
+                                <option value="Si">Si</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="fecha">Fecha</label>
+                            <input type="date" name="fecha" class="form-control" min="{{ date('Y-m-d', strtotime('+1 day')) }}" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="observaciones">Observaciones</label>
+                            <textarea name="observaciones" class="form-control" rows="3" placeholder="Ingrese las observaciones aquí..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

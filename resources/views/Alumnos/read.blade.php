@@ -68,7 +68,7 @@
                         {{-- Columna de Datos --}}
                         <div class="col-md-9">
                             <div class="panel-heading" style="border-bottom:0;">
-                                <h3 class="panel-title">Información General {{ $alumno->id }}</h3>
+                                <h3 class="panel-title">Información General </h3>
                             </div>
                             <div class="panel-body" style="padding-top:0;">
                                 <div class="row">
