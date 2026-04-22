@@ -57,7 +57,7 @@
                             </a>
                         @endif
                         @if (auth()->user()->hasPermission('delete_alumnos'))
-                            <a href="#" onclick="deleteItem('{{ route('voyager.alumnos.destroy', ['id' => $item->id]) }}')" title="Eliminar" class="btn btn-sm btn-danger delete">
+                            <a href="javascript:void(0);" onclick="deleteItem('{{ $item->id }}', '{{ route('voyager.alumnos.destroy', ['id' => $item->id]) }}')" title="Eliminar" class="btn btn-sm btn-danger">
                                 <i class="voyager-trash"></i> <span class="hidden-xs hidden-sm"></span>
                             </a>
                         @endif

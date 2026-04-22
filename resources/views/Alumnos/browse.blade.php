@@ -183,13 +183,9 @@
             $('#modal-status').modal('show');
         }
 
-        function deleteItem(url){
-            // Extraer el ID del alumno de la URL de eliminación
-            const urlParts = url.split('/');
-            const alumnoId = urlParts[urlParts.length - 1];
-
+        function deleteItem(alumnoId, url){
             $.ajax({
-                url: `{{ route('alumnos.check_historial', ['id' => 'TEMP_ID']) }}`.replace('TEMP_ID', alumnoId),
+                url: "{{ route('alumnos.check_historial', ['id' => 'TEMP_ID']) }}".replace('TEMP_ID', alumnoId),
                 type: 'GET',
                 success: function(response) {
                     if (response.has_historial) {
