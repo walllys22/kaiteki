@@ -136,7 +136,7 @@
                             <div class="row">
                                 <div class="col-sm-9">
                                     <div class="dataTables_length">
-                                        <label>Mostrar <select id="select-paginate-historial" class="form-control input-sm">
+                                        <label>Mostrar <select id="select-paginate-pagos" class="form-control input-sm">
                                                 <option value="10">10</option>
                                                 <option value="25">25</option>
                                                 <option value="50">50</option>
@@ -145,12 +145,12 @@
                                     </div>
                                 </div>
                                 <div class="col-sm-3" style="margin-bottom: 10px">
-                                    <input type="text" id="input-search-historial" placeholder="🔍 Buscar..."
+                                    <input type="text" id="input-search-pagos" placeholder="🔍 Buscar..."
                                         class="form-control">
                                 </div>
                             </div>
-                            <div id="div-historial-list" style="color: black;">
-                                <p class="text-center">Cargando historial...</p>
+                            <div id="div-pagos-list" style="color: black;">
+                                <p class="text-center">Cargando pagos...</p>
                             </div>
                         </div>
                     </div>
@@ -159,4 +159,37 @@
         </div>
     </div>
 
+@stop
+
+@section('javascript')
+    <script>
+        $(document).ready(function() {
+            listPagos();
+
+            $('#input-search-pagos').on('keyup', function() {
+                listPagos();
+            });
+
+            $('#select-paginate-pagos').on('change', function() {
+                listPagos();
+            });
+        });
+
+        function listPagos(page = 1) {
+            let search = $('#input-search-pagos').val();
+            let paginate = $('#select-paginate-pagos').val();
+            let url = "{{ url('admin/alumnos/'.$alumno->id.'/pagos/list') }}";
+            
+            $.ajax({
+                url: `${url}?page=${page}&search=${search}&paginate=${paginate}`,
+                type: 'GET',
+                success: function(data) {
+                    $('#div-pagos-list').html(data);
+                },
+                error: function() {
+                    $('#div-pagos-list').html('<p class="text-center text-danger">Error al cargar los datos.</p>');
+                }
+            });
+        }
+    </script>
 @stop
