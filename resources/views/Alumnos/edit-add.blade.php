@@ -11,6 +11,10 @@
 
 
 @section('content')
+    @php
+        $userDojoId = auth()->user()->dojo_id;
+        $isEditing = isset($dataTypeContent->id);
+    @endphp
     <div class="page-content edit-add container-fluid">
         <div class="row">
             <div class="col-md-12">
@@ -28,7 +32,7 @@
                             {{-- lista de Dojos --}}
                             <div class="form-group col-md-6">
                                 <label for="dojo_id">Nombre del Dojo</label>
-                                @if ($dataTypeContent)
+                                @if ($isEditing || $userDojoId)
                                     <select class="form-control select2" disabled>
                                         <option value="">Seleccione un Dojo</option>
                                         @foreach ($dojo as $dojos)
@@ -39,7 +43,7 @@
                                         @endforeach
                                     </select>
 
-                                    <input type="hidden" name="dojo_id" value="{{ $dataTypeContent->dojo_id }}">
+                                    <input type="hidden" name="dojo_id" value="{{ old('dojo_id', $dataTypeContent->dojo_id ?? $userDojoId) }}">
                                 @else
                                     <select name="dojo_id" class="form-control select2" required>
                                         <option value="">Seleccione un Dojo</option>
@@ -55,7 +59,7 @@
                             {{-- lista de personas --}}
                             <div class="form-group col-md-6">
                                 <label for="person_id">Nombre del Alumno</label>
-                                @if ($dataTypeContent)
+                                @if ($isEditing)
                                     <select class="form-control select2" disabled>
                                         @foreach ($people as $person)
                                             <option value="{{ $person->id }}"
@@ -67,15 +71,14 @@
 
                                     <input type="hidden" name="person_id" value="{{ $dataTypeContent->person_id }}">
                                 @else
-                                    <select name="person_id" class="form-control select2" required>
-                                        <option value="">Seleccione una persona</option>
-                                        @foreach ($people as $person)
-                                            <option value="{{ $person->id }}"
-                                                {{ old('person_id') == $person->id ? 'selected' : '' }}>
-                                                {{ $person->first_name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                    <div class="input-group">
+                                        <select name="person_id" id="select-person_id" required class="form-control"></select>
+                                        <span class="input-group-btn">
+                                            <button class="btn btn-primary" title="Nueva persona" data-target="#modal-create-person" data-toggle="modal" style="margin: 0px" type="button">
+                                                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                                            </button>
+                                        </span>
+                                    </div>
                                 @endif
                             </div>
 
@@ -153,6 +156,8 @@
         </div>
 
         {{-- Modales de validación amarillos --}}
+        @include('partials.modal-registerPerson')
+
         <div class="modal modal-warning fade" tabindex="-1" id="modal-alumno-exists" role="dialog">
             <div class="modal-dialog modal-sm">
                 <div class="modal-content">
@@ -282,13 +287,17 @@
 @stop
 
 @section('javascript')
+    <script src="{{ asset('js/include/person-select.js') }}"></script>
+    <script src="{{ asset('js/include/person-register.js') }}"></script>
+    <script src="{{ asset('js/btn-submit.js') }}"></script>
+
     <script>
         $(document).ready(function() {
             // Lógica de validación AJAX al cambiar de persona o de dojo
             $('select[name="person_id"], select[name="dojo_id"]').on('change', function() {
                 // Siempre capturamos los valores actuales de ambos selectores
                 var person_id = $('select[name="person_id"]').val() || null;
-                var dojo_id = $('select[name="dojo_id"]').val();
+                var dojo_id = $('select[name="dojo_id"]').val() || $('input[name="dojo_id"]').val();
 
                 if (person_id && dojo_id) {
                     // Obtenemos el ID del registro actual (vacío si es nuevo)

@@ -65,6 +65,17 @@ Este usuario representa un usuario vinculado a una persona y a un dojo.
 - Editar usuario obliga mantener sucursal/dojo.
 - Se mejoro `UserController` para validar mejor y evitar consultas inseguras.
 
+### Alumnos
+
+- Si el usuario logueado pertenece a un dojo, `AlumnoController`
+  toma internamente `auth()->user()->dojo_id` al crear o actualizar.
+- En la vista de alta/edicion de alumnos ya no necesita seleccionar dojo
+  cuando el usuario pertenece a una sucursal.
+- Si el usuario es global y no pertenece a un dojo, la vista permite
+  seleccionar la sucursal manualmente.
+- El listado, edicion y lectura de alumnos se filtran por `dojo_id`
+  cuando el usuario pertenece a una sucursal.
+
 ### Personas
 
 - El sistema ahora trabaja solo con `first_name`.
