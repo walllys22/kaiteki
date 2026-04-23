@@ -29,33 +29,6 @@
                         @endif
                         {{-- lista de dojo --}}
                         <div class="panel-body">
-                            {{-- lista de Dojos --}}
-                            <div class="form-group col-md-6">
-                                <label for="dojo_id">Nombre del Dojo</label>
-                                @if ($isEditing || $userDojoId)
-                                    <select class="form-control select2" disabled>
-                                        <option value="">Seleccione un Dojo</option>
-                                        @foreach ($dojo as $dojos)
-                                            <option value="{{ $dojos->id }}"
-                                                {{ old('dojo_id', $dataTypeContent->dojo_id) == $dojos->id ? 'selected' : '' }}>
-                                                {{ $dojos->nombre }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-
-                                    <input type="hidden" name="dojo_id" value="{{ old('dojo_id', $dataTypeContent->dojo_id ?? $userDojoId) }}">
-                                @else
-                                    <select name="dojo_id" class="form-control select2" required>
-                                        <option value="">Seleccione un Dojo</option>
-                                        @foreach ($dojo as $dojos)
-                                            <option value="{{ $dojos->id }}"
-                                                {{ old('dojo_id') == $dojos->id ? 'selected' : '' }}>
-                                                {{ $dojos->nombre }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                @endif
-                            </div>
                             {{-- lista de personas --}}
                             <div class="form-group col-md-6">
                                 <label for="person_id">Nombre del Alumno</label>
@@ -83,7 +56,7 @@
                             </div>
 
                             {{-- Fecha Ingreso --}}
-                            <div class="form-group col-md-4">
+                            <div class="form-group col-md-2">
                                 <label for="fechainicio">Fecha Ingreso</label>
                                 <input type="date" class="form-control" name="entry_date"
                                     value="{{ old('entry_date', $dataTypeContent->entry_date) }}" required>
@@ -112,6 +85,19 @@
                                         <option value="{{ $grados->id }}"
                                             {{ old('grado_id', $dataTypeContent->grado_id) == $grados->id ? 'selected' : '' }}>
                                             {{ $grados->tipo }} {{ $grados->numero }} {{ $grados->nombre }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            {{-- Tipo de sangre --}}
+                            <div class="form-group col-md-4">
+                                <label for="tipoSangre">Tipo de Sangre</label>
+                                <select name="tipoSangre" class="form-control select2">
+                                    <option value="">Seleccione un tipo de sangre</option>
+                                    @foreach ($bloodTypes as $bloodType)
+                                        <option value="{{ $bloodType }}"
+                                            {{ old('tipoSangre', $dataTypeContent->tipoSangre) == $bloodType ? 'selected' : '' }}>
+                                            {{ $bloodType }}
                                         </option>
                                     @endforeach
                                 </select>

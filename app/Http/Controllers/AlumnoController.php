@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 
 class AlumnoController extends Controller
 {
-        protected $storageController;
+    protected $storageController;
 
     public function __construct()
     {
@@ -35,6 +35,11 @@ class AlumnoController extends Controller
         }
 
         return $request->dojo_id;
+    }
+
+    protected function bloodTypes(): array
+    {
+        return ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
     }
 
     public function index()
@@ -86,7 +91,9 @@ class AlumnoController extends Controller
             })
             ->get();
         $dataTypeContent = new Alumno(); // Objeto vacío para la vista
-        return view('alumnos.edit-add', compact('dojo', 'people', 'grado', 'horario', 'dataTypeContent'));
+        $bloodTypes = $this->bloodTypes();
+
+        return view('alumnos.edit-add', compact('dojo', 'people', 'grado', 'horario', 'dataTypeContent', 'bloodTypes'));
     }
 
 
@@ -105,6 +112,7 @@ class AlumnoController extends Controller
             'entry_date' => 'required|date',
             'horario_id' => 'required|exists:horarios,id',
             'grado_id' => 'required|exists:grados,id',
+            'tipoSangre' => 'nullable|in:' . implode(',', $this->bloodTypes()),
             'status' => 'required|integer',
             'observacion' => 'nullable|string|max:255',
         ]);
@@ -116,6 +124,7 @@ class AlumnoController extends Controller
                 'entry_date' => $request->entry_date,
                 'horario_id' => $request->horario_id,
                 'grado_id' => $request->grado_id,
+                'tipoSangre' => $request->tipoSangre,
                 'status' => $request->status,
                 'observacion' => $request->observacion,
             ]);
@@ -147,9 +156,9 @@ class AlumnoController extends Controller
                 return $query->where('id', $userDojoId);
             })
             ->get();
+        $bloodTypes = $this->bloodTypes();
 
-
-        return view('alumnos.edit-add', compact('dojo', 'people', 'grado', 'horario', 'dataTypeContent'));
+        return view('alumnos.edit-add', compact('dojo', 'people', 'grado', 'horario', 'dataTypeContent', 'bloodTypes'));
         
     }
 
@@ -194,6 +203,7 @@ class AlumnoController extends Controller
             'entry_date' => 'required|date',
             'horario_id' => 'required',
             'grado_id' => 'required',
+            'tipoSangre' => 'nullable|in:' . implode(',', $this->bloodTypes()),
             'status' => 'nullable', // Permitimos nullable para manejar el checkbox desmarcado
             'observacion' => 'nullable|string|max:255',
         ]);
@@ -210,6 +220,7 @@ class AlumnoController extends Controller
             $alumno->entry_date = $request->entry_date;
             $alumno->horario_id = $request->horario_id;
             $alumno->grado_id = $request->grado_id;
+            $alumno->tipoSangre = $request->tipoSangre;
             $alumno->status = $request->status ? 1 : 0;
             $alumno->observacion = $request->observacion;
 
