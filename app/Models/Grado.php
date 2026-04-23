@@ -13,5 +13,16 @@ class Grado extends Model
 
     protected $dates = ['deleted_at'];
 
-    protected $fillable = ['tipo', 'numero', 'nombre', 'deleted_at'];
+    protected $fillable = [
+        'tipo', 'numero', 'nombre', 
+
+        'status',
+
+        'registerUser_id',
+        'registerRole',
+        'deleted_at',
+        'deleteUser_id',
+        'deleteRole',
+        'deleteObservation',
+    ];
 }
