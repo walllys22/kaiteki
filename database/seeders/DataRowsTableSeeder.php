@@ -709,7 +709,7 @@ class DataRowsTableSeeder extends Seeder
             ),
             900 => 
             array (
-                'id' => 107,
+                'id' => 252,
                 'data_type_id' => 1,
                 'field' => 'dojo_id',
                 'type' => 'text',
