@@ -31,13 +31,20 @@ class AjaxController extends Controller
     }
 
     public function personStore(Request $request){
+        $request->validate([
+            'dojo_id' => 'nullable|exists:dojos,id',
+            'ci' => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'gender' => 'required|string|max:50',
+        ]);
+
         $person = Person::withTrashed()->where('ci', $request->ci)->first();
         if ($person) {
             return response()->json(['error' => 'El CI ya se encuentra registrado a nombre de: ' . $person->first_name . ' ' . $person->paternal_surname]);
         }
         DB::beginTransaction();
         try {
-            $person =Person::create($request->all());
+            $person = Person::create($request->all());
             DB::commit();
             return response()->json(['person' => $person]);
         } catch (\Throwable $th) {

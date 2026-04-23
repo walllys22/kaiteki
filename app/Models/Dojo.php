@@ -37,4 +37,9 @@ class Dojo extends Model
     {
         return $this->hasMany(User::class, 'dojo_id');
     }
+
+    public function people()
+    {
+        return $this->hasMany(Person::class, 'dojo_id');
+    }
 }

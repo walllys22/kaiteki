@@ -8,24 +8,11 @@
                 </div>
                 <div class="modal-body">
                     @csrf
+                    <input type="hidden" name="dojo_id" id="modal_person_dojo_id">
                     <div class="row">
-                        <div class="form-group col-md-6">
-                            <label for="full_name">Primer Nombre <span class="text-danger">*</span></label>
+                        <div class="form-group col-md-12">
+                            <label for="full_name">Primer completo <span class="text-danger">*</span></label>
                             <input type="text" name="first_name" class="form-control" placeholder="Juan" required>
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label for="full_name">Segundo Nombre (Opcional)</label>
-                            <input type="text" name="middle_name" class="form-control" placeholder="Daniel">
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="form-group col-md-6">
-                            <label for="full_name">Apellido Paterno <span class="text-danger">*</span></label>
-                            <input type="text" name="paternal_surname" class="form-control" placeholder="Perez" required>
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label for="full_name">Apellido Materno</label>
-                            <input type="text" name="maternal_surname" class="form-control" placeholder="Ortiz" >
                         </div>
                     </div>
                     <div class="row">

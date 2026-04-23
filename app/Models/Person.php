@@ -15,6 +15,7 @@ class Person extends Model
 
     protected $fillable = [
         'documentType',
+        'dojo_id',
         'ci',
         'first_name',
         // 'middle_name',
@@ -36,4 +37,9 @@ class Person extends Model
         'deleteRole',
         'deleteObservation',
     ];
+
+    public function dojo()
+    {
+        return $this->belongsTo(Dojo::class, 'dojo_id');
+    }
 }
