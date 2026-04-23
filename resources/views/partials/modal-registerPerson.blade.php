@@ -1,4 +1,8 @@
 <form action="{{ url('admin/ajax/person/store') }}" id="create-form-person" method="POST">
+    @php
+        $userDojoId = auth()->user()->dojo_id;
+        $dojos = \App\Models\Dojo::whereNull('deleted_at')->orderBy('nombre')->get();
+    @endphp
     <div class="modal fade" tabindex="-1" id="modal-create-person" role="dialog">
         <div class="modal-dialog modal-primary">
             <div class="modal-content">
@@ -8,8 +12,31 @@
                 </div>
                 <div class="modal-body">
                     @csrf
-                    <input type="hidden" name="dojo_id" id="modal_person_dojo_id">
                     <input type="hidden" name="status" value="1">
+
+                    <div class="row">
+                        <div class="form-group col-md-12">
+                            <label for="modal_person_dojo_select">Sucursal / Dojo @if(!$userDojoId)<span class="text-danger">*</span>@endif</label>
+                            @if ($userDojoId)
+                                <select id="modal_person_dojo_select" class="form-control" disabled>
+                                    @foreach ($dojos as $dojo)
+                                        <option value="{{ $dojo->id }}" {{ (string) $userDojoId === (string) $dojo->id ? 'selected' : '' }}>
+                                            {{ $dojo->nombre }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <input type="hidden" name="dojo_id" id="modal_person_dojo_id" value="{{ $userDojoId }}">
+                                <small class="text-muted">La persona se registrara en tu sucursal asignada.</small>
+                            @else
+                                <select name="dojo_id" id="modal_person_dojo_select" class="form-control" required>
+                                    <option value="">Seleccione una sucursal</option>
+                                    @foreach ($dojos as $dojo)
+                                        <option value="{{ $dojo->id }}">{{ $dojo->nombre }}</option>
+                                    @endforeach
+                                </select>
+                            @endif
+                        </div>
+                    </div>
 
                     <div class="row">
                         <div class="form-group col-md-4">

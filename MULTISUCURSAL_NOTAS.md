@@ -83,6 +83,9 @@ Este usuario representa un usuario vinculado a una persona y a un dojo.
   `middle_name`, `paternal_surname`, `maternal_surname`, `last_name`.
 - El modal de registro de persona ahora envia:
   `documentType`, `dojo_id`, `status`, `first_name`, `ci`, `gender`, etc.
+- En el modal de registro de persona:
+  si el usuario tiene `dojo_id`, el dojo se muestra fijo y no puede cambiarse.
+- Si el usuario no tiene `dojo_id`, el modal permite seleccionar la sucursal manualmente.
 - Si el usuario logueado pertenece a un dojo, `PersonController`
   toma internamente `auth()->user()->dojo_id`.
 - En ese caso, el backend ya no depende de que la interfaz mande el dojo correcto.
