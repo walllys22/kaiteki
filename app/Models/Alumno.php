@@ -16,6 +16,7 @@ class Alumno extends Model
             'entry_date',
             'horario_id',
             'grado_id',
+            'tipoSangre',
             'status',
             'observacion',
             'deleted_at'

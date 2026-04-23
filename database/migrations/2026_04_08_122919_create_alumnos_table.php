@@ -18,6 +18,7 @@ return new class extends Migration
             $table->date('entry_date')->nullable();
             $table->foreignId('horario_id')->nullable()->constrained('horarios');
             $table->foreignId('grado_id')->nullable()->constrained('grados');
+            $table->string('tipoSangre')->nullable();
             $table->smallInteger('status')->default(1);
             $table->text('observacion')->nullable();
 
