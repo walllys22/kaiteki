@@ -20,5 +20,8 @@ class DatabaseSeeder extends Seeder
         $this->call(PeopleTableSeeder::class);
         $this->call(DojosTableSeeder::class);
         $this->call(DojoUsersTableSeeder::class);
+        $this->call(DataRowsTableSeeder::class);
+        $this->call(DataTypesTableSeeder::class);
+        $this->call(MenuItemsTableSeeder::class);
     }
 }
