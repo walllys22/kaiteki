@@ -15,9 +15,6 @@
 
 @section('content')
     <div class="page-content container-fluid">
-        @php
-            $dojos = \App\Models\Dojo::whereNull('deleted_at')->orderBy('nombre')->get();
-        @endphp
         <form class="form-edit-add" role="form"
               action="@if(!is_null($dataTypeContent->getKey())){{ route('voyager.'.$dataType->slug.'.update', $dataTypeContent->getKey()) }}@else{{ route('voyager.'.$dataType->slug.'.store') }}@endif"
               {{-- action="@if(!is_null($dataTypeContent->getKey())){{ route('update.users', $dataTypeContent->getKey()) }}@else{{ route('store.users') }}@endif" --}}
@@ -71,15 +68,14 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="dojo_id">Sucursal / Dojo</label>
-                                <select name="dojo_id" id="dojo_id" class="form-control select2" required>
-                                    <option value="" disabled {{ old('dojo_id', $dataTypeContent->dojo_id ?? '') ? '' : 'selected' }}>Seleccione una sucursal</option>
-                                    @foreach ($dojos as $dojo)
-                                        <option value="{{ $dojo->id }}" {{ (string) old('dojo_id', $dataTypeContent->dojo_id ?? '') === (string) $dojo->id ? 'selected' : '' }}>
-                                            {{ $dojo->nombre }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                                <label for="dojo_name_display">Sucursal / Dojo</label>
+                                @if(!$dataTypeContent->getKey())
+                                    <input type="text" id="dojo_name_display" class="form-control" value="" placeholder="Se asignara automaticamente desde la persona seleccionada" readonly>
+                                    <input type="hidden" name="dojo_id" id="dojo_id" value="">
+                                @else
+                                    <input type="text" id="dojo_name_display" class="form-control" value="{{ $dataTypeContent->dojo->nombre ?? 'Sin sucursal asignada' }}" readonly>
+                                    <input type="hidden" name="dojo_id" id="dojo_id" value="{{ $dataTypeContent->dojo_id }}">
+                                @endif
                             </div>
 
                             <div class="form-group">
@@ -196,6 +192,14 @@
     <script>
         $('document').ready(function () {
             $('.toggleswitch').bootstrapToggle();
+
+            $('#select-person_id').on('change', function () {
+                const dojoName = window.personSelected && window.personSelected.dojo ? window.personSelected.dojo.nombre : '';
+                const dojoId = window.personSelected && window.personSelected.dojo_id ? window.personSelected.dojo_id : '';
+
+                $('#dojo_name_display').val(dojoName || 'Sin sucursal asignada');
+                $('#dojo_id').val(dojoId);
+            });
         });
     </script>
 @stop

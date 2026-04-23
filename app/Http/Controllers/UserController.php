@@ -45,7 +45,6 @@ class UserController extends Controller
     {
         $request->validate([
             'person_id' => 'required|exists:people,id',
-            'dojo_id' => 'required|exists:dojos,id',
             'role_id' => 'required|exists:roles,id',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6',
@@ -60,7 +59,7 @@ class UserController extends Controller
         try {
             User::create([
                 'person_id' => $request->person_id,
-                'dojo_id' => $request->dojo_id,
+                'dojo_id' => $person->dojo_id,
                 'name' => $person->first_name,
                 'role_id' => $request->role_id,
                 'email' => $request->email,
@@ -87,7 +86,6 @@ class UserController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'dojo_id' => 'required|exists:dojos,id',
             'role_id' => 'nullable|exists:roles,id',
             'password' => 'nullable|string|min:6',
         ]);
@@ -95,11 +93,11 @@ class UserController extends Controller
         DB::beginTransaction();
 
         try {
-            $user = User::findOrFail($id);
+            $user = User::with('person')->findOrFail($id);
 
             $user->update([
                 'status' => $request->status ? 1 : 0,
-                'dojo_id' => $request->dojo_id,
+                'dojo_id' => $user->person->dojo_id ?? null,
             ]);
 
             if ($request->role_id) {

@@ -64,6 +64,10 @@ Este usuario representa un usuario vinculado a una persona y a un dojo.
 - Crear usuario obliga seleccionar sucursal/dojo.
 - Editar usuario obliga mantener sucursal/dojo.
 - Se mejoro `UserController` para validar mejor y evitar consultas inseguras.
+- En usuarios, `dojo_id` ahora se toma desde la persona seleccionada:
+  `users.dojo_id = people.dojo_id`.
+- La vista de usuarios ya no selecciona dojo manualmente; solo lo muestra
+  como dato informativo segun la persona elegida.
 
 ### Alumnos
 
