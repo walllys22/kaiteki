@@ -1,6 +1,8 @@
 @php
     $edit = !is_null($dataTypeContent->getKey());
     $add  = is_null($dataTypeContent->getKey());
+    $userDojoId = auth()->check() ? auth()->user()->dojo_id : null;
+    $breadDojos = null;
 @endphp
 
 @extends('voyager::master')
@@ -88,7 +90,32 @@
                                     {{ $row->slugify }}
                                     <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
                                     @include('voyager::multilingual.input-hidden-bread-edit-add')
-                                    @if ($add && isset($row->details->view_add))
+                                    @if ($dataType->slug === 'people' && $row->field === 'dojo_id' && $add)
+                                        @php
+                                            $breadDojos = $breadDojos ?? \App\Models\Dojo::whereNull('deleted_at')->orderBy('nombre')->get();
+                                            $selectedDojoId = old('dojo_id', $userDojoId);
+                                        @endphp
+                                        @if ($userDojoId)
+                                            <select class="form-control select2" disabled>
+                                                @foreach ($breadDojos as $dojo)
+                                                    <option value="{{ $dojo->id }}" {{ (string) $selectedDojoId === (string) $dojo->id ? 'selected' : '' }}>
+                                                        {{ $dojo->nombre }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            <input type="hidden" name="dojo_id" value="{{ $selectedDojoId }}">
+                                            <small class="text-muted">La persona se registrara en tu sucursal asignada.</small>
+                                        @else
+                                            <select name="dojo_id" class="form-control select2" required>
+                                                <option value="">Seleccione una sucursal</option>
+                                                @foreach ($breadDojos as $dojo)
+                                                    <option value="{{ $dojo->id }}" {{ (string) old('dojo_id') === (string) $dojo->id ? 'selected' : '' }}>
+                                                        {{ $dojo->nombre }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        @endif
+                                    @elseif ($add && isset($row->details->view_add))
                                         @include($row->details->view_add, ['row' => $row, 'dataType' => $dataType, 'dataTypeContent' => $dataTypeContent, 'content' => $dataTypeContent->{$row->field}, 'view' => 'add', 'options' => $row->details])
                                     @elseif ($edit && isset($row->details->view_edit))
                                         @include($row->details->view_edit, ['row' => $row, 'dataType' => $dataType, 'dataTypeContent' => $dataTypeContent, 'content' => $dataTypeContent->{$row->field}, 'view' => 'edit', 'options' => $row->details])
