@@ -19,9 +19,9 @@ return new class extends Migration
             $table->string('ci')->nullable();
 
             $table->string('first_name')->nullable();
-            $table->string('middle_name')->nullable();
-            $table->string('paternal_surname')->nullable();
-            $table->string('maternal_surname')->nullable();
+            // $table->string('middle_name')->nullable();
+            // $table->string('paternal_surname')->nullable();
+            // $table->string('maternal_surname')->nullable();
 
             $table->date('birth_date')->nullable();
             $table->string('email')->nullable();
