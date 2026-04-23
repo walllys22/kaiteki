@@ -66,7 +66,7 @@
                                     <div class="col-md-4 form-group">
                                         <label class="control-label" style="font-weight:bold;">Nombre Completo</label>
                                         <p class="form-control-static">
-                                            {{ $person->first_name }} {{ $person->middle_name }} {{ $person->paternal_surname }} {{ $person->maternal_surname }}
+                                            {{ $person->first_name }}
                                         </p>
                                     </div>
                                     <div class="col-md-4 form-group">

@@ -38,7 +38,7 @@ var personSelected;
                 templateSelection: (opt) => {
                     window.personSelected = opt; // Guarda en variable global
                     // personSelected = opt;
-                    return opt.first_name?opt.first_name+' '+ (opt.middle_name?opt.middle_name+' ':'')+opt.paternal_surname+(opt.maternal_surname?' '+opt.maternal_surname:''):'<i class="fa fa-search"></i> Buscar... ';
+                    return opt.first_name ? opt.first_name : '<i class="fa fa-search"></i> Buscar... ';
                 }
             }).change(function(){
                 if(window.personSelected){
@@ -69,7 +69,7 @@ var personSelected;
                             </div>
                             <div>
                                 <small>CI: </small><b style="font-size: 15px; color: black">${option.ci?option.ci:'No definido'}</b><br>
-                                <b style="font-size: 15px; color: black">${option.first_name} ${option.middle_name?option.middle_name:''} ${option.paternal_surname} ${option.maternal_surname?option.maternal_surname:''}</b>
+                                <b style="font-size: 15px; color: black">${option.first_name || 'Sin nombre'}</b>
                             </div>
                         </div>
                         `);

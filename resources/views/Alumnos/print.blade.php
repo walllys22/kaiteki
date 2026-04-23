@@ -93,7 +93,7 @@
         <tbody>
             @foreach($alumnos as $alumno)
             <tr>
-                <td>{{ $alumno->person->first_name }} {{ $alumno->person->last_name ?? '' }}</td>
+                <td>{{ $alumno->person->first_name }}</td>
                 <td>{{ $alumno->dojo->nombre ?? 'N/A' }}</td>
                 <td>
                     {{ $alumno->grado->tipo ?? '' }} 

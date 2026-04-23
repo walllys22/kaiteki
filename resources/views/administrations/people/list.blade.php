@@ -30,7 +30,7 @@
                         <div style="display: flex; align-items: center;">
                             <img src="{{ $image }}" alt="{{ $item->first_name }}" class="image-expandable" style="width: 60px; height: 60px; border-radius: 30px; margin-right: 10px; object-fit: cover;">
                             <div>
-                                {{ strtoupper($item->first_name) }} {{ $item->middle_name ? strtoupper($item->middle_name) : '' }} {{ strtoupper($item->paternal_surname) }}  {{ strtoupper($item->maternal_surname) }}
+                                {{ strtoupper($item->first_name) }}
                             </div>
                         </div>
                     </td>

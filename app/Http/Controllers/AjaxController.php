@@ -14,18 +14,15 @@ class AjaxController extends Controller
 
     public function personList(){
         $q = request('q');
-        $data = Person::OrWhereRaw($q ? "ci like '%$q%'" : 1)
-                        ->OrWhereRaw($q ? "phone like '%$q%'" : 1)
-                        ->OrWhereRaw($q ? "first_name like '%$q%'" : 1)
-                        ->OrWhereRaw($q ? "middle_name like '%$q%'" : 1)
-                        ->OrWhereRaw($q ? "paternal_surname like '%$q%'" : 1)
-                        ->OrWhereRaw($q ? "maternal_surname like '%$q%'" : 1)
-                        ->orWhere(function ($subQ) use ($q) {
-                            $subQ->whereRaw("CONCAT(COALESCE(first_name, ''), ' ', COALESCE(middle_name, '')) like ?", ["%$q%"])
-                                ->orWhereRaw("CONCAT(COALESCE(first_name, ''), ' ', COALESCE(paternal_surname, ''), ' ', COALESCE(maternal_surname, '')) like ?", ["%$q%"])
-                                ->orWhereRaw("CONCAT(COALESCE(first_name, ''), ' ', COALESCE(middle_name, ''), ' ', COALESCE(paternal_surname, ''), ' ', COALESCE(maternal_surname, '')) like ?", ["%$q%"]);
+        $data = Person::query()
+                        ->when($q, function ($query, $q) {
+                            $query->where(function ($subQ) use ($q) {
+                                $subQ->where('ci', 'like', "%$q%")
+                                    ->orWhere('phone', 'like', "%$q%")
+                                    ->orWhere('first_name', 'like', "%$q%");
+                            });
                         })
-                        ->where('deleted_at', null)
+                        ->whereNull('deleted_at')
                         ->get();
         return response()->json($data);
     }

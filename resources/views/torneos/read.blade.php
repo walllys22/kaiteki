@@ -104,8 +104,7 @@
                                 <div class="row">
                                     <div class="col-md-6 form-group">
                                         <label class="control-label" style="font-weight:bold;">Persona Responsable</label>
-                                        <p class="form-control-static">{{ $torneo->person->first_name }}
-                                            {{ $torneo->person->paternal_surname }}</p>
+                                        <p class="form-control-static">{{ $torneo->person->first_name }}</p>
                                     </div>
                                     <div class="col-md-6 form-group">
                                         <label class="control-label" style="font-weight:bold;">Fecha de Registro</label>

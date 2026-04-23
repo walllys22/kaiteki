@@ -28,7 +28,7 @@
                                 <img src="{{ $image }}" alt="{{ $item->person->first_name }}" class="image-expandable" style="width: 60px; height: 60px; border-radius: 30px; margin-right: 10px; object-fit: cover;">
                                 <div>
                                     <small>CI:</small> {{$item->person->ci}} <br>
-                                    {{ strtoupper($item->person->first_name) }} {{ strtoupper($item->person->last_name) }}
+                                    {{ strtoupper($item->person->first_name) }}
                                 </div>
                             </div>
                         @else
