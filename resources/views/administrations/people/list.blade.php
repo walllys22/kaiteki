@@ -63,7 +63,6 @@
                         @endif
                     </td>
                     <td style="text-align: center">
-                        hola
                         @if ($item->status==1)  
                             <label class="label label-success">Activo</label>
                         @else

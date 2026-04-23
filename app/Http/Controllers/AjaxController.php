@@ -32,10 +32,11 @@ class AjaxController extends Controller
 
     public function personStore(Request $request){
         $request->validate([
+            'documentType' => 'required|string|in:Ci,Nit',
             'dojo_id' => 'nullable|exists:dojos,id',
             'ci' => 'required|string|max:255',
             'first_name' => 'required|string|max:255',
-            'gender' => 'required|string|max:50',
+            'gender' => 'required|string|in:Masculino,Femenino',
         ]);
 
         $person = Person::withTrashed()->where('ci', $request->ci)->first();
