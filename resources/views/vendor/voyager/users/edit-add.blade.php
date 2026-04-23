@@ -47,14 +47,14 @@
                             @if (!$dataTypeContent->getKey())
                                 <div class="form-group">
                                     <label for="customer_id">Persona</label>
-                                    {{-- <div class="input-group"> --}}
+                                    <div class="input-group">
                                         <select name="person_id" id="select-person_id" required class="form-control"></select>
-                                        {{-- <span class="input-group-btn">
+                                        <span class="input-group-btn">
                                             <button class="btn btn-primary" title="Nueva persona" data-target="#modal-create-person" data-toggle="modal" style="margin: 0px" type="button">
                                                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
                                             </button>
-                                        </span> --}}
-                                    {{-- </div> --}}
+                                        </span>
+                                    </div>
                                 </div>
                             @endif
                             
