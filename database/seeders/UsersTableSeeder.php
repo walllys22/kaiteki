@@ -24,7 +24,7 @@ class UsersTableSeeder extends Seeder
                 'id' => 1,
                 'role_id' => 1,
                 'name' => 'Admin',
-                'email' => 'admin@root.com',
+                'email' => 'admin@admin.com',
                 'avatar' => 'users/default.png',
                 'email_verified_at' => NULL,
                 'password' => '$2y$10$ILLZfhsbwinK3235ceVa7O0mj3M5fr33wb3z28aDqiBWLwBfSUzYy',
