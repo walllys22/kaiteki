@@ -81,6 +81,11 @@ Este usuario representa un usuario vinculado a una persona y a un dojo.
   igual puede registrar personas; en ese caso `people.dojo_id` queda `null`.
 - El registro rapido por modal (`AjaxController@personStore`) sigue la misma regla:
   prioriza el `dojo_id` del usuario logueado y solo usa el formulario para usuarios globales.
+- `PersonController@list` y `PersonController@show` aplican el filtro por dojo
+  directamente con `where('dojo_id', auth()->user()->dojo_id)` cuando corresponde.
+- `AjaxController@personList` aplica el mismo criterio para el buscador/select AJAX.
+- Si el usuario tiene `dojo_id`, solo ve personas de su dojo.
+- Si el usuario no tiene `dojo_id`, ve todas las personas.
 
 ### BREAD / Voyager
 

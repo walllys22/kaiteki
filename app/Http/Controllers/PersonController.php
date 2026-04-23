@@ -38,6 +38,7 @@ class PersonController extends Controller
     {
         $search = request('search') ?? null;
         $paginate = request('paginate') ?? 10;
+        $userDojoId = auth()->user()->dojo_id;
 
         $data = Person::query()
             ->when($search, function ($query, $search) {
@@ -47,6 +48,9 @@ class PersonController extends Controller
                         ->orWhere('phone', 'like', "%$search%")
                         ->orWhere('first_name', 'like', "%$search%");
                 });
+            })
+            ->when($userDojoId, function ($query, $userDojoId) {
+                return $query->where('dojo_id', $userDojoId);
             })
             ->whereNull('deleted_at')
             ->orderBy('id', 'DESC')
@@ -58,9 +62,7 @@ class PersonController extends Controller
     public function store(Request $request)
     {
         $this->custom_authorize('add_people');
-        // return $request;
         $dojoId = $this->resolveDojoIdFromContext($request);
-        return $dojoId;
 
         $request->validate([
             'documentType' => 'required|string|in:Ci,Nit',
@@ -165,7 +167,13 @@ class PersonController extends Controller
     public function show($id)
     {
         $this->custom_authorize('read_people');
-        $person = Person::findOrFail($id);
+        $userDojoId = auth()->user()->dojo_id;
+
+        $person = Person::query()
+            ->when($userDojoId, function ($query, $userDojoId) {
+                return $query->where('dojo_id', $userDojoId);
+            })
+            ->findOrFail($id);
 
         return view('administrations.people.read', compact('person'));
     }

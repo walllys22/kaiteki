@@ -25,6 +25,8 @@ class AjaxController extends Controller
 
     public function personList(){
         $q = request('q');
+        $userDojoId = auth()->user()->dojo_id;
+
         $data = Person::query()
                         ->when($q, function ($query, $q) {
                             $query->where(function ($subQ) use ($q) {
@@ -32,6 +34,9 @@ class AjaxController extends Controller
                                     ->orWhere('phone', 'like', "%$q%")
                                     ->orWhere('first_name', 'like', "%$q%");
                             });
+                        })
+                        ->when($userDojoId, function ($query, $userDojoId) {
+                            return $query->where('dojo_id', $userDojoId);
                         })
                         ->whereNull('deleted_at')
                         ->get();
