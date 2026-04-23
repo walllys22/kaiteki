@@ -6,6 +6,7 @@
                     <th>ID</th>
                     <th>Nombre</th>                    
                     <th>Email.</th>
+                    <th>Sucursal</th>
                     <th>Role</th>
                     <th>Estado</th>
                     <th class="text-right">Acciones</th>
@@ -35,6 +36,7 @@
                         @endif
                     </td>
                     <td>{{ $item->email }}</td>
+                    <td>{{ $item->dojo->nombre ?? 'Sin sucursal' }}</td>
                     <td>
                         {{-- Se recomienda precargar la relación 'role' en el controlador para evitar consultas N+1 --}}
                         {{-- Ejemplo en controlador: User::with('role')->paginate(); --}}
@@ -67,7 +69,7 @@
                 </tr>
                 @empty
                     <tr>
-                        <td colspan="6">
+                        <td colspan="7">
                             <h5 class="text-center" style="margin-top: 50px">
                                 <img src="{{ asset('images/empty.png') }}" width="120px" alt="" style="opacity: 0.8">
                                 <br><br>

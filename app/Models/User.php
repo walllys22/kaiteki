@@ -10,6 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 use App\Traits\RegistersUserEvents;
+use App\Models\Dojo;
 
 
 class User extends \TCG\Voyager\Models\User
@@ -21,6 +22,7 @@ class User extends \TCG\Voyager\Models\User
 
     protected $fillable = [
         'person_id',
+        'dojo_id',
         'name',
         'role_id',
         'email',
@@ -38,6 +40,11 @@ class User extends \TCG\Voyager\Models\User
     public function person()
     {
         return $this->belongsTo(Person::class, 'person_id');
+    }
+
+    public function dojo()
+    {
+        return $this->belongsTo(Dojo::class, 'dojo_id');
     }
 
 

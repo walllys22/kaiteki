@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Person;
 use App\Models\User;
+use App\Models\Dojo;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -26,7 +27,7 @@ class UserController extends Controller
         $search = request('search') ?? null;
         $paginate = request('paginate') ?? 10;
         
-        $data = User::with(['person'])
+        $data = User::with(['person', 'dojo', 'role'])
                     ->where(function($query) use ($search){
                         $query->OrWhereRaw($search ? "id = '$search'" : 1)
                         ->OrWhereRaw($search ? "name like '%$search%'" : 1)
@@ -42,6 +43,14 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        $request->validate([
+            'person_id' => 'required|exists:people,id',
+            'dojo_id' => 'required|exists:dojos,id',
+            'role_id' => 'required|exists:roles,id',
+            'email' => 'required|email',
+            'password' => 'required|string|min:6',
+        ]);
+
         $data = User::where('email', $request->email)->first();
         if($data)
         {
@@ -54,6 +63,7 @@ class UserController extends Controller
             
             User::create([
                 'person_id' => $request->person_id,
+                'dojo_id' => $request->dojo_id,
                 'name' =>  $person->first_name,
                 'role_id' => $request->role_id,
                 'email' => $request->email,
@@ -74,11 +84,18 @@ class UserController extends Controller
 
     public function update(Request $request, $id)
     {
+        $request->validate([
+            'dojo_id' => 'required|exists:dojos,id',
+            'role_id' => 'nullable|exists:roles,id',
+            'password' => 'nullable|string|min:6',
+        ]);
+
         DB::beginTransaction();
         try {
             $user = User::where('id', $id)->first();
             $user->update([
                 'status'=> $request->status?1:0,
+                'dojo_id' => $request->dojo_id,
             ]);
             
             if($request->role_id)

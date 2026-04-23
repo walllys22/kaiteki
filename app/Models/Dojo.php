@@ -32,4 +32,9 @@ class Dojo extends Model
     {
         return $this->belongsTo(Ciudad::class, 'ciudad_id');
     }
+
+    public function users()
+    {
+        return $this->hasMany(User::class, 'dojo_id');
+    }
 }

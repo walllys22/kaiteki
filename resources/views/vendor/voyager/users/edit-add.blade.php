@@ -15,6 +15,9 @@
 
 @section('content')
     <div class="page-content container-fluid">
+        @php
+            $dojos = \App\Models\Dojo::whereNull('deleted_at')->orderBy('nombre')->get();
+        @endphp
         <form class="form-edit-add" role="form"
               action="@if(!is_null($dataTypeContent->getKey())){{ route('voyager.'.$dataType->slug.'.update', $dataTypeContent->getKey()) }}@else{{ route('voyager.'.$dataType->slug.'.store') }}@endif"
               {{-- action="@if(!is_null($dataTypeContent->getKey())){{ route('update.users', $dataTypeContent->getKey()) }}@else{{ route('store.users') }}@endif" --}}
@@ -65,6 +68,18 @@
                                 <label for="email">{{ __('voyager::generic.email') }}</label>
                                 <input type="email" class="form-control" id="email" name="email" {{$dataTypeContent->getKey()?'disabled':''}} placeholder="{{ __('voyager::generic.email') }}"
                                        value="{{ old('email', $dataTypeContent->email ?? '') }}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="dojo_id">Sucursal / Dojo</label>
+                                <select name="dojo_id" id="dojo_id" class="form-control select2" required>
+                                    <option value="" disabled {{ old('dojo_id', $dataTypeContent->dojo_id ?? '') ? '' : 'selected' }}>Seleccione una sucursal</option>
+                                    @foreach ($dojos as $dojo)
+                                        <option value="{{ $dojo->id }}" {{ (string) old('dojo_id', $dataTypeContent->dojo_id ?? '') === (string) $dojo->id ? 'selected' : '' }}>
+                                            {{ $dojo->nombre }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </div>
 
                             <div class="form-group">
