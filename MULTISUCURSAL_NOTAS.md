@@ -72,6 +72,13 @@ Este usuario representa un usuario vinculado a una persona y a un dojo.
   `middle_name`, `paternal_surname`, `maternal_surname`, `last_name`.
 - El modal de registro de persona ahora envia:
   `documentType`, `dojo_id`, `status`, `first_name`, `ci`, `gender`, etc.
+- Si el usuario logueado pertenece a un dojo, `PersonController`
+  toma internamente `auth()->user()->dojo_id`.
+- En ese caso, el backend ya no depende de que la interfaz mande el dojo correcto.
+- Si el usuario logueado no pertenece a un dojo, puede definir la sucursal
+  desde la interfaz para registrar o actualizar personas.
+- Si el usuario logueado no tiene dojo y tampoco se envia uno desde la interfaz,
+  igual puede registrar personas; en ese caso `people.dojo_id` queda `null`.
 
 ### BREAD / Voyager
 
@@ -105,7 +112,7 @@ Aunque ya existe base multisucursal, eso no implica que todo el sistema este ais
 
 Todavia falta, si se quiere multisucursal real:
 
-- filtrar listados por `auth()->user()->dojo_id`
+- filtrar otros modulos por `auth()->user()->dojo_id`
 - restringir accesos por sucursal en personas, alumnos, pagos, reportes, etc.
 - impedir que usuarios de una sucursal vean o editen datos de otra
 

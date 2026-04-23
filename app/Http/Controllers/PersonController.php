@@ -16,6 +16,17 @@ class PersonController extends Controller
         $this->storageController = new StorageController();
     }
 
+    protected function resolveDojoIdFromContext(Request $request)
+    {
+        $userDojoId = auth()->user()->dojo_id;
+
+        if ($userDojoId) {
+            return $userDojoId;
+        }
+
+        return $request->dojo_id;
+    }
+
     public function index()
     {
         $this->custom_authorize('browse_people');
@@ -47,8 +58,11 @@ class PersonController extends Controller
     public function store(Request $request)
     {
         $this->custom_authorize('add_people');
+        $dojoId = $this->resolveDojoIdFromContext($request);
+
         $request->validate([
             'documentType' => 'required|string|in:Ci,Nit',
+            'dojo_id' => 'nullable|exists:dojos,id',
             'ci' => 'required|string|max:255|unique:people,ci',
             'gender' => 'required|string|in:Masculino,Femenino',
             'first_name' => 'required|string|max:255',
@@ -57,6 +71,7 @@ class PersonController extends Controller
             'ci.required' => 'El numero de cedula es obligatorio',
             'ci.unique' => 'Esta cedula ya esta registrada',
             'first_name.required' => 'El nombre es obligatorio.',
+            'dojo_id.exists' => 'La sucursal seleccionada no es valida.',
             'image.image' => 'El archivo debe ser una imagen.',
             'image.mimes' => 'La imagen debe tener uno de los siguientes formatos: jpeg, jpg, png, bmp, webp.',
             'image.max' => 'La imagen no puede pesar mas de 2 megabytes (MB).',
@@ -67,7 +82,7 @@ class PersonController extends Controller
         try {
             Person::create([
                 'documentType' => $request->documentType,
-                'dojo_id' => $request->dojo_id,
+                'dojo_id' => $dojoId,
                 'ci' => $request->ci,
                 'birth_date' => $request->birth_date,
                 'gender' => $request->gender,
@@ -94,9 +109,11 @@ class PersonController extends Controller
     {
         $this->custom_authorize('edit_people');
         $ciValidationRule = 'required|string|max:255|unique:people,ci,' . $id;
+        $dojoId = $this->resolveDojoIdFromContext($request);
 
         $request->validate([
             'documentType' => 'required|string|in:Ci,Nit',
+            'dojo_id' => 'nullable|exists:dojos,id',
             'ci' => $ciValidationRule,
             'gender' => 'required|string|in:Masculino,Femenino',
             'first_name' => 'required|string|max:255',
@@ -105,6 +122,7 @@ class PersonController extends Controller
             'ci.required' => 'El numero de cedula es obligatorio',
             'ci.unique' => 'Esta cedula ya esta registrada',
             'first_name.required' => 'El nombre es obligatorio.',
+            'dojo_id.exists' => 'La sucursal seleccionada no es valida.',
             'image.image' => 'El archivo debe ser una imagen.',
             'image.mimes' => 'La imagen debe tener uno de los siguientes formatos: jpeg, jpg, png, bmp, webp.',
             'image.max' => 'La imagen no puede pesar mas de 2 megabytes (MB).',
@@ -115,7 +133,7 @@ class PersonController extends Controller
         try {
             $person = Person::findOrFail($id);
             $person->documentType = $request->documentType;
-            $person->dojo_id = $request->dojo_id;
+            $person->dojo_id = $dojoId;
             $person->ci = $request->ci;
             $person->birth_date = $request->birth_date;
             $person->gender = $request->gender;
