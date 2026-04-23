@@ -58,8 +58,8 @@ class StorageController extends Controller
                 'suffix' => '',
                 'width' => 1200,
                 'height' => null,
-                'format' => 'avif',
-                'quality' => 75 // Reducimos un poco la calidad para acelerar la codificación
+                'format' => 'jpg',
+                'quality' => 85
             ],
             // El banner también es importante, lo mantenemos en AVIF.
             'banner' => [

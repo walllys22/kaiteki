@@ -57,12 +57,14 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
 
 
     //Rutas Alumnos Historial
+    Route::get('alumnos/{id}/pagos', [AlumnoHistorialController::class, 'showPagos'])->name('alumnos.pagos.show');
     Route::get('alumnos/{id}/historial/browse', [AlumnoHistorialController::class, 'show'])->name('alumnos.historial.show');
     Route::get('alumnos/{id}/historial/list', [AlumnoHistorialController::class, 'historialList']);
     Route::get('alumnos/{id}/check-historial', [AlumnoHistorialController::class, 'checkHistorial'])->name('alumnos.check_historial');
     Route::post('alumnos/historial/store', [AlumnoHistorialController::class, 'store'])->name('alumnos.historial.store');
     Route::post('alumnos/{id}/status', [AlumnoHistorialController::class, 'updateStatus'])->name('alumnos.status.update');
     Route::get('alumnos/check-registration/{person_id}', [AlumnoHistorialController::class, 'checkRegistration'])->name('alumnos.check_registration');
+    Route::get('alumnos/imprimir/reporte', [AlumnoHistorialController::class, 'print'])->name('alumnos.print');
     
 
 

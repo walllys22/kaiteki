@@ -14,6 +14,9 @@
                             </h1>
                         </div>
                         <div class="col-md-8 text-right" style="margin-top: 30px">
+                            <a href="#" class="btn btn-success" data-toggle="modal" data-target="#modal-print">
+                                <i class="fa-solid fa-print"></i> <span>Imprimir</span>
+                            </a>
                             @if (auth()->user()->hasPermission('add_alumnos'))
                             <a href="{{ route('voyager.alumnos.create') }}" class="btn btn-success">
                                 <i class="voyager-plus"></i> <span>Crear</span>
@@ -119,6 +122,33 @@
                 </div><!-- /.modal-content -->
             </div><!-- /.modal-dialog -->
         </div><!-- /.modal -->
+
+        {{-- Modal de impresión (Verde) --}}
+        <div class="modal modal-success fade" tabindex="-1" id="modal-print" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" style="color: white;"><i class="fa-solid fa-print"></i> Imprimir Reporte de Alumnos</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="print_dojo_id" style="color: #333;">Seleccione el Dojo que desea imprimir:</label>
+                            <select id="print_dojo_id" class="form-control">
+                                <option value="">-- Todos los Dojos --</option>
+                                @foreach (\App\Models\Dojo::whereNull('deleted_at')->get() as $item)
+                                    <option value="{{ $item->id }}">{{ $item->nombre }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-success" id="btn-print-confirm">Imprimir</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 @stop
 
@@ -152,6 +182,14 @@
                 timeout = setTimeout(function() {
                     list();
                 }, 2000); // retardo de 2 segundos cada vez que se escribe algo en el input
+            });
+
+            $('#btn-print-confirm').click(function(){
+                let search = $('#input-search').val() ? $('#input-search').val() : '';
+                let dojo_id = $('#print_dojo_id').val();
+                let url = '{{ route("alumnos.print") }}';
+                window.open(`${url}?search=${search}&dojo_id=${dojo_id}`, '_blank');
+                $('#modal-print').modal('hide');
             });
         });
 

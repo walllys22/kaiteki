@@ -63,7 +63,10 @@
                         @endif
                         <div class="row" >
                             <div class="btn group">
-                                <a href="{{ route('alumnos.historial.show', $item->id) }}" title="Historial" class="btn btn-sm btn-success">
+                                <a href="{{ route('alumnos.pagos.show', $item->id) }}" title="Pagos" class="btn btn-sm btn-success">
+                                    <i class="fa-solid fa-money-bill-1"></i> <span class="hidden-xs hidden-sm"></span>
+                                </a>
+                                <a href="{{ route('alumnos.historial.show', $item->id) }}" title="Historial" class="btn btn-sm btn-warning">
                                     <i class="fa-solid fa-file-pen"></i> <span class="hidden-xs hidden-sm"></span>
                                 </a>
                                 <a href="#" onclick="statusItem('{{ $item->id }}', '{{ $item->person->first_name }}', '{{ $item->dojo->nombre }}')" title="Estado" class="btn btn-sm btn-dark">

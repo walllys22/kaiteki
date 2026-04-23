@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 use App\Models\Alumno;
 use App\Models\Grado;
 use App\Models\AlumnoHistoriale;
+use App\Models\ArancelAlumno;
 use App\Models\Person;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 
 class AlumnoHistorialController extends Controller
@@ -25,6 +27,19 @@ class AlumnoHistorialController extends Controller
         $historial = AlumnoHistoriale::where('alumno_id', $id)->whereNull('deleted_at')->with(['grado'])->get();
         
         return view('alumnos.historial.browse', compact('grado', 'historial', 'dataTypeContent'));
+    }
+
+    /**
+     * Muestra los pagos del alumno.
+     */
+    public function showPagos($id)
+    {
+        $this->custom_authorize('read_alumnos');
+
+        // Buscamos el alumno con su relación de persona y dojo
+        $dataTypeContent = Alumno::with(['person', 'dojo'])->findOrFail($id);
+        
+        return view('alumnos.pagos.browse', compact('dataTypeContent'));
     }
 
     /**
@@ -49,6 +64,32 @@ class AlumnoHistorialController extends Controller
             ->paginate($paginate);
 
         return view('alumnos.historial.list', compact('historial'));
+    }
+
+    /**
+     * Obtiene la lista filtrada de aranceles (pagos) para la petición AJAX.
+     */
+    public function arancelAlumnoList(Request $request, $id)
+    {
+        $this->custom_authorize('read_alumnos');
+
+        $search = $request->input('search');
+        $paginate = $request->input('paginate', 10);
+
+        $aranceles = ArancelAlumno::where('alumno_id', $id)
+            ->where(function($query) use ($search) {
+                if ($search) {
+                    $query->where('monto', 'like', "%$search%")
+                          ->orWhereHas('arancel', function($q) use ($search) {
+                              $q->where('nombre', 'like', "%$search%");
+                          });
+                }
+            })
+            ->with(['arancel'])
+            ->orderBy('id', 'desc')
+            ->paginate($paginate);
+
+        return view('alumnos.pagos.list', compact('aranceles'));
     }
 
     /**
@@ -174,5 +215,39 @@ class AlumnoHistorialController extends Controller
         // Nota: Si el alumno está inactivo (status = 0) en otros dojos, o si es encargado en la tabla Dojo,
         // la validación permitirá el registro devolviendo 'ok'.
         return response()->json(['status' => 'ok']);
+    }
+
+    /**
+     * Genera un reporte en PDF de los alumnos filtrados.
+     */
+    public function print(Request $request)
+    {
+        $this->custom_authorize('read_alumnos');
+
+        $search = $request->input('search');
+        $dojo_id = $request->input('dojo_id');
+
+        $query = Alumno::with(['person', 'dojo', 'grado', 'horario']);
+
+        if ($dojo_id) {
+            $query->where('dojo_id', $dojo_id);
+        }
+
+        if ($search) {
+            $query->whereHas('person', function($q) use ($search) {
+                $q->where('first_name', 'like', "%$search%");
+            });
+        }
+
+        $alumnos = $query->orderBy('id', 'desc')->get();
+        $dojo = $dojo_id ? \App\Models\Dojo::find($dojo_id) : null;
+
+        // Si no hay dojo seleccionado pero los resultados pertenecen a uno solo, lo cargamos para el logo
+        if (!$dojo && $alumnos->isNotEmpty() && $alumnos->pluck('dojo_id')->unique()->count() === 1) {
+            $dojo = $alumnos->first()->dojo;
+        }
+
+
+        return view('alumnos.print', compact('alumnos', 'search', 'dojo'));
     }
 }
