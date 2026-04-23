@@ -21,8 +21,14 @@ return new class extends Migration
             $table->string('archivo')->nullable();
 
 
-            $table->timestamps();
+            $table->timestamps();            
+            $table->foreignId('registerUser_id')->nullable()->constrained('users');
+            $table->string('registerRole')->nullable();
+
             $table->softDeletes();
+            $table->foreignId('deleteUser_id')->nullable()->constrained('users');
+            $table->string('deleteRole')->nullable();
+            $table->text('deleteObservation')->nullable();
         });
     }
 

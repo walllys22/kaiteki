@@ -24,8 +24,14 @@ return new class extends Migration
 
             $table->smallInteger('status')->default(1);
             
+            $table->timestamps();            
+            $table->foreignId('registerUser_id')->nullable()->constrained('users');
+            $table->string('registerRole')->nullable();
+
             $table->softDeletes();
-            $table->timestamps();
+            $table->foreignId('deleteUser_id')->nullable()->constrained('users');
+            $table->string('deleteRole')->nullable();
+            $table->text('deleteObservation')->nullable();
         });
     }
 

@@ -14,8 +14,17 @@ return new class extends Migration
         Schema::create('ciudads', function (Blueprint $table) {
             $table->id();
             $table->string('nombre')->nullable();
-            $table->timestamps();
+
+            $table->smallInteger('status')->default(1);
+
+            $table->timestamps();            
+            $table->foreignId('registerUser_id')->nullable()->constrained('users');
+            $table->string('registerRole')->nullable();
+
             $table->softDeletes();
+            $table->foreignId('deleteUser_id')->nullable()->constrained('users');
+            $table->string('deleteRole')->nullable();
+            $table->text('deleteObservation')->nullable();
         });
     }
 

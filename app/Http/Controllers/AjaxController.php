@@ -41,7 +41,7 @@ class AjaxController extends Controller
 
         $person = Person::withTrashed()->where('ci', $request->ci)->first();
         if ($person) {
-            return response()->json(['error' => 'El CI ya se encuentra registrado a nombre de: ' . $person->first_name . ' ' . $person->paternal_surname]);
+            return response()->json(['error' => 'El CI ya se encuentra registrado a nombre de: ' . $person->first_name]);
         }
         DB::beginTransaction();
         try {
