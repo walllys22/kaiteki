@@ -21,8 +21,6 @@ return new class extends Migration
             $table->smallInteger('status')->default(1);
             $table->text('observacion')->nullable();
 
-            $table->smallInteger('status')->default(1);
-
             $table->timestamps();            
             $table->foreignId('registerUser_id')->nullable()->constrained('users');
             $table->string('registerRole')->nullable();
