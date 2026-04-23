@@ -12,6 +12,17 @@ class AjaxController extends Controller
         $this->middleware('auth');
     }
 
+    protected function resolveDojoIdFromContext(Request $request)
+    {
+        $userDojoId = auth()->user()->dojo_id;
+
+        if ($userDojoId) {
+            return $userDojoId;
+        }
+
+        return $request->dojo_id;
+    }
+
     public function personList(){
         $q = request('q');
         $data = Person::query()
@@ -28,6 +39,8 @@ class AjaxController extends Controller
     }
 
     public function personStore(Request $request){
+        $dojoId = $this->resolveDojoIdFromContext($request);
+
         $request->validate([
             'documentType' => 'required|string|in:Ci,Nit',
             'dojo_id' => 'nullable|exists:dojos,id',
@@ -42,7 +55,19 @@ class AjaxController extends Controller
         }
         DB::beginTransaction();
         try {
-            $person = Person::create($request->all());
+            $person = Person::create([
+                'documentType' => $request->documentType,
+                'dojo_id' => $dojoId,
+                'ci' => $request->ci,
+                'first_name' => $request->first_name,
+                'birth_date' => $request->birth_date,
+                'email' => $request->email,
+                'country_code' => $request->country_code,
+                'phone' => $request->phone,
+                'address' => $request->address,
+                'gender' => $request->gender,
+                'status' => 1,
+            ]);
             DB::commit();
             return response()->json(['person' => $person]);
         } catch (\Throwable $th) {

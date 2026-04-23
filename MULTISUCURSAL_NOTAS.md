@@ -79,6 +79,8 @@ Este usuario representa un usuario vinculado a una persona y a un dojo.
   desde la interfaz para registrar o actualizar personas.
 - Si el usuario logueado no tiene dojo y tampoco se envia uno desde la interfaz,
   igual puede registrar personas; en ese caso `people.dojo_id` queda `null`.
+- El registro rapido por modal (`AjaxController@personStore`) sigue la misma regla:
+  prioriza el `dojo_id` del usuario logueado y solo usa el formulario para usuarios globales.
 
 ### BREAD / Voyager
 

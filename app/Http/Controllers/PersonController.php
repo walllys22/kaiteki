@@ -58,7 +58,9 @@ class PersonController extends Controller
     public function store(Request $request)
     {
         $this->custom_authorize('add_people');
+        // return $request;
         $dojoId = $this->resolveDojoIdFromContext($request);
+        return $dojoId;
 
         $request->validate([
             'documentType' => 'required|string|in:Ci,Nit',
