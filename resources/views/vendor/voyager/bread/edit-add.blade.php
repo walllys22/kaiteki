@@ -90,10 +90,11 @@
                                     {{ $row->slugify }}
                                     <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
                                     @include('voyager::multilingual.input-hidden-bread-edit-add')
-                                    @if ($dataType->slug === 'people' && $row->field === 'dojo_id' && $add)
+                                    @if (in_array($dataType->slug, ['people', 'horarios'], true) && $row->field === 'dojo_id' && ($dataType->slug !== 'people' || $add))
                                         @php
                                             $breadDojos = $breadDojos ?? \App\Models\Dojo::whereNull('deleted_at')->orderBy('nombre')->get();
-                                            $selectedDojoId = old('dojo_id', $userDojoId);
+                                            $selectedDojoId = old('dojo_id', $userDojoId ?: $dataTypeContent->dojo_id);
+                                            $itemLabel = $dataType->slug === 'people' ? 'La persona' : 'El horario';
                                         @endphp
                                         @if ($userDojoId)
                                             <select class="form-control select2" disabled>
@@ -104,12 +105,12 @@
                                                 @endforeach
                                             </select>
                                             <input type="hidden" name="dojo_id" value="{{ $selectedDojoId }}">
-                                            <small class="text-muted">La persona se registrara en tu sucursal asignada.</small>
+                                            <small class="text-muted">{{ $itemLabel }} se {{ $edit ? 'mantendra' : 'registrara' }} en tu sucursal asignada.</small>
                                         @else
                                             <select name="dojo_id" class="form-control select2" required>
                                                 <option value="">Seleccione una sucursal</option>
                                                 @foreach ($breadDojos as $dojo)
-                                                    <option value="{{ $dojo->id }}" {{ (string) old('dojo_id') === (string) $dojo->id ? 'selected' : '' }}>
+                                                    <option value="{{ $dojo->id }}" {{ (string) $selectedDojoId === (string) $dojo->id ? 'selected' : '' }}>
                                                         {{ $dojo->nombre }}
                                                     </option>
                                                 @endforeach
