@@ -156,7 +156,7 @@ class AlumnoHistorialController extends Controller
         // Graba en AlumnoHistoriale.php
         AlumnoHistoriale::create([
             'alumno_id'     => $alumno->id,
-            'grado_id'      => $alumno->grado_id,
+            'grado_id'      => null,
             'tipo'          => '',
             'aprobo'        => '',
             'fecha'         => date('Y-m-d'),

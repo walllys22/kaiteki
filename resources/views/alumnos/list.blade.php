@@ -7,8 +7,6 @@
                     <th style="text-align: center">Nombre Dojo</th>                    
                     <th style="text-align: center">Nombre Completo</th>
                     <th style="text-align: center">Ingreso</th>                    
-                    <th style="text-align: center">Horario</th>
-                    <th style="text-align: center">Grado</th>
                     <th style="text-align: center">Estado</th>
                     <th style="text-align: center">Acciones</th>
                 </tr>
@@ -33,10 +31,8 @@
                         </div>
                     </td>
                     <td style="text-align: center">
-                        {{ \Carbon\Carbon::parse($item->entry_date)->format('d/m/Y') }}
+                        {{ $item->fechaIngreso ? \Carbon\Carbon::parse($item->fechaIngreso)->format('d/m/Y') : 'N/A' }}
                     </td>
-                    <td style="text-align: center"> {{ $item->Horario->tipo }} {{ $item->Horario->nombre }}</td>
-                    <td style="text-align: center"> {{ $item->grado->numero}} {{ $item->grado->tipo }} {{ $item->grado->nombre}} </td>
                     <td style="text-align: center">
                         @if ($item->status==1)  
                             <label class="label label-success">Activo</label>
@@ -78,7 +74,7 @@
                 </tr>
                 @empty
                     <tr>
-                        <td colspan="8">
+                        <td colspan="6">
                             <h5 class="text-center" style="margin-top: 50px">
                                 <img src="{{ asset('images/empty.png') }}" width="120px" alt="" style="opacity: 0.8">
                                 <br><br>

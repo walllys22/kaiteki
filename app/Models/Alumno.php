@@ -38,14 +38,17 @@ class Alumno extends Model
     {
         return $this->belongsTo(Person::class, 'person_id');
     }
-
-    public function horario()
+    public function alumnoEnfermedads()
     {
-        return $this->belongsTo(horario::class, 'horario_id');
+        return $this->hasMany(AlumnoEnfermedad::class, 'alumno_id');
+    }
+    public function alumnoGrado()
+    {
+        return $this->hasMany(AlumnoGrado::class, 'alumno_id');
     }
 
-    public function grado()
+    public function register()
     {
-        return $this->belongsTo(grado::class, 'grado_id');
+        return $this->belongsTo(User::class, 'registerUser_id');
     }
 }

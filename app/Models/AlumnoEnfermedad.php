@@ -7,27 +7,18 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\RegistersUserEvents;
 
-class Person extends Model
+class AlumnoEnfermedad extends Model
 {
     use HasFactory, RegistersUserEvents, SoftDeletes;
 
     protected $dates = ['deleted_at'];
-
     protected $fillable = [
-        'documentType',
-        'dojo_id',
-        'ci',
-        'first_name',
-        // 'middle_name',
-        // 'paternal_surname',
-        // 'maternal_surname',
-        'birth_date',
-        'email',
-        'country_code',
-        'phone',
-        'address',
-        'gender',
-        'image',
+        'alumno_id',
+        'nombre',
+        'medicamento',
+        'administracion',
+
+        'observacion',
         'status',
 
         'registerUser_id',
@@ -38,16 +29,10 @@ class Person extends Model
         'deleteObservation',
     ];
 
-    public function dojo()
-    {
-        return $this->belongsTo(Dojo::class, 'dojo_id');
-    }
-
     public function alumno()
     {
-        return $this->hasMany(Alumno::class, 'person_id');
+        return $this->belongsTo(Alumno::class, 'alumno_id');
     }
-    
     public function register()
     {
         return $this->belongsTo(User::class, 'registerUser_id');

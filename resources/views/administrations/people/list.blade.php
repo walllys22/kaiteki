@@ -6,8 +6,8 @@
                     <th style="text-align: center">ID</th>
                     <th style="text-align: center">Documento</th>
                     <th style="text-align: center">Nombre completo</th>                    
-                    <th style="text-align: center">Fecha nac.</th>
-                    <th style="text-align: center">Telefono/Celular</th>
+                    <th style="text-align: center">Datos personales</th>
+                    <th style="text-align: center">Contacto</th>
                     <th style="text-align: center">Estado</th>
                     <th style="text-align: center">Acciones</th>
                 </tr>
@@ -25,21 +25,32 @@
                 @endphp
                 <tr>
                     <td>{{ $item->id }}</td>
-                    <td>{{ $item->documentType }}: {{ $item->ci }}</td>
+                    <td style="text-align: center">
+                        <strong>{{ $item->documentType }}</strong><br>
+                        <span>{{ $item->ci ?: 'Sin documento' }}</span>
+                    </td>
                     <td>
                         <div style="display: flex; align-items: center;">
                             <img src="{{ $image }}" alt="{{ $item->first_name }}" class="image-expandable" style="width: 60px; height: 60px; border-radius: 30px; margin-right: 10px; object-fit: cover;">
                             <div>
-                                {{ strtoupper($item->first_name) }}
+                                <strong>{{ strtoupper($item->first_name) }}</strong><br>
+                                @if($item->dojo)
+                                    <span class="label label-primary">{{ $item->dojo->nombre }}</span>
+                                @else
+                                    <span class="text-muted">Sin dojo asignado</span>
+                                @endif
                             </div>
                         </div>
                     </td>
                     <td style="text-align: center">
                         @if ($item->birth_date)
-                            {{ \Carbon\Carbon::parse($item->birth_date)->format('d/m/Y') }} <br> <small>{{ $age }} años</small>
+                            <div><strong>Nacimiento:</strong> {{ \Carbon\Carbon::parse($item->birth_date)->format('d/m/Y') }}</div>
+                            <small>{{ $age }} años</small><br>
                         @else
-                            Sin Datos                            
+                            <span class="text-muted">Sin fecha de nacimiento</span><br>
                         @endif
+                        <small><strong>Género:</strong> {{ $item->gender ?: 'No registrado' }}</small><br>
+                        <small><strong>Tipo sangre:</strong> {{ $item->sangre ?: 'No registrado' }}</small>
                     </td>
                     <td style="text-align: center">
                         @if($item->phone)
@@ -57,9 +68,21 @@
                                 <a href="https://wa.me/{{ $code }}{{ $item->phone }}?text=Hola {{ $item->first_name }}" target="_blank" class="label label-success" style="margin-top: 5px; padding: 3px 8px; font-size: 10px; text-decoration: none; cursor: pointer;">
                                     <i class="voyager-paper-plane"></i> WhatsApp
                                 </a>
+                                @if($item->email)
+                                    <small style="margin-top: 5px; display: block;">{{ $item->email }}</small>
+                                @endif
+                                @if($item->address)
+                                    <small class="text-muted" style="margin-top: 4px; display: block;">{{ $item->address }}</small>
+                                @endif
                             </div>
                         @else
                             <span class="text-muted" style="font-style: italic;">No registrado</span>
+                            @if($item->email)
+                                <br><small>{{ $item->email }}</small>
+                            @endif
+                            @if($item->address)
+                                <br><small class="text-muted">{{ $item->address }}</small>
+                            @endif
                         @endif
                     </td>
                     <td style="text-align: center">

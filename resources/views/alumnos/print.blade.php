@@ -84,8 +84,6 @@
             <tr>
                 <th>Nombre del Alumno</th>
                 <th>Dojo</th>
-                <th>Grado</th>
-                <th>Horario</th>
                 <th>Fecha Ingreso</th>
                 <th>Estado</th>
             </tr>
@@ -96,16 +94,7 @@
                 <td>{{ $alumno->person->first_name }}</td>
                 <td>{{ $alumno->dojo->nombre ?? 'N/A' }}</td>
                 <td>
-                    {{ $alumno->grado->tipo ?? '' }} 
-                    {{ $alumno->grado->numero ?? '' }} 
-                    {{ $alumno->grado->nombre ?? '' }}
-                </td>
-                <td>
-                    {{ $alumno->horario->tipo ?? '' }} 
-                    {{ $alumno->horario->nombre ?? '' }}
-                </td>
-                <td>
-                    {{ $alumno->entry_date ? \Carbon\Carbon::parse($alumno->entry_date)->format('d/m/Y') : 'N/A' }}
+                    {{ $alumno->fechaIngreso ? \Carbon\Carbon::parse($alumno->fechaIngreso)->format('d/m/Y') : 'N/A' }}
                 </td>
                 <td>
                     <span class="{{ $alumno->status == 1 ? 'status-active' : 'status-inactive' }}">

@@ -82,22 +82,12 @@
                                         <label class="control-label" style="font-weight:bold; text-align:center;">Fecha
                                             Ingreso</label>
                                         <p class="form-control-static">
-                                            {{ \Carbon\Carbon::parse($alumno->entry_date)->format('d/m/Y') }}</p>
+                                            {{ $alumno->fechaIngreso ? \Carbon\Carbon::parse($alumno->fechaIngreso)->format('d/m/Y') : 'N/A' }}</p>
                                     </div>
 
                                 </div>
                                 <div class="row">
                                     <div class="col-md-4 form-group">
-                                        <label class="control-label" style="font-weight:bold;">Horario</label>
-                                        <p class="form-control-static">{{ $alumno->horario->tipo }}
-                                            {{ $alumno->horario->nombre }}</p>
-                                    </div>
-                                    <div class="col-md-4 form-group">
-                                        <label class="control-label" style="font-weight:bold;">Grado</label>
-                                        <p class="form-control-static">{{ $alumno->grado->numero }}
-                                            {{ $alumno->grado->tipo }} {{ $alumno->grado->nombre }} </p>
-                                    </div>
-                                    <div class="col-md-2 form-group">
                                         <label class="control-label" style="font-weight:bold;">Estado</label>
                                         <p class="form-control-static">
                                             @if ($alumno->status == 1)
@@ -106,6 +96,10 @@
                                                 <label class="label label-warning">Inactivo</label>
                                             @endif
                                         </p>
+                                    </div>
+                                    <div class="col-md-8 form-group">
+                                        <label class="control-label" style="font-weight:bold;">Observaciones</label>
+                                        <p class="form-control-static">{{ $alumno->observacion ?: 'Sin observaciones registradas.' }}</p>
                                     </div>
                                     <hr style="margin: 10px 0;">
                                 </div>

@@ -142,7 +142,7 @@ class Controller extends BaseVoyagerBaseController
         if ($slug == 'alumnos' && $data->wasRecentlyCreated) {
             \App\Models\AlumnoHistoriale::create([
                 'alumno_id'     => $data->id,
-                'grado_id'      => $data->grado_id,
+                'grado_id'      => null,
                 'tipo'          => 'Ingreso',
                 'aprobo'        => '',
                 'fecha'         => date('Y-m-d'),
