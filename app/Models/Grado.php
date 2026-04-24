@@ -16,6 +16,9 @@ class Grado extends Model
     protected $fillable = [
         'tipo', 'numero', 'nombre', 
 
+        'puntas',
+        'dias',
+
         'status',
 
         'registerUser_id',

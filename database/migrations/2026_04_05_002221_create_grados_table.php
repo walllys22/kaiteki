@@ -13,8 +13,14 @@ return new class extends Migration
     {
         Schema::create('grados', function (Blueprint $table) {
             $table->id();
-            $table->string('tipo')->nullable();            $table->string('numero')->nullable();
+            $table->string('tipo')->nullable();            
+            $table->string('numero')->nullable();
             $table->string('nombre')->nullable();
+
+            $table->integer('puntas');
+            $table->integer('dias');
+
+            $table->smallInteger('status')->default(1);
             
             $table->timestamps();            
             $table->foreignId('registerUser_id')->nullable()->constrained('users');
