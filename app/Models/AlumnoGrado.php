@@ -29,4 +29,14 @@ class AlumnoGrado extends Model
         'deleteRole',
         'deleteObservation',
     ];
+
+    public function grado()
+    {
+        return $this->belongsTo(Grado::class, 'grado_id')->withTrashed();
+    }
+
+    public function alumno()
+    {
+        return $this->belongsTo(Alumno::class, 'alumno_id');
+    }
 }

@@ -29,5 +29,19 @@ class AlumnoTutor extends Model
         'deleteRole',
         'deleteObservation',
     ];
-    
+
+    public function tutor()
+    {
+        return $this->belongsTo(Person::class, 'person_id')->withTrashed();
+    }
+
+    public function pariente()
+    {
+        return $this->belongsTo(Parentesco::class, 'parentesco_id')->withTrashed();
+    }
+
+    public function alumno()
+    {
+        return $this->belongsTo(Alumno::class, 'alumno_id');
+    }
 }

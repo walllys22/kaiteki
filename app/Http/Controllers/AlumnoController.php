@@ -6,9 +6,12 @@ namespace App\Http\Controllers;
 use App\Models\Alumno;
 use App\Models\AlumnoTutor;
 use App\Models\AlumnoEnfermedad;
+use App\Models\AlumnoGrado;
 use App\Models\Person;
 use App\Models\Dojo;
 use App\Models\Parentesco;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Grado;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -194,9 +197,10 @@ class AlumnoController extends Controller
         $people = Person::whereNull('deleted_at')->get();
         $dojo = Dojo::whereNull('deleted_at')->get();
         $parientes = Parentesco::whereNull('deleted_at')->get();
+        $grados = Grado::whereNull('deleted_at')->where('status', 1)->orderBy('tipo')->orderBy('numero')->get();
         $enfermedades = AlumnoEnfermedad::whereNull('deleted_at')->get();
 
-        return view('alumnos.read', compact('dojo', 'people', 'enfermedades', 'parientes', 'dataTypeContent'));
+        return view('alumnos.read', compact('dojo', 'people', 'enfermedades', 'parientes', 'grados', 'dataTypeContent'));
     }
 
     public function updateStatus($id)
@@ -216,35 +220,108 @@ class AlumnoController extends Controller
         return back()->with(['message' => "El estado del alumno se cambió a $msg.", 'alert-type' => 'success']);
     }
 
+    public function checkHistorial($alumno_id)
+    {
+        $this->custom_authorize('read_alumnos');
+
+        $hasHistorial =
+            AlumnoGrado::where('alumno_id', $alumno_id)->exists() ||
+            AlumnoTutor::where('alumno_id', $alumno_id)->exists() ||
+            AlumnoEnfermedad::where('alumno_id', $alumno_id)->exists();
+
+        return response()->json(['has_historial' => $hasHistorial]);
+    }
+
+    public function checkRegistration(Request $request, $person_id)
+    {
+        $dojo_id = $request->dojo_id;
+
+        $alumnoRegistrado = Alumno::withTrashed()
+            ->with('dojo')
+            ->where('person_id', $person_id)
+            ->first();
+
+        if ($alumnoRegistrado) {
+            return response()->json(['status' => 'exists', 'dojo' => optional($alumnoRegistrado->dojo)->nombre ?? 'N/A']);
+        }
+
+        $dojoResponsable = Dojo::where('person_id', $person_id)
+            ->where('id', $dojo_id)
+            ->first();
+
+        if ($dojoResponsable) {
+            return response()->json(['status' => 'responsible_same_dojo', 'dojo' => $dojoResponsable->nombre ?? 'N/A']);
+        }
+
+        return response()->json(['status' => 'ok']);
+    }
+
+    public function print(Request $request)
+    {
+        $this->custom_authorize('read_alumnos');
+
+        $search = $request->input('search');
+        $dojo_id = $request->input('dojo_id');
+
+        $query = Alumno::with(['person', 'dojo'])
+            ->when($dojo_id, function ($q) use ($dojo_id) {
+                return $q->where('dojo_id', $dojo_id);
+            })
+            ->when($search, function ($q) use ($search) {
+                return $q->whereHas('person', function ($personQuery) use ($search) {
+                    $personQuery->where('first_name', 'like', "%$search%");
+                });
+            });
+
+        $alumnos = $query->orderByDesc('id')->get();
+        $dojo = $dojo_id ? Dojo::find($dojo_id) : null;
+
+        if (!$dojo && $alumnos->isNotEmpty() && $alumnos->pluck('dojo_id')->filter()->unique()->count() === 1) {
+            $dojo = $alumnos->first()->dojo;
+        }
+
+        return view('alumnos.print', compact('alumnos', 'search', 'dojo'));
+    }
+
     public function tutorList($alumno_id)
     {
         $search = request('search');
         $paginate = request('paginate') ?? 10;
 
-        $data = alumnotutor::with(['tutor', 'pariente'])
+        $data = AlumnoTutor::with(['tutor', 'pariente'])
             ->where('alumno_id', $alumno_id)
             ->when($search, function ($query, $search) {
-                return $query->whereHas('person', function($q) use ($search) {
+                return $query->whereHas('tutor', function($q) use ($search) {
                     $q->where('first_name', 'like', "%$search%");
                 });
             })
             ->orderBy('id', 'DESC')
             ->paginate($paginate);   
 
-        return view('alumnos.Parentesco.list', compact('data', 'alumno_id'));
+        return view('alumnos.tutores.list', compact('data', 'alumno_id'));
     }
 
     public function storeAlumnoTutor(Request $request)
     {
-     //   $this->custom_authorize('add_alumnos');
+        $this->custom_authorize('add_alumnos');
+        $request->validate([
+            'alumno_id' => 'required|exists:alumnos,id',
+            'person_id' => 'required|exists:people,id',
+            'parentesco_id' => 'required|exists:parentescos,id',
+            'observacion' => 'nullable|string|max:255',
+        ]);
 
         try {
-            $data = $request->all();
-
-            alumnotutor::create($data);
+            AlumnoTutor::create([
+                'alumno_id' => $request->alumno_id,
+                'person_id' => $request->person_id,
+                'parentesco_id' => $request->parentesco_id,
+                'observacion' => $request->observacion,
+                'status' => 1,
+            ]);
 
             return redirect()->route('voyager.alumnos.show', ['id' => $request->alumno_id])
-                ->with(['message' => 'Alumno creado exitosamente', 'alert-type' => 'success']);
+                ->with(['message' => 'Tutor registrado exitosamente', 'alert-type' => 'success']);
         } catch (\Throwable $th) {
             return redirect()->back()
                 ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
@@ -253,14 +330,27 @@ class AlumnoController extends Controller
 
     public function storeAlumnoEnfermedad(Request $request)
     {
+        $this->custom_authorize('add_alumnos');
+        $request->validate([
+            'alumno_id' => 'required|exists:alumnos,id',
+            'nombre' => 'required|string|max:255',
+            'medicamento' => 'nullable|string|max:255',
+            'administracion' => 'nullable|string|max:255',
+            'observacion' => 'nullable|string|max:1000',
+        ]);
 
         try {
-            $data = $request->all();
-
-            AlumnoEnfermedad::create($data);
+            AlumnoEnfermedad::create([
+                'alumno_id' => $request->alumno_id,
+                'nombre' => $request->nombre,
+                'medicamento' => $request->medicamento,
+                'administracion' => $request->administracion,
+                'observacion' => $request->observacion,
+                'status' => 1,
+            ]);
 
             return redirect()->route('voyager.alumnos.show', ['id' => $request->alumno_id])
-                ->with(['message' => 'Alumno creado exitosamente', 'alert-type' => 'success']);
+                ->with(['message' => 'Enfermedad registrada exitosamente', 'alert-type' => 'success']);
         } catch (\Throwable $th) {
             return redirect()->back()
                 ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
@@ -270,7 +360,7 @@ class AlumnoController extends Controller
 
     public function tutorDestroy($id)
     {
-        $alumnoTutor = alumnotutor::findOrFail($id);
+        $alumnoTutor = AlumnoTutor::findOrFail($id);
    
         try {
             
@@ -285,6 +375,27 @@ class AlumnoController extends Controller
         }
     }
 
+    public function gradoList($alumno_id)
+    {
+        $search = request('search');
+        $paginate = request('paginate') ?? 10;
+
+        $data = AlumnoGrado::with(['grado'])
+            ->where('alumno_id', $alumno_id)
+            ->when($search, function ($query, $search) {
+                return $query->whereHas('grado', function ($q) use ($search) {
+                    $q->where('tipo', 'like', "%$search%")
+                        ->orWhere('numero', 'like', "%$search%")
+                        ->orWhere('nombre', 'like', "%$search%");
+                });
+            })
+            ->orderByDesc('fecha')
+            ->orderByDesc('id')
+            ->paginate($paginate);
+
+        return view('alumnos.grados.list', compact('data', 'alumno_id'));
+    }
+
     public function enfermedadList($alumno_id)
     {
         $search = request('search');
@@ -294,14 +405,14 @@ class AlumnoController extends Controller
             ->where('alumno_id', $alumno_id)
             ->when($search, function ($query, $search) {
                 return $query->where(function($q) use ($search) {
-                    $q->where('enfermedad', 'like', "%$search%")
+                    $q->where('nombre', 'like', "%$search%")
                       ->orWhere('medicamento', 'like', "%$search%");
                 });
             })
             ->orderBy('id', 'DESC')
             ->paginate($paginate);   
 
-        return view('alumnos.enfermedad.list', compact('data', 'alumno_id'));
+        return view('alumnos.enfermedades.list', compact('data', 'alumno_id'));
     }
 
     public function enfermedadDestroy($id)
@@ -313,7 +424,7 @@ class AlumnoController extends Controller
             $alumnoEnfer->delete();
 
             return redirect()->route('voyager.alumnos.show', ['id' => $alumnoEnfer->alumno_id])
-                ->with(['message' => 'Tutor eliminado del alumno.', 'alert-type' => 'success']);
+                ->with(['message' => 'Enfermedad eliminada del alumno.', 'alert-type' => 'success']);
             
         } catch (\Throwable $th) {
             return redirect()->back()
