@@ -29,11 +29,11 @@ class AlumnoGradoController extends Controller
         $puntasObtenidas = $repasos->where('aprobado', 1)->count();
         $diasTranscurridos = (int) Carbon::parse($alumnoGrado->fecha)->diffInDays(Carbon::now());
 
-        $cumplePuntas  = $puntasObtenidas >= $puntasRequeridas;
-        $cumpleDias    = $diasTranscurridos >= $diasRequeridos;
-        $puedeExamen   = $cumplePuntas && $cumpleDias;
+        $cumplePuntas   = $puntasObtenidas >= $puntasRequeridas;
+        $cumpleDias     = $diasTranscurridos >= $diasRequeridos;
+        $puedeExamen    = $cumplePuntas;   // solo puntas habilitan el examen
         $examenAprobado = $examenes->where('aprobado', 1)->count() > 0;
-        $isComplete    = $puedeExamen && $examenAprobado;
+        $isComplete     = $puedeExamen && $examenAprobado;
 
         return compact(
             'puntasRequeridas',
@@ -113,11 +113,18 @@ class AlumnoGradoController extends Controller
             'observacion'     => 'nullable|string|max:500',
         ]);
 
-        $alumnoGrado = AlumnoGrado::findOrFail($request->alumno_grado_id);
+        $alumnoGrado = AlumnoGrado::with(['grado', 'repasos', 'examenes'])->findOrFail($request->alumno_grado_id);
 
         if ($alumnoGrado->isCompletado()) {
             return redirect()->back()
                 ->with(['message' => 'No se puede agregar un repaso a un grado ya completado.', 'alert-type' => 'error']);
+        }
+
+        // Bloquear si ya se alcanzó la cantidad de puntas aprobadas requeridas
+        $progress = self::calcularProgreso($alumnoGrado);
+        if ($progress['cumplePuntas']) {
+            return redirect()->back()
+                ->with(['message' => 'Ya se cumplió con la cantidad de puntas requeridas. Debe rendir el examen final.', 'alert-type' => 'warning']);
         }
 
         try {
@@ -178,18 +185,9 @@ class AlumnoGradoController extends Controller
         $progress = self::calcularProgreso($alumnoGrado);
 
         if (!$progress['puedeExamen']) {
-            $faltante = [];
-            if (!$progress['cumplePuntas']) {
-                $falta = $progress['puntasRequeridas'] - $progress['puntasObtenidas'];
-                $faltante[] = "faltan {$falta} punta(s)";
-            }
-            if (!$progress['cumpleDias']) {
-                $falta = $progress['diasRequeridos'] - $progress['diasTranscurridos'];
-                $faltante[] = "faltan {$falta} día(s)";
-            }
-
+            $faltan = $progress['puntasRequeridas'] - $progress['puntasObtenidas'];
             return redirect()->back()
-                ->with(['message' => 'No puede rendir el examen final aún: ' . implode(' y ', $faltante) . '.', 'alert-type' => 'error']);
+                ->with(['message' => "No puede rendir el examen final aún: faltan {$faltan} punta(s) aprobada(s).", 'alert-type' => 'error']);
         }
 
         try {

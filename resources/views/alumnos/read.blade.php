@@ -320,7 +320,7 @@
                             <div class="form-group col-md-8">
                                 <label>Grado <span class="text-danger">*</span></label>
                                 <select name="grado_id" class="form-control select2" required>
-                                    <option value="">Seleccione un grado</option>
+                                    <option value="" selected disabled>Seleccione un grado</option>
                                     @foreach ($grados as $g)
                                         <option value="{{ $g->id }}">
                                             {{ trim(($g->tipo ?? '') . ' ' . ($g->numero ?? '') . ' ' . ($g->nombre ?? '')) }}

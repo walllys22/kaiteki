@@ -97,10 +97,14 @@
                             <i class="fa-solid fa-repeat" style="color:#8e44ad;"></i> Repasos
                             <small class="text-muted">({{ $repasos->count() }} total · {{ $repasos->where('aprobado', 1)->count() }} aprobados)</small>
                         </h5>
-                        @if(!$activeGrado->isCompletado())
+                        @if(!$activeGrado->isCompletado() && !$progress['cumplePuntas'])
                         <button class="btn btn-primary btn-xs" data-toggle="modal" data-target="#modal-add-repaso">
                             <i class="voyager-plus"></i> Agregar Repaso
                         </button>
+                        @elseif($progress['cumplePuntas'] && !$activeGrado->isCompletado())
+                        <span class="label label-success" style="font-size:11px; padding:4px 8px;">
+                            <i class="fa-solid fa-lock"></i> Puntas completas — debe rendir examen
+                        </span>
                         @endif
                     </div>
 
@@ -169,7 +173,10 @@
                     </div>
 
                     @if(!$progress['puedeExamen'] && !$examenes->count())
-                        <p class="text-muted" style="font-size:13px;">Complete las puntas y los días requeridos para habilitar el examen final.</p>
+                        <p class="text-muted" style="font-size:13px;">
+                            Complete las {{ $progress['puntasRequeridas'] }} puntas requeridas para habilitar el examen final
+                            (faltan {{ $progress['puntasRequeridas'] - $progress['puntasObtenidas'] }}).
+                        </p>
                     @elseif($examenes->count())
                     <div class="table-responsive">
                         <table class="table table-condensed table-bordered" style="font-size:13px;">
