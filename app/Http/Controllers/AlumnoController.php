@@ -83,6 +83,22 @@ class AlumnoController extends Controller
         }
     }
 
+    protected function validateUniqueAlumnoPerson(Request $request): void
+    {
+        $existingAlumno = Alumno::withTrashed()
+            ->with('dojo')
+            ->where('person_id', $request->person_id)
+            ->first();
+
+        if ($existingAlumno) {
+            $dojoName = optional($existingAlumno->dojo)->nombre ?: 'Sin dojo';
+
+            throw ValidationException::withMessages([
+                'person_id' => "La persona seleccionada ya está registrada como alumno en {$dojoName}.",
+            ]);
+        }
+    }
+
     public function index()
     {
         $this->custom_authorize('browse_alumnos');
@@ -148,6 +164,7 @@ class AlumnoController extends Controller
 
         try {
             $this->validateRelationsForDojo((int) $dojoId, $request);
+            $this->validateUniqueAlumnoPerson($request);
 
             Alumno::create([
                 'dojo_id' => $dojoId,

@@ -54,6 +54,11 @@
                                 <i class="voyager-trash"></i> <span class="hidden-xs hidden-sm"></span>
                             </a>
                         @endif
+                        @if (auth()->user()->hasPermission('edit_alumnos'))
+                            <a href="javascript:void(0);" onclick="statusItem('{{ $item->id }}', '{{ $personName }}', '{{ $dojoName }}', '{{ $item->status }}')" title="{{ $item->status == 1 ? 'Deshabilitar' : 'Habilitar' }}" class="btn btn-sm {{ $item->status == 1 ? 'btn-dark' : 'btn-success' }}">
+                                <i class="fa-solid {{ $item->status == 1 ? 'fa-person-circle-xmark' : 'fa-person-circle-check' }}"></i> <span class="hidden-xs hidden-sm"></span>
+                            </a>
+                        @endif
                     </td>
                 </tr>
                 @empty

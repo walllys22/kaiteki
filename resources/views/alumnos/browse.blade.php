@@ -89,14 +89,15 @@
                     <div class="modal-body" style="color: black;">
                         <p><strong>Alumno:</strong> <span id="status-alumno-name"></span></p>
                         <p><strong>Dojo:</strong> <span id="status-alumno-dojo"></span></p>
+                        <p><strong>Estado actual:</strong> <span id="status-alumno-current"></span></p>
                     </div>
                     <div class="modal-footer" style="text-align: center; color: black;">
-                        <p>Esta seguro de cambiar el estado del alumno</p>
+                        <p id="status-alumno-question">Esta seguro de cambiar el estado del alumno</p>
                         <br>
                         <form action="#" id="status_form" method="POST">
                             @csrf
                             <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-dark">Cambiar</button>
+                            <button type="submit" class="btn btn-dark" id="status-submit-button">Cambiar</button>
                         </form>
                     </div>
                 </div>
@@ -470,11 +471,18 @@
             });
         }
 
-        function statusItem(id, name, dojo) {
+        function statusItem(id, name, dojo, status) {
             let url = '{{ route("alumnos.status.update", ["id" => "TEMP_ID"]) }}'.replace('TEMP_ID', id);
             $('#status_form').attr('action', url);
             $('#status-alumno-name').text(name);
             $('#status-alumno-dojo').text(dojo);
+            const isActive = String(status) === '1';
+            $('#status-alumno-current').text(isActive ? 'Activo' : 'Inactivo');
+            $('#status-alumno-question').text(isActive ? 'Esta seguro de deshabilitar al alumno' : 'Esta seguro de habilitar al alumno');
+            $('#status-submit-button')
+                .text(isActive ? 'Deshabilitar' : 'Habilitar')
+                .removeClass('btn-dark btn-success')
+                .addClass(isActive ? 'btn-dark' : 'btn-success');
             $('#modal-status').modal('show');
         }
 
