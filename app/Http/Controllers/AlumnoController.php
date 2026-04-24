@@ -319,6 +319,16 @@ class AlumnoController extends Controller
                     ->with(['message' => 'La misma persona registrada como alumno no puede registrarse como tutor.', 'alert-type' => 'error']);
             }
 
+            $existingTutor = AlumnoTutor::where('alumno_id', $request->alumno_id)
+                ->where('person_id', $request->person_id)
+                ->whereNull('deleted_at')
+                ->exists();
+
+            if ($existingTutor) {
+                return redirect()->back()
+                    ->with(['message' => 'La persona seleccionada ya está registrada como tutor de este alumno.', 'alert-type' => 'error']);
+            }
+
             AlumnoTutor::create([
                 'alumno_id' => $request->alumno_id,
                 'person_id' => $request->person_id,
