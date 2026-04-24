@@ -580,9 +580,20 @@
                 success: function(result) {
                     $('#div-grados-list').html(result);
                     $('#div-grados-list').loading('toggle');
-                    // Mostrar u ocultar el botón "Nuevo Grado" según el estado del partial
+                    // Mostrar u ocultar el botón "Nuevo Grado"
                     var puedeAgregar = $('#puede-agregar-grado').val();
                     $('#btn-add-grado').toggle(puedeAgregar === '1');
+                    // Aplicar fecha mínima al input del modal
+                    var minFecha = $('#min-fecha-grado').val();
+                    var $fechaInput = $('#form-add-grado input[name="fecha"]');
+                    if (minFecha) {
+                        $fechaInput.attr('min', minFecha);
+                        if ($fechaInput.val() < minFecha) {
+                            $fechaInput.val(minFecha);
+                        }
+                    } else {
+                        $fechaInput.removeAttr('min');
+                    }
                 },
                 error: function() {
                     $('#div-grados-list').html('<p class="text-center">No se pudieron cargar los grados.</p>');

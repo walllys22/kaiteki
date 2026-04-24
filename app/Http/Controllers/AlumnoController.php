@@ -7,6 +7,7 @@ use App\Models\Alumno;
 use App\Models\AlumnoTutor;
 use App\Models\AlumnoEnfermedad;
 use App\Models\AlumnoGrado;
+use App\Models\AlumnoGradoExamen;
 use App\Models\Person;
 use App\Models\Dojo;
 use App\Models\Parentesco;
@@ -467,6 +468,21 @@ class AlumnoController extends Controller
         // Puede agregar nuevo grado si no hay uno en progreso, o si el activo está completo
         $puedeAgregarGrado = !$activeGrado || ($progress && $progress['isComplete']);
 
+        // Fecha mínima para el próximo grado: fecha del examen final aprobado del último grado completado
+        $minFechaGrado = null;
+        $ultimoCompletado = AlumnoGrado::where('alumno_id', $alumno_id)
+            ->where('status', '1')
+            ->whereNull('deleted_at')
+            ->orderByDesc('id')
+            ->first();
+        if ($ultimoCompletado) {
+            $minFechaGrado = AlumnoGradoExamen::where('alumno_grado_id', $ultimoCompletado->id)
+                ->where('aprobado', 1)
+                ->whereNull('deleted_at')
+                ->orderByDesc('fecha')
+                ->value('fecha');
+        }
+
         // Grados disponibles: excluir los que el alumno ya tiene registrados
         $gradosUsados = AlumnoGrado::where('alumno_id', $alumno_id)
             ->whereNotNull('grado_id')
@@ -482,7 +498,7 @@ class AlumnoController extends Controller
             ->get();
 
         return view('alumnos.grados.list', compact(
-            'data', 'alumno_id', 'activeGrado', 'progress', 'puedeAgregarGrado', 'grados'
+            'data', 'alumno_id', 'activeGrado', 'progress', 'puedeAgregarGrado', 'grados', 'minFechaGrado'
         ));
     }
 

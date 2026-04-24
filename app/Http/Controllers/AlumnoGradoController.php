@@ -86,12 +86,35 @@ class AlumnoGradoController extends Controller
 
             if (!$progress['isComplete']) {
                 return redirect()->route('voyager.alumnos.show', ['id' => $alumnoId])
-                    ->with(['message' => 'El alumno tiene un grado en progreso que aún no fue completado. Debe cumplir las puntas, los días requeridos y aprobar el examen final.', 'alert-type' => 'error']);
+                    ->with(['message' => 'El alumno tiene un grado en progreso que aún no fue completado. Debe cumplir las puntas y aprobar el examen final.', 'alert-type' => 'error']);
             }
 
-            // Marcar el grado anterior como completado
+            // Marcar el grado anterior como completado (caso borde)
             $activeGrado->status = '1';
             $activeGrado->save();
+        }
+
+        // Validar fecha contra el último grado completado (independiente del flujo de arriba,
+        // porque storeExamen() ya marca el grado como status='1' antes de llegar aquí)
+        $ultimoCompletado = AlumnoGrado::where('alumno_id', $alumnoId)
+            ->where('status', '1')
+            ->whereNull('deleted_at')
+            ->orderByDesc('id')
+            ->first();
+
+        if ($ultimoCompletado) {
+            $fechaExamen = AlumnoGradoExamen::where('alumno_grado_id', $ultimoCompletado->id)
+                ->where('aprobado', 1)
+                ->whereNull('deleted_at')
+                ->orderByDesc('fecha')
+                ->value('fecha');
+
+            if ($fechaExamen && $request->fecha < $fechaExamen) {
+                $fechaFormateada = Carbon::parse($fechaExamen)->format('d/m/Y');
+                return redirect()->back()
+                    ->withInput()
+                    ->with(['message' => "La fecha de inicio no puede ser anterior al examen final aprobado ({$fechaFormateada}).", 'alert-type' => 'error']);
+            }
         }
 
         try {

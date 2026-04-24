@@ -1,6 +1,7 @@
-{{-- Comunicar al JS de read.blade.php si se puede agregar nuevo grado --}}
+{{-- Comunicar al JS de read.blade.php si se puede agregar nuevo grado y la fecha mínima --}}
 <input type="hidden" id="puede-agregar-grado" value="{{ $puedeAgregarGrado ? '1' : '0' }}">
 <input type="hidden" id="active-grado-id" value="{{ $activeGrado ? $activeGrado->id : '' }}">
+<input type="hidden" id="min-fecha-grado" value="{{ $minFechaGrado ?? '' }}">
 
 {{-- ══════════════════════════════════════════════════════
      SECCIÓN: GRADO ACTIVO EN PROGRESO
