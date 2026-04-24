@@ -320,39 +320,145 @@
 </h5>
 
 <div class="table-responsive">
-    <table id="dataTable" class="table table-bordered table-hover" style="font-size:13px;">
+    <table class="table table-bordered table-hover historial-grados-table" style="font-size:13px;">
         <thead>
             <tr>
-                <th style="width:60px; text-align:center;">ID</th>
+                <th style="width:36px;"></th>
                 <th>Grado</th>
                 <th style="width:120px;">Fecha Inicio</th>
                 <th>Observación</th>
+                <th style="width:80px; text-align:center;">Puntas</th>
+                <th style="width:90px; text-align:center;">Examen</th>
             </tr>
         </thead>
         <tbody>
             @forelse ($data as $item)
                 @php
-                    $grado = $item->grado;
-                    $gradoLabel = trim(($grado->tipo ?? '') . ' ' . ($grado->numero ?? '') . ' ' . ($grado->nombre ?? ''));
+                    $grado        = $item->grado;
+                    $gradoLabel   = trim(($grado->tipo ?? '') . ' ' . ($grado->numero ?? '') . ' ' . ($grado->nombre ?? ''));
+                    $hRepasos     = $item->repasos->sortByDesc('fecha');
+                    $hExamenes    = $item->examenes->sortByDesc('fecha');
+                    $hPuntasObt   = $hRepasos->where('aprobado', 1)->count();
+                    $hPuntasReq   = $grado ? (int) $grado->puntas : 0;
+                    $hExamAprobado = $hExamenes->where('aprobado', 1)->count() > 0;
                 @endphp
-                <tr>
-                    <td style="text-align:center;">{{ $item->id }}</td>
-                    <td>
+
+                {{-- Fila principal (clickeable) --}}
+                <tr class="historial-row" data-target="#hdetail-{{ $item->id }}"
+                    style="cursor:pointer;" title="Click para ver detalle">
+                    <td style="text-align:center; vertical-align:middle;">
+                        <i class="fa-solid fa-chevron-right historial-chevron" id="chev-{{ $item->id }}"
+                           style="color:#aaa; font-size:11px; transition:transform .2s;"></i>
+                    </td>
+                    <td style="vertical-align:middle;">
                         <strong>{{ $gradoLabel ?: 'Grado no disponible' }}</strong>
                         @if ($grado)
-                            <br>
-                            <small class="text-muted">
-                                Puntas: <strong>{{ $grado->puntas ?? 0 }}</strong> ·
-                                Días: <strong>{{ $grado->dias ?? 0 }}</strong>
-                            </small>
+                            <br><small class="text-muted">{{ $grado->tipo ?? '' }} · req. {{ $hPuntasReq }} puntas</small>
                         @endif
                     </td>
-                    <td>{{ $item->fecha ? \Carbon\Carbon::parse($item->fecha)->format('d/m/Y') : '—' }}</td>
-                    <td>{{ $item->observacion ?: '—' }}</td>
+                    <td style="vertical-align:middle;">
+                        {{ $item->fecha ? \Carbon\Carbon::parse($item->fecha)->format('d/m/Y') : '—' }}
+                    </td>
+                    <td style="vertical-align:middle;">{{ $item->observacion ?: '—' }}</td>
+                    <td style="text-align:center; vertical-align:middle;">
+                        <span class="label label-success">{{ $hPuntasObt }}/{{ $hPuntasReq }}</span>
+                    </td>
+                    <td style="text-align:center; vertical-align:middle;">
+                        @if($hExamAprobado)
+                            <span class="label label-success"><i class="fa-solid fa-check"></i> Aprobado</span>
+                        @else
+                            <span class="label label-default">—</span>
+                        @endif
+                    </td>
                 </tr>
+
+                {{-- Fila de detalle (colapsable) --}}
+                <tr class="historial-detail-row" id="hdetail-{{ $item->id }}" style="display:none;">
+                    <td colspan="6" style="padding:0; border-top:0; background:#f7fafd;">
+                        <div style="padding:14px 18px;">
+                            <div class="row">
+
+                                {{-- Repasos --}}
+                                <div class="col-md-7">
+                                    <p style="font-weight:600; margin-bottom:6px; font-size:13px;">
+                                        <i class="fa-solid fa-repeat" style="color:#8e44ad;"></i>
+                                        Repasos
+                                        <small class="text-muted">({{ $hRepasos->count() }} total · {{ $hPuntasObt }} aprobados)</small>
+                                    </p>
+                                    @if($hRepasos->count())
+                                        <table class="table table-condensed" style="font-size:12px; margin-bottom:0;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width:100px;">Fecha</th>
+                                                    <th style="width:100px; text-align:center;">Resultado</th>
+                                                    <th>Observación</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($hRepasos as $r)
+                                                <tr>
+                                                    <td>{{ \Carbon\Carbon::parse($r->fecha)->format('d/m/Y') }}</td>
+                                                    <td style="text-align:center;">
+                                                        @if($r->aprobado)
+                                                            <span class="label label-success"><i class="fa-solid fa-star"></i> Punta</span>
+                                                        @else
+                                                            <span class="label label-default">No aprobado</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>{{ $r->observacion ?: '—' }}</td>
+                                                </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    @else
+                                        <p class="text-muted" style="font-size:12px;">Sin repasos registrados.</p>
+                                    @endif
+                                </div>
+
+                                {{-- Exámenes --}}
+                                <div class="col-md-5">
+                                    <p style="font-weight:600; margin-bottom:6px; font-size:13px;">
+                                        <i class="fa-solid fa-graduation-cap" style="color:#e74c3c;"></i>
+                                        Examen Final
+                                    </p>
+                                    @if($hExamenes->count())
+                                        <table class="table table-condensed" style="font-size:12px; margin-bottom:0;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width:100px;">Fecha</th>
+                                                    <th style="text-align:center;">Resultado</th>
+                                                    <th>Observación</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($hExamenes as $e)
+                                                <tr>
+                                                    <td>{{ \Carbon\Carbon::parse($e->fecha)->format('d/m/Y') }}</td>
+                                                    <td style="text-align:center;">
+                                                        @if($e->aprobado)
+                                                            <span class="label label-success"><i class="fa-solid fa-check"></i> Aprobado</span>
+                                                        @else
+                                                            <span class="label label-danger"><i class="fa-solid fa-xmark"></i> Aplazado</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>{{ $e->observacion ?: '—' }}</td>
+                                                </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    @else
+                                        <p class="text-muted" style="font-size:12px;">Sin intentos de examen.</p>
+                                    @endif
+                                </div>
+
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+
             @empty
                 <tr>
-                    <td colspan="4" class="text-center text-muted">Sin grados completados.</td>
+                    <td colspan="6" class="text-center text-muted">Sin grados completados.</td>
                 </tr>
             @endforelse
         </tbody>
@@ -376,4 +482,28 @@
     .grado-progress-card { background: #fafcfe; border: 1px solid #edf2f7; border-radius: 6px; padding: 10px 12px; margin-bottom: 10px; }
     .grado-progress-label { font-size: 13px; color: #555; margin-bottom: 6px; }
     .progress { border-radius: 6px; }
+    .historial-row:hover td { background: #eef6ff !important; }
+    .historial-detail-row td { border-top: 0 !important; }
+    .historial-chevron.open { transform: rotate(90deg); color: #3498db !important; }
 </style>
+
+<script>
+(function() {
+    // Usar delegación desde el padre estable (#div-grados-list)
+    var container = document.getElementById('div-grados-list') || document;
+    container.addEventListener('click', function(e) {
+        var row = e.target.closest('.historial-row');
+        if (!row) return;
+
+        var targetId = row.getAttribute('data-target');
+        var detailRow = document.querySelector(targetId);
+        var chevronId = 'chev-' + targetId.replace('#hdetail-', '');
+        var chevron   = document.getElementById(chevronId);
+        if (!detailRow) return;
+
+        var isOpen = detailRow.style.display !== 'none';
+        detailRow.style.display = isOpen ? 'none' : 'table-row';
+        if (chevron) chevron.classList.toggle('open', !isOpen);
+    });
+})();
+</script>
