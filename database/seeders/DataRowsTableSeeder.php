@@ -400,8 +400,8 @@ class DataRowsTableSeeder extends Seeder
                 'edit' => 1,
                 'add' => 1,
                 'delete' => 0,
-                'details' => '{"validation":{"rule":"required|max:191"},"display":{"width":12}}',
-                'order' => 6,
+                'details' => '{"validation":{"rule":"required|max:191"},"display":{"width":9}}',
+                'order' => 7,
             ),
             24 => 
             array (
@@ -417,7 +417,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 1,
                 'delete' => 0,
                 'details' => '{"default":"","null":"","options":{},"relationship":{"key":"id","label":"nombre","parent_table":"dojos","parent_model":"App\\\\Models\\\\Dojo"},"validation":{"rule":"required|exists:dojos,id"},"display":{"width":4}}',
-                'order' => 7,
+                'order' => 8,
             ),
             25 => 
             array (
@@ -449,7 +449,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 1,
                 'delete' => 0,
                 'details' => '{"validation":{"rule":"max:191"},"display":{"width":4}}',
-                'order' => 10,
+                'order' => 9,
             ),
             27 => 
             array (
@@ -465,7 +465,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 1,
                 'delete' => 0,
                 'details' => '{"validation":{"rule":"max:191"},"display":{"width":2}}',
-                'order' => 12,
+                'order' => 11,
             ),
             28 => 
             array (
@@ -481,7 +481,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 1,
                 'delete' => 0,
                 'details' => '{"validation":{"rule":"max:191"},"display":{"width":12}}',
-                'order' => 14,
+                'order' => 13,
             ),
             29 => 
             array (
@@ -513,7 +513,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 1,
                 'delete' => 0,
                 'details' => '{"display":{"width":12},"resize":{"width":"1000","height":null},"quality":"70%","upsize":true,"thumbnails":[{"name":"medium","scale":"50%"},{"name":"small","scale":"25%"},{"name":"cropped","crop":{"width":"300","height":"250"}}]}',
-                'order' => 13,
+                'order' => 12,
             ),
             31 => 
             array (
@@ -529,7 +529,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 0,
                 'delete' => 0,
                 'details' => '{"on":"Activo","off":"Inactivo","checked":true}',
-                'order' => 15,
+                'order' => 14,
             ),
             32 => 
             array (
@@ -545,7 +545,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 0,
                 'delete' => 0,
                 'details' => '{}',
-                'order' => 16,
+                'order' => 15,
             ),
             33 => 
             array (
@@ -561,7 +561,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 0,
                 'delete' => 0,
                 'details' => '{}',
-                'order' => 17,
+                'order' => 16,
             ),
             34 => 
             array (
@@ -577,7 +577,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 0,
                 'delete' => 0,
                 'details' => '{}',
-                'order' => 18,
+                'order' => 17,
             ),
             35 => 
             array (
@@ -593,7 +593,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 0,
                 'delete' => 0,
                 'details' => '{}',
-                'order' => 19,
+                'order' => 18,
             ),
             36 => 
             array (
@@ -609,7 +609,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 0,
                 'delete' => 0,
                 'details' => '{}',
-                'order' => 20,
+                'order' => 19,
             ),
             37 => 
             array (
@@ -625,7 +625,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 0,
                 'delete' => 0,
                 'details' => '{}',
-                'order' => 21,
+                'order' => 20,
             ),
             38 => 
             array (
@@ -641,7 +641,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 0,
                 'delete' => 0,
                 'details' => '{}',
-                'order' => 22,
+                'order' => 21,
             ),
             39 => 
             array (
@@ -657,7 +657,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 0,
                 'delete' => 0,
                 'details' => '{}',
-                'order' => 23,
+                'order' => 22,
             ),
             40 => 
             array (
@@ -817,7 +817,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 1,
                 'delete' => 0,
                 'details' => '{"display":{"width":2}}',
-                'order' => 11,
+                'order' => 10,
             ),
             50 => 
             array (
@@ -2466,6 +2466,22 @@ class DataRowsTableSeeder extends Seeder
                 'delete' => 0,
                 'details' => '{"on":"Activo","off":"Inactivo","checked":true}',
                 'order' => 7,
+            ),
+            153 => 
+            array (
+                'id' => 286,
+                'data_type_id' => 8,
+                'field' => 'sangre',
+                'type' => 'select_dropdown',
+                'display_name' => 'Tipo de Sangre',
+                'required' => 0,
+                'browse' => 1,
+                'read' => 1,
+                'edit' => 1,
+                'add' => 1,
+                'delete' => 0,
+            'details' => '{"options":{"orh(+)":"orh(+)","orh(-)":"orh(-)"},"display":{"width":3},"validation":{"rule":"required"}}',
+                'order' => 6,
             ),
         ));
         

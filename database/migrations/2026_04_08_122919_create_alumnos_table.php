@@ -14,11 +14,10 @@ return new class extends Migration
         Schema::create('alumnos', function (Blueprint $table) {
             $table->id();
             $table->foreignId('dojo_id')->nullable()->constrained('dojos');
-            $table->foreignId('person_id')->nullable()->constrained('people');  
-            $table->date('entry_date')->nullable();
-            $table->foreignId('horario_id')->nullable()->constrained('horarios');
-            $table->foreignId('grado_id')->nullable()->constrained('grados');
-            $table->string('tipoSangre')->nullable();
+            $table->foreignId('person_id')->nullable()->constrained('people'); 
+
+            $table->date('fechaIngreso')->nullable();
+
             $table->smallInteger('status')->default(1);
             $table->text('observacion')->nullable();
 
