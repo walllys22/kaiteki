@@ -1,10 +1,16 @@
+@php
+    $showDojoColumn = !auth()->user()->dojo_id;
+@endphp
+
 <div class="col-md-12">
     <div class="table-responsive">
         <table id="dataTable" class="table table-bordered table-hover">
             <thead>
                 <tr>
                     <th style="text-align: center">ID</th>
-                    <th style="text-align: center">Dojo</th>
+                    @if ($showDojoColumn)
+                        <th style="text-align: center">Dojo</th>
+                    @endif
                     <th style="text-align: center">Turno</th>
                     <th style="text-align: center">Nombre</th>
                     <th style="text-align: center">Estado</th>
@@ -15,7 +21,9 @@
                 @forelse ($data as $item)
                     <tr>
                         <td style="text-align: center">{{ $item->id }}</td>
-                        <td style="text-align: center">{{ $item->dojo->nombre ?? 'Sin sucursal' }}</td>
+                        @if ($showDojoColumn)
+                            <td style="text-align: center">{{ $item->dojo->nombre ?? 'Sin sucursal' }}</td>
+                        @endif
                         <td style="text-align: center">{{ $item->tipo ?? 'Sin turno' }}</td>
                         <td>{{ $item->nombre ?? 'Sin nombre' }}</td>
                         <td style="text-align: center">
@@ -45,7 +53,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6">
+                        <td colspan="{{ $showDojoColumn ? 6 : 5 }}">
                             <h5 class="text-center" style="margin-top: 50px">
                                 <img src="{{ asset('images/empty.png') }}" width="120px" alt="" style="opacity: 0.8">
                                 <br><br>
