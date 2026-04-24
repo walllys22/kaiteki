@@ -12,7 +12,6 @@ use App\Http\Controllers\TorneoController;
 use App\Http\Controllers\KumiteController;
 use App\Http\Controllers\TableroKataController;
 use App\Http\Controllers\AlumnoController;
-use App\Http\Controllers\AlumnoHistorialController;
 use App\Http\Controllers\HorarioController;
 use Illuminate\Support\Facades\Artisan;
 use TCG\Voyager\Facades\Voyager;
@@ -62,7 +61,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     Route::get('alumnos/{id}/historial/list', [AlumnoHistorialController::class, 'historialList']);
     Route::get('alumnos/{id}/check-historial', [AlumnoHistorialController::class, 'checkHistorial'])->name('alumnos.check_historial');
     Route::post('alumnos/historial/store', [AlumnoHistorialController::class, 'store'])->name('alumnos.historial.store');
-    Route::post('alumnos/{id}/status', [AlumnoHistorialController::class, 'updateStatus'])->name('alumnos.status.update');
+    Route::post('alumnos/{id}/status', [AlumnoController::class, 'updateStatus'])->name('alumnos.status.update');
     Route::get('alumnos/check-registration/{person_id}', [AlumnoHistorialController::class, 'checkRegistration'])->name('alumnos.check_registration');
     Route::get('alumnos/imprimir/reporte', [AlumnoHistorialController::class, 'print'])->name('alumnos.print');
     

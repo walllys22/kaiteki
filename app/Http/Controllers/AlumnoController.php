@@ -199,6 +199,23 @@ class AlumnoController extends Controller
         return view('alumnos.read', compact('dojo', 'people', 'enfermedades', 'parientes', 'dataTypeContent'));
     }
 
+    public function updateStatus($id)
+    {
+        $this->custom_authorize('edit_alumnos');
+
+        $userDojoId = auth()->user()->dojo_id;
+        $alumno = Alumno::when($userDojoId, function ($query, $userDojoId) {
+            return $query->where('dojo_id', $userDojoId);
+        })->findOrFail($id);
+
+        $alumno->status = $alumno->status == 1 ? 0 : 1;
+        $alumno->save();
+
+        $msg = $alumno->status == 1 ? 'Activo' : 'Inactivo';
+
+        return back()->with(['message' => "El estado del alumno se cambió a $msg.", 'alert-type' => 'success']);
+    }
+
     public function tutorList($alumno_id)
     {
         $search = request('search');
