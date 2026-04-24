@@ -26,7 +26,7 @@ class GradosTableSeeder extends Seeder
                 'numero' => '10mo.',
                 'nombre' => 'Cinturon Blanco',
                 'created_at' => '2026-04-23 13:02:59',
-                'updated_at' => '2026-04-23 21:28:48',
+                'updated_at' => '2026-04-23 21:36:43',
                 'registerUser_id' => 1,
                 'registerRole' => 'admin',
                 'deleted_at' => NULL,
@@ -80,7 +80,7 @@ class GradosTableSeeder extends Seeder
                 'numero' => '7mo.',
                 'nombre' => 'Cinturon Naranja',
                 'created_at' => '2026-04-23 21:30:20',
-                'updated_at' => '2026-04-23 21:30:20',
+                'updated_at' => '2026-04-23 21:36:49',
                 'registerUser_id' => 1,
                 'registerRole' => 'admin',
                 'deleted_at' => NULL,
@@ -89,7 +89,7 @@ class GradosTableSeeder extends Seeder
                 'deleteObservation' => NULL,
                 'puntas' => 6,
                 'dias' => 180,
-                'status' => 1,
+                'status' => 0,
             ),
         ));
         
