@@ -111,6 +111,7 @@ class AlumnoController extends Controller
             ->when($userDojoId, function ($query, $userDojoId) {
                 return $query->where('dojo_id', $userDojoId);
             })
+            ->whereNotNull('person_id')
             ->whereNull('deleted_at')
             ->orderBy('id', 'DESC')
             ->paginate($paginate);
@@ -164,19 +165,6 @@ class AlumnoController extends Controller
         }
     }
 
-    public function edit($id)
-    {
-        $this->custom_authorize('edit_alumnos');
-        $userDojoId = auth()->user()->dojo_id;
-        $dataTypeContent = Alumno::when($userDojoId, function ($query, $userDojoId) {
-            return $query->where('dojo_id', $userDojoId);
-        })->findOrFail($id);
-        $formData = $this->buildFormData($dataTypeContent);
-
-        return view('alumnos.edit-add', array_merge($formData, compact('dataTypeContent')));
-        
-    }
-
     public function show($id)
     {
         $this->custom_authorize('read_alumnos');
@@ -192,53 +180,6 @@ class AlumnoController extends Controller
         $enfermedades = AlumnoEnfermedade::whereNull('deleted_at')->get();
 
         return view('alumnos.read', compact('dojo', 'people', 'enfermedades', 'parientes', 'dataTypeContent'));
-    }
-
-    public function update(Request $request, $id)
-    {
-        $this->custom_authorize('edit_alumnos');
-        $dojoId = $this->resolveAlumnoDojoId($request);
-        if (!$dojoId) {
-            return redirect()->back()
-                ->withInput()
-                ->with(['message' => 'Debe seleccionar un dojo valido para actualizar al alumno.', 'alert-type' => 'error']);
-        }
-
-        // Manejo de status (si viene de un checkbox envía "on")
-        if ($request->has('status')) {
-            $request->merge(['status' => $request->status == 'on' ? 1 : $request->status]);
-        }
-
-
-        $request->validate([
-            'dojo_id' => 'nullable|exists:dojos,id',
-            'person_id' => 'required|exists:people,id',
-            'fechaIngreso' => 'required|date',
-            'status' => 'nullable',
-            'observacion' => 'nullable|string|max:255',
-        ]);
-
-        try {
-            $alumno = Alumno::when(auth()->user()->dojo_id, function ($query, $userDojoId) {
-                return $query->where('dojo_id', $userDojoId);
-            })->findOrFail($id);
-
-            $this->validateRelationsForDojo((int) $dojoId, $request, $alumno->id);
-            
-            $alumno->dojo_id = $dojoId;
-            $alumno->person_id = $request->person_id;
-            $alumno->fechaIngreso = $request->fechaIngreso;
-            $alumno->status = $request->status ? 1 : 0;
-            $alumno->observacion = $request->observacion;
-
-            $alumno->update();
-
-            return redirect()->route('voyager.alumnos.index')
-                ->with(['message' => 'Alumno actualizado exitosamente', 'alert-type' => 'success']);
-        } catch (\Throwable $th) {
-            return redirect()->back()
-                ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
-        }
     }
 
     public function tutorList($alumno_id)

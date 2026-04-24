@@ -31,12 +31,12 @@ class Alumno extends Model
 
     public function dojo()
     {
-        return $this->belongsTo(dojo::class, 'dojo_id');
+        return $this->belongsTo(Dojo::class, 'dojo_id')->withTrashed();
     }
 
     public function person()
     {
-        return $this->belongsTo(Person::class, 'person_id');
+        return $this->belongsTo(Person::class, 'person_id')->withTrashed();
     }
     public function alumnoEnfermedads()
     {

@@ -50,8 +50,6 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     Route::get('alumnos/ajax/list', [AlumnoController::class, 'list']);
     Route::get('alumnos/create', [AlumnoController::class, 'create'])->name('voyager.alumnos.create');
     Route::post('alumnos/store', [AlumnoController::class, 'store'])->name('voyager.alumnos.store');
-    Route::get('alumnos/{id}/edit', [AlumnoController::class, 'edit'])->name('voyager.alumnos.edit');
-    Route::put('alumnos/{id}', [AlumnoController::class, 'update'])->name('voyager.alumnos.update');
     Route::get('alumnos/{id}', [AlumnoController::class, 'show'])->name('voyager.alumnos.show');
 
 

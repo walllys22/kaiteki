@@ -15,18 +15,20 @@
                 @forelse ($data as $item)
                 @php
                     $image = asset('images/default.jpg');
-                    if($item->person->image){
+                    if(optional($item->person)->image){
                         $image = asset('storage/' . str_replace('.avif', '', $item->person->image) . '-cropped.webp');
                     }
+                    $personName = optional($item->person)->first_name ?: 'Persona no disponible';
+                    $dojoName = optional($item->dojo)->nombre ?: 'Sin dojo';
                 @endphp
                 <tr>
                     <td>{{ $item->id }}</td>
-                    <td style="text-align: center">{{ $item->dojo->nombre }} </td>
+                    <td style="text-align: center">{{ $dojoName }} </td>
                     <td>
                         <div style="display: flex; align-items: center;">
-                            <img src="{{ $image }}" alt="{{ $item->person->first_name }}" class="image-expandable" style="width: 60px; height: 60px; border-radius: 30px; margin-right: 10px; object-fit: cover;">
+                            <img src="{{ $image }}" alt="{{ $personName }}" class="image-expandable" style="width: 60px; height: 60px; border-radius: 30px; margin-right: 10px; object-fit: cover;">
                             <div>
-                                {{ $item->person->first_name }} 
+                                {{ $personName }} 
                             </div>
                         </div>
                     </td>
@@ -47,29 +49,11 @@
                                 <i class="voyager-eye"></i> <span class="hidden-xs hidden-sm"></span>
                             </a>
                         @endif
-                        @if (auth()->user()->hasPermission('edit_alumnos'))
-                            <a href="{{ route('voyager.alumnos.edit', ['id' => $item->id]) }}" title="Editar" class="btn btn-sm btn-primary edit">
-                                <i class="voyager-edit"></i> <span class="hidden-xs hidden-sm"></span>
-                            </a>
-                        @endif
                         @if (auth()->user()->hasPermission('delete_alumnos'))
                             <a href="javascript:void(0);" onclick="deleteItem('{{ $item->id }}', '{{ route('voyager.alumnos.destroy', ['id' => $item->id]) }}')" title="Eliminar" class="btn btn-sm btn-danger">
                                 <i class="voyager-trash"></i> <span class="hidden-xs hidden-sm"></span>
                             </a>
                         @endif
-                        <div class="row" >
-                            <div class="btn group">
-                                <a href="{{ route('alumnos.pagos.show', $item->id) }}" title="Pagos" class="btn btn-sm btn-success">
-                                    <i class="fa-solid fa-money-bill-1"></i> <span class="hidden-xs hidden-sm"></span>
-                                </a>
-                                <a href="{{ route('alumnos.historial.show', $item->id) }}" title="Historial" class="btn btn-sm btn-warning">
-                                    <i class="fa-solid fa-file-pen"></i> <span class="hidden-xs hidden-sm"></span>
-                                </a>
-                                <a href="#" onclick="statusItem('{{ $item->id }}', '{{ $item->person->first_name }}', '{{ $item->dojo->nombre }}')" title="Estado" class="btn btn-sm btn-dark">
-                                    <i class="fa-solid fa-person-circle-xmark"></i> <span class="hidden-xs hidden-sm"></span>
-                                </a>
-                            </div>
-                        </div>
                     </td>
                 </tr>
                 @empty
