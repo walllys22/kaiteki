@@ -56,6 +56,56 @@
     </div>
 
     @include('partials.modal-delete')
+    @include('partials.modal-registerPerson')
+
+    <div class="modal fade" id="modal-assign-responsable" role="dialog">
+        <div class="modal-dialog modal-primary">
+            <div class="modal-content">
+                <form id="form-assign-responsable" action="{{ route('horarios.responsables.store') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="horario_id" id="responsable_horario_id">
+                    <input type="hidden" id="responsable_dojo_id" value="">
+
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" style="color: #ffffff !important">
+                            <i class="voyager-people"></i> Asignar Responsable
+                        </h4>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="alert alert-info" style="margin-bottom: 20px;">
+                            <strong>Horario:</strong> <span id="responsable_horario_nombre">-</span><br>
+                            <strong>Sucursal:</strong> <span id="responsable_dojo_nombre">-</span><br>
+                            <small>Al asignar un nuevo responsable, el anterior quedará inactivo y se conservará en el historial.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="select-person_id">Responsable</label>
+                            <div class="input-group">
+                                <select name="person_id" id="select-person_id" required class="form-control"></select>
+                                <span class="input-group-btn">
+                                    <button class="btn btn-primary" title="Nueva persona" data-target="#modal-create-person" data-toggle="modal" style="margin: 0px" type="button" id="btn-open-create-person">
+                                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="responsable_observacion">Observación</label>
+                            <textarea name="observacion" id="responsable_observacion" class="form-control" rows="3" placeholder="Motivo del cambio o nota adicional"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                        <input type="submit" class="btn btn-primary btn-save-responsable" value="Guardar">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @stop
 
 @section('css')
@@ -66,10 +116,13 @@
 @section('javascript')
     <script src="{{ url('js/main.js') }}"></script>
     <script src="{{ asset('js/btn-submit.js') }}"></script>
+    <script src="{{ asset('js/include/person-select.js') }}"></script>
+    <script src="{{ asset('js/include/person-register.js') }}"></script>
 
     <script>
         var countPage = 10, order = 'id', typeOrder = 'desc';
         var timeout = null;
+        var shouldRestoreResponsableModal = false;
 
         $(document).ready(() => {
             list();
@@ -113,5 +166,87 @@
         function deleteItem(url){
             $('#delete_form').attr('action', url);
         }
+
+        function openResponsableModal(horarioId, horarioNombre, dojoId, dojoNombre) {
+            $('#responsable_horario_id').val(horarioId);
+            $('#responsable_dojo_id').val(dojoId || '');
+            $('#responsable_horario_nombre').text(horarioNombre || '-');
+            $('#responsable_dojo_nombre').text(dojoNombre || 'Sin sucursal');
+            $('#responsable_observacion').val('');
+            $('#select-person_id').val(null).trigger('change');
+            $('#modal-assign-responsable').modal('show');
+        }
+
+        window.getPersonListParams = function () {
+            return {
+                dojo_id: $('#responsable_dojo_id').val() || ''
+            };
+        };
+
+        $(document).on('submit', '#form-assign-responsable', function(e) {
+            e.preventDefault();
+
+            const form = $(this);
+            $('.btn-save-responsable').prop('disabled', true).val('Guardando...');
+
+            $.post(form.attr('action'), form.serialize(), function(data) {
+                toastr.success(data.message, 'Éxito');
+                $('#modal-assign-responsable').modal('hide');
+                list(typeof page !== 'undefined' ? page : 1);
+            }).fail(function(xhr) {
+                const message = xhr.responseJSON?.error || 'No se pudo registrar el responsable.';
+                toastr.error(message, 'Error');
+            }).always(function() {
+                $('.btn-save-responsable').prop('disabled', false).val('Guardar');
+            });
+        });
+
+        $('#btn-open-create-person').on('click', function(e) {
+            e.preventDefault();
+
+            const dojoId = $('#responsable_dojo_id').val();
+            shouldRestoreResponsableModal = true;
+
+            if ($('#modal_person_dojo_id').length) {
+                $('#modal_person_dojo_id').val(dojoId);
+            }
+
+            if ($('#modal_person_dojo_select').length && !$('#modal_person_dojo_select').is(':disabled')) {
+                $('#modal_person_dojo_select').val(dojoId).trigger('change');
+            }
+
+            $('#modal-assign-responsable').modal('hide');
+        });
+
+        $('#modal-assign-responsable').on('hidden.bs.modal', function() {
+            if (shouldRestoreResponsableModal) {
+                $('#modal-create-person').modal('show');
+            }
+        });
+
+        $('#modal-create-person').on('hidden.bs.modal', function() {
+            if (shouldRestoreResponsableModal) {
+                $('#modal-assign-responsable').modal('show');
+            }
+        });
+
+        $(document).on('person:created', function(event, person) {
+            if (!shouldRestoreResponsableModal || !person) {
+                return;
+            }
+
+            const option = new Option(person.first_name, person.id, true, true);
+            $('#select-person_id').append(option).trigger('change');
+            $('#select-person_id').trigger({
+                type: 'select2:select',
+                params: {
+                    data: person
+                }
+            });
+        });
+
+        $('#modal-assign-responsable').on('shown.bs.modal', function() {
+            shouldRestoreResponsableModal = false;
+        });
     </script>
 @stop

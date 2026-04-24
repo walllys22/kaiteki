@@ -35,4 +35,16 @@ class Horario extends Model
     {
         return $this->dojo();
     }
+
+    public function responsibles()
+    {
+        return $this->hasMany(HorarioReponsable::class, 'horario_id')->orderByDesc('created_at');
+    }
+
+    public function activeResponsible()
+    {
+        return $this->hasOne(HorarioReponsable::class, 'horario_id')
+            ->where('status', 1)
+            ->latestOfMany();
+    }
 }

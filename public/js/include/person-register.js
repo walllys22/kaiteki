@@ -16,6 +16,7 @@ $(document).ready(function() {
         $.post(form.attr('action'), $(this).serialize(), function(data) {
             if (data.person) {
                 toastr.success('Persona registrada', 'Exito');
+                $(document).trigger('person:created', [data.person]);
                 form[0].reset();
                 if ($('#modal_person_dojo_id').length) {
                     $('#modal_person_dojo_id').val(fixedDojoId);

@@ -20,6 +20,17 @@ var personSelected;
                 ajax: {
                     // url: "{{ url('admin/ajax/personList') }}",        
                     url: window.personListUrl, // Usa la variable global
+                    // data: function (params) {
+                    //     let extraParams = {};
+                    //     if (typeof window.getPersonListParams === 'function') {
+                    //         extraParams = window.getPersonListParams() || {};
+                    //     }
+
+                    //     return {
+                    //         q: params.term || '',
+                    //         ...extraParams
+                    //     };
+                    // },
                     processResults: function (data) {
                         let results = [];
                         data.map(data =>{

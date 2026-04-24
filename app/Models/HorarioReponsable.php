@@ -27,4 +27,13 @@ class HorarioReponsable extends Model
         'deleteObservation',
     ];
 
+    public function horario()
+    {
+        return $this->belongsTo(Horario::class, 'horario_id');
+    }
+
+    public function person()
+    {
+        return $this->belongsTo(Person::class, 'person_id');
+    }
 }
