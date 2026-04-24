@@ -195,7 +195,7 @@ class AlumnoController extends Controller
                 'grado_id' => $request->grado_id,
                 'fecha' => $request->fechaIngreso,
                 'observacion' => 'Registro inicial del alumno',
-                'status' => 1,
+                'status' => '0',
             ]);
 
             DB::commit();
