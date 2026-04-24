@@ -29,6 +29,7 @@ class PermissionRoleTableSeeder extends Seeder
 
                                             table_name = "people" or
                                             table_name = "alumnos" or
+                                            table_name = "horarios" or
                                             table_name = "roles" or
                                             table_name = "users" or
                                             table_name = "settings" or

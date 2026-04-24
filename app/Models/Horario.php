@@ -30,4 +30,9 @@ class Horario extends Model
     {
         return $this->belongsTo(Dojo::class, 'dojo_id');
     }
+
+    public function dojoId()
+    {
+        return $this->dojo();
+    }
 }
