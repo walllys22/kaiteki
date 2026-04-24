@@ -175,10 +175,68 @@ php artisan optimize:clear
 php artisan view:clear
 ```
 
+## Sistema de progresion de grados (AlumnoGrado)
+
+### Modelos involucrados
+
+- `App\Models\AlumnoGrado` — relacion alumno-grado. Tiene `repasos()`, `examenes()` (ambos con `whereNull('deleted_at')`), e `isCompletado()`.
+- `App\Models\AlumnoGradoRepaso` — cada sesion de practica. Campo `aprobado` (0/1). Un repaso aprobado cuenta como una punta.
+- `App\Models\AlumnoGradoExamen` — cada intento de examen final. Campo `aprobado` (0/1).
+
+Todos usan `HasFactory`, `RegistersUserEvents`, `SoftDeletes`.
+
+### Tablas
+
+- `alumno_grados` — ya existia; `status='0'` o null = en progreso, `status='1'` = completado.
+- `alumno_grado_repasos` — creada en migracion `2026_04_24_100000`.
+- `alumno_grado_examens` — creada en migracion `2026_04_24_100001`.
+
+### Reglas de negocio (todas validadas en servidor)
+
+1. No se puede registrar un nuevo grado mientras hay uno en progreso (`status='0'`).
+2. Para habilitar el examen final, el alumno debe tener repasos aprobados >= `Grado.puntas`.
+3. Una vez alcanzada la cuota de puntas, no se pueden agregar mas repasos.
+4. El examen puede repetirse las veces necesarias hasta que sea aprobado.
+5. El grado se marca como completado (`status='1'`) solo cuando el examen es aprobado.
+6. El mismo grado no puede registrarse dos veces para el mismo alumno (se verifica incluyendo soft-deleted).
+7. El select de grados excluye los que el alumno ya tiene registrados (completados o en progreso).
+8. La fecha de inicio de un nuevo grado no puede ser anterior a la fecha del examen final aprobado del grado anterior.
+
+### Detalle de implementacion
+
+- `AlumnoGradoController::calcularProgreso(AlumnoGrado)` — metodo estatico. Recibe un AlumnoGrado con eager load de `grado`, `repasos`, `examenes`. Retorna array con: `puntasRequeridas`, `puntasObtenidas`, `diasRequeridos`, `diasTranscurridos`, `cumplePuntas`, `cumpleDias`, `puedeExamen`, `examenAprobado`, `isComplete`.
+
+- **Problema de orden de operaciones**: `storeExamen()` ya setea `status='1'` cuando el examen es aprobado. Por eso en `storeGrado()` la validacion de fecha y el calculo de `$minFechaGrado` en `gradoList()` usan queries independientes sobre `AlumnoGrado` con `status='1'` + `AlumnoGradoExamen`, no dependen de `$activeGrado`.
+
+- **Grado inicial al registrar alumno**: Al crear un alumno desde el modal de registro, el `AlumnoGrado` inicial se crea con `status='0'` para que el alumno deba completar el ciclo normal de puntas + examen.
+
+### Rutas (AlumnoGradoController)
+
+```
+POST   admin/alumnos/grado/store               alumno.grado.store
+POST   admin/alumnos/grado/repaso/store        alumno.grado.repaso.store
+DELETE admin/alumnos/grado/repaso/{id}/delete  alumno.grado.repaso.destroy
+POST   admin/alumnos/grado/examen/store        alumno.grado.examen.store
+DELETE admin/alumnos/grado/examen/{id}/delete  alumno.grado.examen.destroy
+```
+
+### Comunicacion AJAX entre partial y vista principal
+
+`alumnos/grados/list.blade.php` se carga via AJAX dentro de `read.blade.php`. Para comunicar estado, el partial incluye inputs ocultos que el JS de `read.blade.php` lee despues de cargar el HTML:
+
+- `#puede-agregar-grado` — `'1'` si el boton "Nuevo Grado" debe mostrarse.
+- `#min-fecha-grado` — fecha ISO minima para el campo `fecha` del modal de nuevo grado.
+- `#active-grado-id` — ID del grado activo actual.
+
+### Select2 dentro de modales Bootstrap
+
+Los select con clase `select2` dentro de modales deben reinicializarse con `dropdownParent: $(modal)` cuando el modal abre (`shown.bs.modal`), de lo contrario el dropdown queda detras del overlay. Ver `initGradoSelect()` en `browse.blade.php`.
+
 ## Resumen corto
 
 - `admin@admin.com` = usuario global, sin persona ni dojo
 - `ignacio@admin.com` = usuario operativo, con persona y dojo
 - `registerUser_id` = auditoria
 - `dojo_id` = pertenencia a sucursal
+- `AlumnoGrado.status` = `'0'`/null en progreso, `'1'` completado
 - `.codex` = documento central del proyecto
