@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Alumno;
 use App\Models\AlumnoTutor;
-use App\Models\AlumnoEnfermedade;
+use App\Models\AlumnoEnfermedad;
 use App\Models\Person;
 use App\Models\Dojo;
 use App\Models\Parentesco;
@@ -194,7 +194,7 @@ class AlumnoController extends Controller
         $people = Person::whereNull('deleted_at')->get();
         $dojo = Dojo::whereNull('deleted_at')->get();
         $parientes = Parentesco::whereNull('deleted_at')->get();
-        $enfermedades = AlumnoEnfermedade::whereNull('deleted_at')->get();
+        $enfermedades = AlumnoEnfermedad::whereNull('deleted_at')->get();
 
         return view('alumnos.read', compact('dojo', 'people', 'enfermedades', 'parientes', 'dataTypeContent'));
     }
@@ -257,7 +257,7 @@ class AlumnoController extends Controller
         try {
             $data = $request->all();
 
-            AlumnoEnfermedade::create($data);
+            AlumnoEnfermedad::create($data);
 
             return redirect()->route('voyager.alumnos.show', ['id' => $request->alumno_id])
                 ->with(['message' => 'Alumno creado exitosamente', 'alert-type' => 'success']);
@@ -290,7 +290,7 @@ class AlumnoController extends Controller
         $search = request('search');
         $paginate = request('paginate') ?? 10;
 
-        $data = AlumnoEnfermedade::with(['alumno'])
+        $data = AlumnoEnfermedad::with(['alumno'])
             ->where('alumno_id', $alumno_id)
             ->when($search, function ($query, $search) {
                 return $query->where(function($q) use ($search) {
@@ -306,7 +306,7 @@ class AlumnoController extends Controller
 
     public function enfermedadDestroy($id)
     {
-        $alumnoEnfer = AlumnoEnfermedade::findOrFail($id);
+        $alumnoEnfer = AlumnoEnfermedad::findOrFail($id);
    
         try {
             

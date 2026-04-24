@@ -32,78 +32,121 @@
     @include('partials.modal-delete')
 
     @php
-        // Usamos $dataTypeContent que es la variable por defecto que pasa Voyager para el registro actual
         $alumno = $dataTypeContent;
-
-        // Lógica de imagen similar a tu list.blade.php
+        $person = $alumno->person;
+        $dojoData = $alumno->dojo;
         $image = asset('images/default.jpg');
-        if ($alumno->person->image) {
-            $image = asset('storage/' . str_replace('.avif', '', $alumno->person->image) . '-cropped.webp');
+        if (optional($person)->image) {
+            $image = asset('storage/' . str_replace('.avif', '', $person->image) . '-cropped.webp');
         }
     @endphp
 
     <div class="page-content read container-fluid">
         <div class="row">
             <div class="col-md-12">
-                <div class="panel panel-bordered" style="padding-bottom:5px;">
-                    <div class="row">
-                        {{-- Columna de Imagen/Poster --}}
-                        <div class="col-md-3">
-                            <div class="panel-heading" style="border-bottom:0;">
-                                <h3 class="panel-title">Foto del Alumno</h3>
-                            </div>
-                            <div class="panel-body" style="padding-top:0;">
-                                @if ($alumno->person->image && Str::endsWith($alumno->person->image, ['.jpg', '.jpeg', '.png', '.webp', '.avif']))
-                                    <img src="{{ $image }}"
-                                        style="width:150%; max-width:150px; border-radius: 5px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" />
-                                @else
-                                    <div
-                                        style="width:150%; height:150px; background-color: #f8f9fa; display:flex; align-items:center; justify-content:center; border: 1px solid #ddd; border-radius: 5px; color:#999;">
-                                        <i class="voyager-trophy" style="font-size: 50px;"></i>
+                <div class="panel panel-bordered alumno-summary-panel">
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-md-2">
+                                <div class="alumno-photo-card">
+                                    <div class="alumno-photo-title">Foto del Alumno</div>
+                                    <div class="alumno-photo-frame">
+                                        @if (optional($person)->image && \Illuminate\Support\Str::endsWith($person->image, ['.jpg', '.jpeg', '.png', '.webp', '.avif']))
+                                            <img src="{{ $image }}" alt="{{ optional($person)->first_name ?: 'Alumno' }}" class="alumno-photo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                            <div class="alumno-photo-fallback" style="display:none;">
+                                                <i class="fa-solid fa-user-graduate"></i>
+                                            </div>
+                                        @else
+                                            <div class="alumno-photo-fallback">
+                                                <i class="fa-solid fa-user-graduate"></i>
+                                            </div>
+                                        @endif
                                     </div>
-                                @endif
-                            </div>
-                        </div>
-
-                        {{-- Columna de Datos --}}
-                        <div class="col-md-9">
-                            <div class="panel-heading" style="border-bottom:0;">
-                                <h3 class="panel-title">Información General </h3>
-                            </div>
-                            <div class="panel-body" style="padding-top:0;">
-                                <div class="row">
-                                    <div class="col-md-4 form-group">
-                                        <label class="control-label" style="font-weight:bold;">Nombre del Dojo</label>
-                                        <p class="form-control-static">{{ $alumno->dojo->nombre }} </p>
-                                    </div>
-                                    <div class="col-md-4 form-group">
-                                        <label class="control-label" style="font-weight:bold;">Nombre del Alumno</label>
-                                        <p class="form-control-static">{{ $alumno->person->first_name }} </p>
-                                    </div>
-                                    <div class="col-md-2 form-group">
-                                        <label class="control-label" style="font-weight:bold; text-align:center;">Fecha
-                                            Ingreso</label>
-                                        <p class="form-control-static">
-                                            {{ $alumno->fechaIngreso ? \Carbon\Carbon::parse($alumno->fechaIngreso)->format('d/m/Y') : 'N/A' }}</p>
-                                    </div>
-
                                 </div>
+                            </div>
+
+                            <div class="col-md-10">
+                                <div class="alumno-info-header">
+                                    <div>
+                                        <div class="alumno-label">Alumno</div>
+                                        <h3 class="alumno-name">{{ optional($person)->first_name ?: 'Persona no disponible' }}</h3>
+                                    </div>
+                                    <div class="alumno-status-wrap">
+                                        @if ($alumno->status == 1)
+                                            <span class="label label-success alumno-status-label">Activo</span>
+                                        @else
+                                            <span class="label label-warning alumno-status-label">Inactivo</span>
+                                        @endif
+                                    </div>
+                                </div>
+
                                 <div class="row">
-                                    <div class="col-md-4 form-group">
-                                        <label class="control-label" style="font-weight:bold;">Estado</label>
-                                        <p class="form-control-static">
-                                            @if ($alumno->status == 1)
-                                                <label class="label label-success">Activo</label>
-                                            @else
-                                                <label class="label label-warning">Inactivo</label>
-                                            @endif
-                                        </p>
+                                    <div class="col-md-3">
+                                        <div class="alumno-data-card">
+                                            <div class="alumno-label">Dojo</div>
+                                            <div class="alumno-value">{{ optional($dojoData)->nombre ?: 'Sin dojo asignado' }}</div>
+                                        </div>
                                     </div>
-                                    <div class="col-md-8 form-group">
-                                        <label class="control-label" style="font-weight:bold;">Observaciones</label>
-                                        <p class="form-control-static">{{ $alumno->observacion ?: 'Sin observaciones registradas.' }}</p>
+                                    <div class="col-md-3">
+                                        <div class="alumno-data-card">
+                                            <div class="alumno-label">Fecha de Ingreso</div>
+                                            <div class="alumno-value">{{ $alumno->fechaIngreso ? \Carbon\Carbon::parse($alumno->fechaIngreso)->format('d/m/Y') : 'No registrada' }}</div>
+                                        </div>
                                     </div>
-                                    <hr style="margin: 10px 0;">
+                                    <div class="col-md-3">
+                                        <div class="alumno-data-card">
+                                            <div class="alumno-label">Documento</div>
+                                            <div class="alumno-value">{{ optional($person)->documentType ?: 'N/A' }}: {{ optional($person)->ci ?: 'No registrado' }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="alumno-data-card">
+                                            <div class="alumno-label">Género</div>
+                                            <div class="alumno-value">{{ optional($person)->gender ?: 'No registrado' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="alumno-data-card">
+                                            <div class="alumno-label">Fecha de Nacimiento</div>
+                                            <div class="alumno-value">{{ optional($person)->birth_date ? \Carbon\Carbon::parse($person->birth_date)->format('d/m/Y') : 'No registrada' }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="alumno-data-card">
+                                            <div class="alumno-label">Teléfono</div>
+                                            <div class="alumno-value">
+                                                @if (optional($person)->phone)
+                                                    +{{ $person->country_code ?: '591' }} {{ $person->phone }}
+                                                @else
+                                                    No registrado
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="alumno-data-card">
+                                            <div class="alumno-label">Correo</div>
+                                            <div class="alumno-value">{{ optional($person)->email ?: 'No registrado' }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="alumno-data-card">
+                                            <div class="alumno-label">Dirección</div>
+                                            <div class="alumno-value">{{ optional($person)->address ?: 'No registrada' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="alumno-data-card">
+                                            <div class="alumno-label">Observaciones</div>
+                                            <div class="alumno-value">{{ $alumno->observacion ?: 'Sin observaciones registradas.' }}</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -308,6 +351,102 @@
 
     @section('css')
         <style>
+            .alumno-summary-panel .panel-body {
+                padding: 18px;
+            }
+
+            .alumno-photo-card {
+                margin-bottom: 15px;
+            }
+
+            .alumno-photo-title {
+                color: #7a8a9a;
+                font-size: 12px;
+                font-weight: 600;
+                letter-spacing: .04em;
+                margin-bottom: 10px;
+                text-transform: uppercase;
+            }
+
+            .alumno-photo-frame {
+                align-items: center;
+                background: linear-gradient(180deg, #f9fbfd 0%, #f3f6f9 100%);
+                border: 1px solid #e6edf3;
+                border-radius: 10px;
+                display: flex;
+                height: 165px;
+                justify-content: center;
+                overflow: hidden;
+                width: 100%;
+            }
+
+            .alumno-photo-img {
+                display: block;
+                height: 100%;
+                object-fit: cover;
+                width: 100%;
+            }
+
+            .alumno-photo-fallback {
+                align-items: center;
+                color: #9aa7b4;
+                display: flex;
+                font-size: 64px;
+                height: 100%;
+                justify-content: center;
+                width: 100%;
+            }
+
+            .alumno-info-header {
+                align-items: flex-start;
+                border-bottom: 1px solid #edf2f7;
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 15px;
+                padding-bottom: 12px;
+            }
+
+            .alumno-name {
+                color: #1f2d3d;
+                font-size: 22px;
+                font-weight: 700;
+                margin: 4px 0 0;
+            }
+
+            .alumno-label {
+                color: #7a8a9a;
+                font-size: 12px;
+                font-weight: 600;
+                letter-spacing: .04em;
+                margin-bottom: 6px;
+                text-transform: uppercase;
+            }
+
+            .alumno-value {
+                color: #253443;
+                font-size: 15px;
+                line-height: 1.5;
+            }
+
+            .alumno-data-card,
+            .alumno-note-card {
+                background-color: #fbfcfe;
+                border: 1px solid #edf2f7;
+                border-radius: 8px;
+                margin-bottom: 12px;
+                min-height: 70px;
+                padding: 12px 14px;
+            }
+
+            .alumno-note-card {
+                min-height: auto;
+            }
+
+            .alumno-status-label {
+                font-size: 12px;
+                padding: 6px 10px;
+            }
+
             /* Asegura que el select ocupe todo el ancho y el buscador sea visible en el modal */
             .select2-container {
                 width: 100% !important;
@@ -316,6 +455,16 @@
             /* Evita conflictos de profundidad (z-index) con el modal de Bootstrap */
             .select2-dropdown {
                 z-index: 10001;
+            }
+
+            @media (max-width: 991px) {
+                .alumno-info-header {
+                    display: block;
+                }
+
+                .alumno-status-wrap {
+                    margin-top: 10px;
+                }
             }
         </style>
     @stop
