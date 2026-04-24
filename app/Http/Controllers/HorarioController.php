@@ -32,7 +32,7 @@ class HorarioController extends Controller
             ->with([
                 'dojo',
                 'activeResponsible.person',
-                'responsibles.person',
+                'responsibles.person'
             ])
             ->withCount('responsibles')
             ->when($search, function ($query, $search) {
@@ -66,6 +66,7 @@ class HorarioController extends Controller
                 'dojo',
                 'activeResponsible.person',
                 'responsibles.person',
+                'responsibles.register'
             ])
             ->when($userDojoId, function ($query, $userDojoId) {
                 return $query->where('dojo_id', $userDojoId);

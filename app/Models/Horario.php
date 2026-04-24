@@ -47,4 +47,9 @@ class Horario extends Model
             ->where('status', 1)
             ->latestOfMany();
     }
+
+    public function register()
+    {
+        return $this->belongsTo(User::class, 'registerUser_id');
+    }
 }

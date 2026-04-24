@@ -14,11 +14,11 @@
                             </h1>
                         </div>
                         <div class="col-md-6 text-right" style="margin-top: 30px">
-                            @if (auth()->user()->hasPermission('edit_horarios'))
+                            {{-- @if (auth()->user()->hasPermission('edit_horarios'))
                                 <button type="button" class="btn btn-info btn-sm" onclick="openResponsableModal()">
                                     <i class="voyager-people"></i> <span>Asignar Responsable</span>
                                 </button>
-                            @endif
+                            @endif --}}
                             <a href="{{ route('voyager.horarios.index') }}" class="btn btn-warning btn-sm">
                                 <i class="voyager-list"></i> <span>Volver</span>
                             </a>
@@ -37,28 +37,46 @@
 
     <div class="page-content read container-fluid">
         <div class="row">
-            <div class="col-md-12">
+            <div class="col-md-8">
                 <div class="panel panel-bordered">
-                    <div class="panel-heading" style="border-bottom: 0;">
-                        <h3 class="panel-title">Información General</h3>
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            <i class="voyager-clock"></i> Información del Horario
+                        </h3>
                     </div>
-                    <div class="panel-body" style="padding-top: 0;">
+                    <div class="panel-body">
                         <div class="row">
-                            <div class="col-md-3 form-group">
+                            <div class="col-md-4 form-group">
                                 <label class="control-label" style="font-weight:bold;">ID</label>
                                 <p class="form-control-static">{{ $horario->id }}</p>
                             </div>
                             @if ($showDojo)
-                                <div class="col-md-3 form-group">
+                                <div class="col-md-4 form-group">
                                     <label class="control-label" style="font-weight:bold;">Dojo</label>
-                                    <p class="form-control-static">{{ $horario->dojo->nombre ?? 'Sin sucursal' }}</p>
+                                    <p class="form-control-static">
+                                        @if ($horario->dojo)
+                                            <label class="label label-info">{{ $horario->dojo->nombre }}</label>
+                                        @else
+                                            <span class="text-muted">Sin sucursal</span>
+                                        @endif
+                                    </p>
                                 </div>
                             @endif
-                            <div class="col-md-3 form-group">
+                            <div class="col-md-4 form-group">
                                 <label class="control-label" style="font-weight:bold;">Turno</label>
-                                <p class="form-control-static">{{ $horario->tipo ?? 'Sin turno' }}</p>
+                                <p class="form-control-static">
+                                    {{ $horario->tipo ?? 'Sin turno' }}
+                                </p>
                             </div>
-                            <div class="col-md-3 form-group">
+                        </div>
+                        <div class="row">
+                            <div class="col-md-8 form-group">
+                                <label class="control-label" style="font-weight:bold;">Nombre</label>
+                                <p class="form-control-static" style="font-size: 18px;">
+                                    <strong>{{ $horario->nombre ?? 'Sin nombre' }}</strong>
+                                </p>
+                            </div>
+                            <div class="col-md-4 form-group">
                                 <label class="control-label" style="font-weight:bold;">Estado</label>
                                 <p class="form-control-static">
                                     @if ($horario->status == 1)
@@ -69,22 +87,54 @@
                                 </p>
                             </div>
                         </div>
+                        <hr style="margin: 10px 0 15px;">
                         <div class="row">
                             <div class="col-md-6 form-group">
-                                <label class="control-label" style="font-weight:bold;">Nombre</label>
-                                <p class="form-control-static">{{ $horario->nombre ?? 'Sin nombre' }}</p>
+                                <label class="control-label" style="font-weight:bold;">Fecha de registro</label>
+                                <p class="form-control-static">
+                                    {{ optional($horario->created_at)->format('d/m/Y H:i') ?: 'Sin datos' }}
+                                </p>
                             </div>
                             <div class="col-md-6 form-group">
-                                <label class="control-label" style="font-weight:bold;">Responsable actual</label>
+                                <label class="control-label" style="font-weight:bold;">Total cambios de responsable</label>
                                 <p class="form-control-static">
-                                    @if ($horario->activeResponsible && $horario->activeResponsible->person)
-                                        <span class="label label-info">{{ $horario->activeResponsible->person->first_name }}</span>
-                                    @else
-                                        <span class="text-muted">Sin responsable asignado</span>
-                                    @endif
+                                    <label class="label label-primary">{{ $horario->responsibles->count() }} registro(s)</label>
                                 </p>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="panel panel-bordered">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            <i class="voyager-people"></i> Responsable Actual
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        @if ($horario->activeResponsible && $horario->activeResponsible->person)
+                            <h4 style="margin-top: 0;">
+                                <label class="label label-success">{{ $horario->activeResponsible->person->first_name }}</label>
+                            </h4>
+                            <p class="text-muted" style="margin-bottom: 8px;">
+                                Asignado el {{ optional($horario->activeResponsible->created_at)->format('d/m/Y H:i') }}
+                            </p>
+                            <p style="margin-bottom: 0;">
+                                <strong>Observación:</strong><br>
+                                <span class="text-muted">{{ $horario->activeResponsible->observacion ?: 'Sin observación' }}</span>
+                            </p>
+                        @else
+                            <p class="text-muted" style="margin-bottom: 15px;">Este horario todavía no tiene responsable asignado.</p>
+                        @endif
+
+                        @if (auth()->user()->hasPermission('edit_horarios'))
+                            <hr style="margin: 15px 0;">
+                            <button type="button" class="btn btn-info btn-block" onclick="openResponsableModal()">
+                                <i class="voyager-plus"></i> {{ $horario->activeResponsible ? 'Cambiar Responsable' : 'Asignar Responsable' }}
+                            </button>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -93,11 +143,13 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="panel panel-bordered">
-                    <div class="panel-heading" style="border-bottom: 0; display:flex; justify-content:space-between; align-items:center;">
-                        <h3 class="panel-title" style="margin:0;">Historial de Responsables</h3>
+                    <div class="panel-heading" style="display:flex; justify-content:space-between; align-items:center;">
+                        <h3 class="panel-title" style="margin:0;">
+                            <i class="voyager-list"></i> Historial de Responsables
+                        </h3>
                         <span class="label label-primary">{{ $horario->responsibles->count() }} registros</span>
                     </div>
-                    <div class="panel-body" style="padding-top: 0;">
+                    <div class="panel-body">
                         <div class="table-responsive">
                             <table id="dataTable" class="table table-bordered table-hover">
                                 <thead>
@@ -116,7 +168,7 @@
                                                 {{ optional($responsible->created_at)->format('d/m/Y H:i') }}
                                             </td>
                                             <td>
-                                                {{ $responsible->person->first_name ?? 'Persona eliminada o no disponible' }}
+                                                <strong>{{ $responsible->person->first_name ?? 'Persona eliminada o no disponible' }}</strong>
                                             </td>
                                             <td style="text-align:center;">
                                                 @if ($responsible->status == 1)
@@ -130,6 +182,10 @@
                                             </td>
                                             <td style="text-align:center;">
                                                 {{ $responsible->registerRole ?: 'Sistema' }}
+                                                @if ($responsible->registerUser_id)
+                                                    <br>
+                                                    <small class="text-muted">{{ $responsible->register->name }}</small>
+                                                @endif
                                             </td>
                                         </tr>
                                     @empty

@@ -36,4 +36,9 @@ class HorarioReponsable extends Model
     {
         return $this->belongsTo(Person::class, 'person_id');
     }
+
+    public function register()
+    {
+        return $this->belongsTo(User::class, 'registerUser_id');
+    }
 }
