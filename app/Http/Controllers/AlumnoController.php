@@ -220,8 +220,21 @@ class AlumnoController extends Controller
         $people = Person::whereNull('deleted_at')->get();
         $dojo = Dojo::whereNull('deleted_at')->get();
         $parientes = Parentesco::whereNull('deleted_at')->get();
-        $grados = Grado::whereNull('deleted_at')->where('status', 1)->orderBy('tipo')->orderBy('numero')->get();
         $enfermedades = AlumnoEnfermedad::whereNull('deleted_at')->get();
+
+        // Excluir grados que el alumno ya tiene registrados (completados o en progreso)
+        $gradosUsados = AlumnoGrado::where('alumno_id', $id)
+            ->whereNotNull('grado_id')
+            ->whereNull('deleted_at')
+            ->pluck('grado_id')
+            ->toArray();
+
+        $grados = Grado::whereNull('deleted_at')
+            ->where('status', 1)
+            ->whereNotIn('id', $gradosUsados)
+            ->orderBy('tipo')
+            ->orderBy('numero')
+            ->get();
 
         return view('alumnos.read', compact('dojo', 'people', 'enfermedades', 'parientes', 'grados', 'dataTypeContent'));
     }
@@ -454,8 +467,19 @@ class AlumnoController extends Controller
         // Puede agregar nuevo grado si no hay uno en progreso, o si el activo está completo
         $puedeAgregarGrado = !$activeGrado || ($progress && $progress['isComplete']);
 
-        // Grados disponibles para el select del modal
-        $grados = Grado::whereNull('deleted_at')->where('status', 1)->orderBy('tipo')->orderBy('numero')->get();
+        // Grados disponibles: excluir los que el alumno ya tiene registrados
+        $gradosUsados = AlumnoGrado::where('alumno_id', $alumno_id)
+            ->whereNotNull('grado_id')
+            ->whereNull('deleted_at')
+            ->pluck('grado_id')
+            ->toArray();
+
+        $grados = Grado::whereNull('deleted_at')
+            ->where('status', 1)
+            ->whereNotIn('id', $gradosUsados)
+            ->orderBy('tipo')
+            ->orderBy('numero')
+            ->get();
 
         return view('alumnos.grados.list', compact(
             'data', 'alumno_id', 'activeGrado', 'progress', 'puedeAgregarGrado', 'grados'

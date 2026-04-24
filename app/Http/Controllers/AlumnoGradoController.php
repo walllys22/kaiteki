@@ -63,6 +63,17 @@ class AlumnoGradoController extends Controller
 
         $alumnoId = (int) $request->alumno_id;
 
+        // Validar que el alumno no tenga este grado ya registrado
+        $gradoYaRegistrado = AlumnoGrado::where('alumno_id', $alumnoId)
+            ->where('grado_id', $request->grado_id)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($gradoYaRegistrado) {
+            return redirect()->route('voyager.alumnos.show', ['id' => $alumnoId])
+                ->with(['message' => 'El alumno ya tiene este grado registrado.', 'alert-type' => 'error']);
+        }
+
         $activeGrado = AlumnoGrado::with(['grado', 'repasos', 'examenes'])
             ->where('alumno_id', $alumnoId)
             ->where(function ($q) { $q->whereNull('status')->orWhere('status', '0'); })
