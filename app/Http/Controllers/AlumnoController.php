@@ -14,6 +14,7 @@ use App\Models\Parentesco;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 
 class AlumnoController extends Controller
@@ -40,6 +41,80 @@ class AlumnoController extends Controller
     protected function bloodTypes(): array
     {
         return ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+    }
+
+    protected function buildFormData(?Alumno $alumno = null): array
+    {
+        $userDojoId = auth()->user()->dojo_id;
+        $selectedDojoId = old('dojo_id', $userDojoId ?: ($alumno->dojo_id ?? null));
+
+        $people = Person::query()
+            ->whereNull('deleted_at')
+            ->where('status', 1)
+            ->when($userDojoId, function ($query, $userDojoId) {
+                return $query->where('dojo_id', $userDojoId);
+            })
+            ->orderBy('first_name')
+            ->get();
+
+        $horario = Horario::query()
+            ->whereNull('deleted_at')
+            ->when($userDojoId, function ($query, $userDojoId) {
+                return $query->where('dojo_id', $userDojoId);
+            })
+            ->orderBy('tipo')
+            ->orderBy('nombre')
+            ->get();
+
+        $grado = Grado::query()
+            ->whereNull('deleted_at')
+            ->where('status', 1)
+            ->orderBy('tipo')
+            ->orderBy('numero')
+            ->get();
+
+        $dojo = Dojo::query()
+            ->whereNull('deleted_at')
+            ->when($userDojoId, function ($query, $userDojoId) {
+                return $query->where('id', $userDojoId);
+            })
+            ->orderBy('nombre')
+            ->get();
+
+        return [
+            'dojo' => $dojo,
+            'people' => $people,
+            'grado' => $grado,
+            'horario' => $horario,
+            'bloodTypes' => $this->bloodTypes(),
+            'selectedDojoId' => $selectedDojoId,
+        ];
+    }
+
+    protected function validateRelationsForDojo(int $dojoId, Request $request, ?int $alumnoId = null): void
+    {
+        $personQuery = Person::query()
+            ->whereNull('deleted_at')
+            ->where('status', 1)
+            ->where('dojo_id', $dojoId)
+            ->where('id', $request->person_id);
+
+        if (!$personQuery->exists()) {
+            throw ValidationException::withMessages([
+                'person_id' => 'La persona seleccionada no pertenece a la sucursal indicada.',
+            ]);
+        }
+
+        $horarioQuery = Horario::query()
+            ->whereNull('deleted_at')
+            ->where('dojo_id', $dojoId)
+            ->where('id', $request->horario_id);
+
+        if (!$horarioQuery->exists()) {
+            throw ValidationException::withMessages([
+                'horario_id' => 'El horario seleccionado no pertenece a la sucursal indicada.',
+            ]);
+        }
     }
 
     public function index()
@@ -77,23 +152,10 @@ class AlumnoController extends Controller
     public function create()
     {
         $this->custom_authorize('add_alumnos');
-        $userDojoId = auth()->user()->dojo_id;
-        $people = Person::whereNull('deleted_at')
-            ->when($userDojoId, function ($query, $userDojoId) {
-                return $query->where('dojo_id', $userDojoId);
-            })
-            ->get();
-        $horario = Horario::whereNull('deleted_at')->get();
-        $grado = Grado::whereNull('deleted_at')->get();
-        $dojo = Dojo::whereNull('deleted_at')
-            ->when($userDojoId, function ($query, $userDojoId) {
-                return $query->where('id', $userDojoId);
-            })
-            ->get();
         $dataTypeContent = new Alumno(); // Objeto vacío para la vista
-        $bloodTypes = $this->bloodTypes();
+        $formData = $this->buildFormData();
 
-        return view('alumnos.edit-add', compact('dojo', 'people', 'grado', 'horario', 'dataTypeContent', 'bloodTypes'));
+        return view('alumnos.edit-add', array_merge($formData, compact('dataTypeContent')));
     }
 
 
@@ -118,6 +180,8 @@ class AlumnoController extends Controller
         ]);
 
         try {
+            $this->validateRelationsForDojo((int) $dojoId, $request);
+
             Alumno::create([
                 'dojo_id' => $dojoId,
                 'person_id' => $request->person_id,
@@ -144,21 +208,9 @@ class AlumnoController extends Controller
         $dataTypeContent = Alumno::when($userDojoId, function ($query, $userDojoId) {
             return $query->where('dojo_id', $userDojoId);
         })->findOrFail($id);
-        $people = Person::whereNull('deleted_at')
-            ->when($userDojoId, function ($query, $userDojoId) {
-                return $query->where('dojo_id', $userDojoId);
-            })
-            ->get();
-        $horario = Horario::whereNull('deleted_at')->get();
-        $grado = Grado::whereNull('deleted_at')->get();
-        $dojo = Dojo::whereNull('deleted_at')
-            ->when($userDojoId, function ($query, $userDojoId) {
-                return $query->where('id', $userDojoId);
-            })
-            ->get();
-        $bloodTypes = $this->bloodTypes();
+        $formData = $this->buildFormData($dataTypeContent);
 
-        return view('alumnos.edit-add', compact('dojo', 'people', 'grado', 'horario', 'dataTypeContent', 'bloodTypes'));
+        return view('alumnos.edit-add', array_merge($formData, compact('dataTypeContent')));
         
     }
 
@@ -213,6 +265,8 @@ class AlumnoController extends Controller
             $alumno = Alumno::when(auth()->user()->dojo_id, function ($query, $userDojoId) {
                 return $query->where('dojo_id', $userDojoId);
             })->findOrFail($id);
+
+            $this->validateRelationsForDojo((int) $dojoId, $request, $alumno->id);
             
             // Asignación manual de atributos para evitar problemas de mass assignment ($fillable)
             $alumno->dojo_id = $dojoId;

@@ -3,160 +3,193 @@
 @section('page_title', (isset($dataTypeContent->id) ? 'Editar' : 'Crear') . ' Alumno')
 
 @section('page_header')
-    <h1 class="page-title">
-        <i class="fa-solid fa-user-graduate"></i>
-        {{ isset($dataTypeContent->id) ? 'Editar' : 'Crear' }} Alumno
-    </h1>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-bordered">
+                    <div class="panel-body" style="padding: 0px">
+                        <div class="col-md-6" style="padding: 0px">
+                            <h1 class="page-title">
+                                <i class="fa-solid fa-user-graduate"></i>
+                                {{ isset($dataTypeContent->id) ? 'Editar' : 'Crear' }} Alumno
+                            </h1>
+                        </div>
+                        <div class="col-md-6 text-right" style="margin-top: 30px">
+                            <a href="{{ route('voyager.alumnos.index') }}" class="btn btn-warning btn-sm">
+                                <i class="voyager-list"></i> <span>Volver</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 @stop
-
 
 @section('content')
     @php
         $userDojoId = auth()->user()->dojo_id;
         $isEditing = isset($dataTypeContent->id);
+        $currentDojoId = old('dojo_id', $selectedDojoId);
+        $currentStatus = (int) old('status', $dataTypeContent->status ?? 1);
     @endphp
+
     <div class="page-content edit-add container-fluid">
         <div class="row">
             <div class="col-md-12">
                 <div class="panel panel-bordered">
-                    <!-- FORM -->
                     <form role="form"
-                        action="{{ isset($dataTypeContent->id) ? route('voyager.alumnos.update', $dataTypeContent->id) : route('voyager.alumnos.store') }}"
+                        action="{{ $isEditing ? route('voyager.alumnos.update', $dataTypeContent->id) : route('voyager.alumnos.store') }}"
                         method="POST" enctype="multipart/form-data">
                         @csrf
-                        @if (isset($dataTypeContent->id))
+                        @if ($isEditing)
                             @method('PUT')
                         @endif
-                        {{-- lista de dojo --}}
+
                         <div class="panel-body">
-                            {{-- lista de personas --}}
-                            <div class="form-group col-md-6">
-                                <label for="person_id">Nombre del Alumno</label>
-                                @if ($isEditing)
-                                    <select class="form-control select2" disabled>
-                                        @foreach ($people as $person)
-                                            <option value="{{ $person->id }}"
-                                                {{ old('person_id', $dataTypeContent->person_id) == $person->id ? 'selected' : '' }}>
-                                                {{ $person->first_name }}
-                                            </option>
+                            @if ($errors->any())
+                                <div class="alert alert-danger">
+                                    <ul style="margin-bottom: 0;">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
                                         @endforeach
-                                    </select>
+                                    </ul>
+                                </div>
+                            @endif
 
-                                    <input type="hidden" name="person_id" value="{{ $dataTypeContent->person_id }}">
-                                @else
-                                    <div class="input-group">
-                                        <select name="person_id" id="select-person_id" required class="form-control"></select>
-                                        <span class="input-group-btn">
-                                            <button class="btn btn-primary" title="Nueva persona" data-target="#modal-create-person" data-toggle="modal" style="margin: 0px" type="button">
-                                                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
-                                            </button>
-                                        </span>
-                                    </div>
-                                @endif
-                            </div>
+                            <div class="row">
+                                <div class="col-md-4 form-group">
+                                    <label for="dojo_id">Sucursal / Dojo</label>
+                                    @if ($userDojoId)
+                                        <select class="form-control select2" disabled>
+                                            @foreach ($dojo as $item)
+                                                <option value="{{ $item->id }}" {{ (string) $currentDojoId === (string) $item->id ? 'selected' : '' }}>
+                                                    {{ $item->nombre }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <input type="hidden" name="dojo_id" id="dojo_id" value="{{ $currentDojoId }}">
+                                        <small class="text-muted">El alumno se registrará en tu sucursal asignada.</small>
+                                    @else
+                                        <select name="dojo_id" id="dojo_id" class="form-control select2" required>
+                                            <option value="">Seleccione una sucursal</option>
+                                            @foreach ($dojo as $item)
+                                                <option value="{{ $item->id }}" {{ (string) $currentDojoId === (string) $item->id ? 'selected' : '' }}>
+                                                    {{ $item->nombre }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    @endif
+                                </div>
 
-                            {{-- Fecha Ingreso --}}
-                            <div class="form-group col-md-2">
-                                <label for="fechainicio">Fecha Ingreso</label>
-                                <input type="date" class="form-control" name="entry_date"
-                                    value="{{ old('entry_date', $dataTypeContent->entry_date) }}" required>
-                            </div>
-                            {{-- Horario --}}
-                            <div class="form-group col-md-4">
-                                {{-- lista de Horario --}}
-                                <label for="horario_id">Horario</label>
-                                <select name="horario_id" class="form-control select2" required>
-                                    <option value="">Seleccione un Horario</option>
-                                    @foreach ($horario as $horarios)
-                                        <option value="{{ $horarios->id }}"
-                                            {{ old('horario_id', $dataTypeContent->horario_id) == $horarios->id ? 'selected' : '' }}>
-                                            {{ $horarios->tipo }} {{ $horarios->nombre }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            {{-- Grado --}}
-                            <div class="form-group col-md-4">
-                                {{-- lista de Grados --}}
-                                <label for="grado_id">Grado</label>
-                                <select name="grado_id" class="form-control select2" required>
-                                    <option value="">Seleccione un Grado</option>
-                                    @foreach ($grado as $grados)
-                                        <option value="{{ $grados->id }}"
-                                            {{ old('grado_id', $dataTypeContent->grado_id) == $grados->id ? 'selected' : '' }}>
-                                            {{ $grados->tipo }} {{ $grados->numero }} {{ $grados->nombre }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            {{-- Tipo de sangre --}}
-                            <div class="form-group col-md-4">
-                                <label for="tipoSangre">Tipo de Sangre</label>
-                                <select name="tipoSangre" class="form-control select2">
-                                    <option value="">Seleccione un tipo de sangre</option>
-                                    @foreach ($bloodTypes as $bloodType)
-                                        <option value="{{ $bloodType }}"
-                                            {{ old('tipoSangre', $dataTypeContent->tipoSangre) == $bloodType ? 'selected' : '' }}>
-                                            {{ $bloodType }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            {{-- Estado Alumno --}}
+                                <div class="col-md-5 form-group">
+                                    <label for="person_id">Alumno</label>
+                                    @if ($isEditing)
+                                        <select class="form-control select2" disabled>
+                                            @foreach ($people as $person)
+                                                <option value="{{ $person->id }}" {{ (string) old('person_id', $dataTypeContent->person_id) === (string) $person->id ? 'selected' : '' }}>
+                                                    {{ $person->first_name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <input type="hidden" name="person_id" value="{{ old('person_id', $dataTypeContent->person_id) }}">
+                                    @else
+                                        <div class="input-group">
+                                            <select name="person_id" id="select-person_id" class="form-control" required></select>
+                                            <span class="input-group-btn">
+                                                <button class="btn btn-primary" title="Nueva persona" data-target="#modal-create-person" data-toggle="modal" style="margin: 0px" type="button">
+                                                    <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                                                </button>
+                                            </span>
+                                        </div>
+                                    @endif
+                                </div>
 
-                            <div class="col-md-6 form-group">
-                                <label class="control-label" style="font-weight:bold; display:block;">Estado</label>
-                                <div class="switch-container">
-                                    <input type="hidden" name="status"
-                                        value="{{ isset($dataTypeContent->id) ? $dataTypeContent->status : 1 }}">
-
-                                    <label class="switch">
-                                        <input type="checkbox" id="status_toggle" value="1"
-                                            {{ (isset($dataTypeContent->status) ? $dataTypeContent->status : 1) == 1 ? 'checked' : '' }}
-                                            disabled>
-                                        <span class="slider round"></span>
-                                    </label>
-
-                                    <span id="status-text" class="status-label"
-                                        style="color: {{ (isset($dataTypeContent->status) ? $dataTypeContent->status : 1) == 1 ? '#5cb85c' : '#d9534f' }};">
-                                        {{ (isset($dataTypeContent->status) ? $dataTypeContent->status : 1) == 1 ? 'Activo' : 'Inactivo' }}
-                                    </span>
+                                <div class="col-md-3 form-group">
+                                    <label for="entry_date">Fecha de Ingreso</label>
+                                    <input type="date" id="entry_date" class="form-control" name="entry_date" value="{{ old('entry_date', $dataTypeContent->entry_date) }}" required>
                                 </div>
                             </div>
 
+                            <div class="row">
+                                <div class="col-md-4 form-group">
+                                    <label for="horario_id">Horario</label>
+                                    <select name="horario_id" id="horario_id" class="form-control select2" required>
+                                        <option value="">Seleccione un horario</option>
+                                        @foreach ($horario as $item)
+                                            <option value="{{ $item->id }}"
+                                                data-dojo-id="{{ $item->dojo_id }}"
+                                                {{ (string) old('horario_id', $dataTypeContent->horario_id) === (string) $item->id ? 'selected' : '' }}>
+                                                {{ trim(($item->tipo ?? '') . ' ' . ($item->nombre ?? '')) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
 
-                            {{-- Observaciones --}}
-                            <div class="form-group col-md-12">
-                                <label for="observacion">Observaciones</label>
-                                <textarea class="form-control" name="observacion" placeholder="observacion" rows="3">{{ old('observacion', $dataTypeContent->observacion) }}</textarea>
+                                <div class="col-md-4 form-group">
+                                    <label for="grado_id">Grado</label>
+                                    <select name="grado_id" id="grado_id" class="form-control select2" required>
+                                        <option value="">Seleccione un grado</option>
+                                        @foreach ($grado as $item)
+                                            <option value="{{ $item->id }}" {{ (string) old('grado_id', $dataTypeContent->grado_id) === (string) $item->id ? 'selected' : '' }}>
+                                                {{ trim(($item->tipo ?? '') . ' ' . ($item->numero ?? '') . ' ' . ($item->nombre ?? '')) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="col-md-4 form-group">
+                                    <label for="tipoSangre">Tipo de Sangre</label>
+                                    <select name="tipoSangre" id="tipoSangre" class="form-control select2">
+                                        <option value="">Seleccione un tipo de sangre</option>
+                                        @foreach ($bloodTypes as $bloodType)
+                                            <option value="{{ $bloodType }}" {{ old('tipoSangre', $dataTypeContent->tipoSangre) === $bloodType ? 'selected' : '' }}>
+                                                {{ $bloodType }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 form-group">
+                                    <label class="control-label" style="font-weight:bold; display:block;">Estado</label>
+                                    <input type="hidden" name="status" id="status_input" value="{{ $currentStatus }}">
+                                    <input type="checkbox" id="status_toggle" class="toggleswitch"
+                                        {{ $currentStatus === 1 ? 'checked' : '' }}
+                                        data-on="Activo" data-off="Inactivo">
+                                </div>
+
+                                <div class="col-md-8 form-group">
+                                    <label for="observacion">Observaciones</label>
+                                    <textarea class="form-control" id="observacion" name="observacion" rows="3" placeholder="Observación adicional">{{ old('observacion', $dataTypeContent->observacion) }}</textarea>
+                                </div>
                             </div>
                         </div>
+
                         <div class="panel-footer">
-                            <button type="submit" class="btn btn-primary save">{{ __('voyager::generic.save') }}</button>
-                            <a href="{{ route('voyager.alumnos.index') }}"
-                                class="btn btn-default">{{ __('voyager::generic.cancel') }}</a>
+                            <button type="submit" class="btn btn-primary save btn-submit">{{ __('voyager::generic.save') }}</button>
+                            <a href="{{ route('voyager.alumnos.index') }}" class="btn btn-default">{{ __('voyager::generic.cancel') }}</a>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
 
-        {{-- Modales de validación amarillos --}}
         @include('partials.modal-registerPerson')
 
         <div class="modal modal-warning fade" tabindex="-1" id="modal-alumno-exists" role="dialog">
             <div class="modal-dialog modal-sm">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                                aria-hidden="true">&times;</span></button>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         <h4 class="modal-title">Validación</h4>
                     </div>
                     <div class="modal-body">
-                        <p>Alumno ya existe <span class="nombre-dojo" style="font-weight: bold;"></span></p>
+                        <p>Alumno ya existe en el Dojo <span class="nombre-dojo" style="font-weight: bold;"></span>.</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
                     </div>
                 </div>
             </div>
@@ -166,38 +199,32 @@
             <div class="modal-dialog modal-sm">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                                aria-hidden="true">&times;</span></button>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         <h4 class="modal-title">Validación</h4>
                     </div>
                     <div class="modal-body">
-                        <p>Alumno registrado en el Dojo <span class="nombre-dojo" style="font-weight: bold;"></span></p>
-                        <p>para reistrar el alumno inactiva del Dojo <span class="nombre-dojo"
-                                style="font-weight: bold;"></span></p>
+                        <p>Alumno registrado en el Dojo <span class="nombre-dojo" style="font-weight: bold;"></span>.</p>
+                        <p>Para registrarlo aquí primero debe inactivarse en ese Dojo.</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- Modal para cuando la persona es responsable del mismo Dojo --}}
         <div class="modal modal-warning fade" tabindex="-1" id="modal-responsible-same-dojo" role="dialog">
             <div class="modal-dialog modal-sm">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                                aria-hidden="true">&times;</span></button>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         <h4 class="modal-title">Validación</h4>
                     </div>
                     <div class="modal-body">
-                        <p>La persona seleccionada es responsable del Dojo <span class="nombre-dojo"
-                                style="font-weight: bold;"></span> y no puede ser registrada como alumno en el mismo Dojo.
-                        </p>
+                        <p>La persona seleccionada es responsable del Dojo <span class="nombre-dojo" style="font-weight: bold;"></span> y no puede registrarse como alumno en esa misma sucursal.</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
                     </div>
                 </div>
             </div>
@@ -210,65 +237,6 @@
         .select2-container {
             width: 100% !important;
         }
-
-        .switch-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 26px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #d9534f;
-            /* ROJO para Inactivo */
-            transition: .4s;
-            border-radius: 34px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        /* VERDE cuando el input está tiqueado */
-        input:checked+.slider {
-            background-color: #5cb85c;
-        }
-
-        input:checked+.slider:before {
-            transform: translateX(24px);
-        }
-
-        .status-label {
-            font-weight: bold;
-            font-size: 14px;
-            transition: 0.3s;
-        }
     </style>
 @stop
 
@@ -278,43 +246,96 @@
     <script src="{{ asset('js/btn-submit.js') }}"></script>
 
     <script>
-        $(document).ready(function() {
-            // Lógica de validación AJAX al cambiar de persona o de dojo
-            $('select[name="person_id"], select[name="dojo_id"]').on('change', function() {
-                // Siempre capturamos los valores actuales de ambos selectores
-                var person_id = $('select[name="person_id"]').val() || null;
-                var dojo_id = $('select[name="dojo_id"]').val() || $('input[name="dojo_id"]').val();
+        window.getPersonListParams = function () {
+            return {
+                dojo_id: $('#dojo_id').val() || ''
+            };
+        };
 
-                if (person_id && dojo_id) {
-                    // Obtenemos el ID del registro actual (vacío si es nuevo)
-                    let currentId = '{{ $dataTypeContent->id ?? '' }}';
+        function syncHorarioOptions() {
+            const dojoId = $('#dojo_id').val() || '{{ $userDojoId }}';
+            const horarioSelect = $('#horario_id');
+            const currentValue = horarioSelect.val();
 
-                    // Construimos la URL con los parámetros necesarios
-                    let url = '{{ route('alumnos.check_registration', ['person_id' => 'TEMP_ID']) }}'
-                        .replace('TEMP_ID', person_id);
-                    let params = [];
-                    if (currentId) params.push('id=' + currentId);
-                    if (dojo_id) params.push('dojo_id=' + dojo_id);
+            horarioSelect.find('option').each(function () {
+                const option = $(this);
+                const optionDojoId = option.data('dojo-id');
 
-                    if (params.length > 0) url += '?' + params.join('&');
-
-                    $.get(url, function(data) {
-                        // Actualizamos el nombre del dojo en todos los spans de los modales
-                        $('.nombre-dojo').text(data.dojo);
-
-                        if (data.status == 'exists') {
-                            $('#modal-alumno-exists').modal('show');
-                            // Limpiamos la selección para obligar a elegir otra persona
-                            $('select[name="person_id"]').val('').trigger('change');
-                        } else if (data.status == 'other_dojo') {
-                            $('#modal-alumno-other-dojo').modal('show');
-                            $('select[name="person_id"]').val('').trigger('change');
-                        } else if (data.status == 'responsible_same_dojo') {
-                            $('#modal-responsible-same-dojo').modal('show');
-                            $('select[name="person_id"]').val('').trigger('change');
-                        }
-                    });
+                if (!option.val()) {
+                    option.prop('hidden', false).prop('disabled', false);
+                    return;
                 }
+
+                if (!dojoId || String(optionDojoId) === String(dojoId)) {
+                    option.prop('hidden', false).prop('disabled', false);
+                } else {
+                    option.prop('hidden', true).prop('disabled', true);
+                }
+            });
+
+            if (currentValue) {
+                const selectedOption = horarioSelect.find('option:selected');
+                if (selectedOption.prop('disabled')) {
+                    horarioSelect.val('').trigger('change');
+                } else {
+                    horarioSelect.trigger('change.select2');
+                }
+            }
+        }
+
+        function validateAlumnoRegistration() {
+            const personId = $('#select-person_id').val();
+            const dojoId = $('#dojo_id').val() || '{{ $userDojoId }}';
+            const currentId = '{{ $dataTypeContent->id ?? '' }}';
+
+            if (!personId || !dojoId || {{ $isEditing ? 'true' : 'false' }}) {
+                return;
+            }
+
+            let url = '{{ route('alumnos.check_registration', ['person_id' => 'TEMP_ID']) }}'.replace('TEMP_ID', personId);
+            let params = ['dojo_id=' + dojoId];
+
+            if (currentId) {
+                params.push('id=' + currentId);
+            }
+
+            url += '?' + params.join('&');
+
+            $.get(url, function(data) {
+                $('.nombre-dojo').text(data.dojo || '');
+
+                if (data.status === 'exists') {
+                    $('#modal-alumno-exists').modal('show');
+                    $('#select-person_id').val(null).trigger('change');
+                } else if (data.status === 'other_dojo') {
+                    $('#modal-alumno-other-dojo').modal('show');
+                    $('#select-person_id').val(null).trigger('change');
+                } else if (data.status === 'responsible_same_dojo') {
+                    $('#modal-responsible-same-dojo').modal('show');
+                    $('#select-person_id').val(null).trigger('change');
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            $('.toggleswitch').bootstrapToggle();
+
+            $('#status_toggle').change(function() {
+                $('#status_input').val($(this).is(':checked') ? 1 : 0);
+            });
+
+            syncHorarioOptions();
+
+            $('#dojo_id').on('change', function() {
+                syncHorarioOptions();
+
+                if (!{{ $isEditing ? 'true' : 'false' }}) {
+                    $('#select-person_id').val(null).trigger('change');
+                }
+            });
+
+            $('#select-person_id').on('change', function() {
+                validateAlumnoRegistration();
             });
         });
     </script>

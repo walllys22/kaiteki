@@ -5,22 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\RegistersUserEvents;
+
 
 class Alumno extends Model
 {
-        use HasFactory, SoftDeletes;
+    use HasFactory, RegistersUserEvents, SoftDeletes;
 
-        protected $fillable = [
-            'dojo_id',     
-            'person_id',    
-            'entry_date',
-            'horario_id',
-            'grado_id',
-            'tipoSangre',
-            'status',
-            'observacion',
-            'deleted_at'
-        ];
+    protected $dates = ['deleted_at'];
+    protected $fillable = [
+        'nombre',
+        'deleted_at'
+    ];
 
 
     /**

@@ -31,6 +31,7 @@ return new class extends Migration
             $table->text('address')->nullable();
 
             $table->string('gender')->nullable();
+            $table->string('sangre')->nullable();
             $table->string('image',600)->nullable();      
 
             

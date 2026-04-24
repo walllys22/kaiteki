@@ -7,14 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\RegistersUserEvents;
 
-class Ciudad extends Model
+class AlumnoGrado extends Model
 {
     use HasFactory, RegistersUserEvents, SoftDeletes;
 
     protected $dates = ['deleted_at'];
-    protected $fillable = [
-        'nombre',
 
+    protected $fillable = [
+        'alumno_id',
+        'grado_id',
+        'fecha',
+
+
+        'observacion',
         'status',
 
         'registerUser_id',
