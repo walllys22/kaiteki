@@ -55,6 +55,26 @@ class HorarioController extends Controller
         return view('horarios.list', compact('data'));
     }
 
+    public function show($id)
+    {
+        $this->custom_authorize('read_horarios');
+
+        $userDojoId = auth()->user()->dojo_id;
+
+        $horario = Horario::query()
+            ->with([
+                'dojo',
+                'activeResponsible.person',
+                'responsibles.person',
+            ])
+            ->when($userDojoId, function ($query, $userDojoId) {
+                return $query->where('dojo_id', $userDojoId);
+            })
+            ->findOrFail($id);
+
+        return view('horarios.read', compact('horario'));
+    }
+
     public function storeResponsible(Request $request)
     {
         $this->custom_authorize('edit_horarios');

@@ -111,6 +111,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
 
     Route::get('horarios', [HorarioController::class, 'index'])->name('voyager.horarios.index');
     Route::get('horarios/ajax/list', [HorarioController::class, 'list']);
+    Route::get('horarios/{id}', [HorarioController::class, 'show'])->name('voyager.horarios.show');
     Route::post('horarios/responsables/store', [HorarioController::class, 'storeResponsible'])->name('horarios.responsables.store');
     
     Route::get('whatsapp', [MicroServiceController::class, 'message'])->name('whatsapp.message');

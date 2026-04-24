@@ -11,63 +11,67 @@
                     @if ($showDojoColumn)
                         <th style="text-align: center">Dojo</th>
                     @endif
-                    <th style="text-align: center">Turno</th>
-                    <th style="text-align: center">Nombre</th>
-                    <th style="text-align: center">Responsable Actual</th>
+                    <th>Horario</th>
+                    <th>Responsables</th>
                     <th style="text-align: center">Estado</th>
                     <th style="text-align: center">Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($data as $item)
+                    @php
+                        $previousResponsible = $item->responsibles->first(function ($responsible) {
+                            return (int) $responsible->status !== 1 && $responsible->person;
+                        });
+                    @endphp
                     <tr>
-                        <td style="text-align: center">{{ $item->id }}</td>
-                        @if ($showDojoColumn)
-                            <td style="text-align: center">{{ $item->dojo->nombre ?? 'Sin sucursal' }}</td>
-                        @endif
-                        <td style="text-align: center">{{ $item->tipo ?? 'Sin turno' }}</td>
-                        <td>
-                            {{ $item->nombre ?? 'Sin nombre' }}
-                            @if ($item->responsibles_count)
-                                <br>
-                                <small class="text-muted">Historial: {{ $item->responsibles_count }}</small>
-                            @endif
+                        <td style="text-align: center; vertical-align: middle;">
+                            {{ $item->id }}
                         </td>
-                        <td style="text-align: center">
+                        @if ($showDojoColumn)
+                            <td style="text-align: center; vertical-align: middle;">
+                                @if ($item->dojo)
+                                    <label class="label label-info">{{ $item->dojo->nombre }}</label>
+                                @else
+                                    <span class="text-muted">Sin sucursal</span>
+                                @endif
+                            </td>
+                        @endif
+                        <td style="vertical-align: middle;">
+                            <strong>{{ $item->nombre ?: 'Sin nombre' }}</strong>
+                            <br>
+                            <small class="text-muted">Turno: {{ $item->tipo ?: 'Sin turno' }}</small>
+                            <br>
+                            <small class="text-muted">Historial: {{ $item->responsibles_count }} registro(s)</small>
+                        </td>
+                        <td style="vertical-align: middle;">
                             @if ($item->activeResponsible && $item->activeResponsible->person)
-                                <span class="label label-info">{{ $item->activeResponsible->person->first_name }}</span>
+                                <label class="label label-success">{{ $item->activeResponsible->person->first_name }}</label>
                             @else
-                                <span class="text-muted">Sin responsable</span>
+                                <span class="text-muted">Sin responsable activo</span>
                             @endif
 
-                            @php
-                                $inactiveResponsibles = $item->responsibles->filter(function ($responsible) {
-                                    return (int) $responsible->status !== 1 && $responsible->person;
-                                });
-                            @endphp
-
-                            @if ($inactiveResponsibles->isNotEmpty())
-                                <div style="margin-top: 8px; text-align: left;">
-                                    <small class="text-muted" style="display: block; margin-bottom: 4px;">Historial anterior:</small>
-                                    @foreach ($inactiveResponsibles as $responsible)
-                                        <div style="margin-bottom: 4px;">
-                                            <span class="label label-default">{{ $responsible->person->first_name }}</span>
-                                            <small class="text-muted">
-                                                {{ optional($responsible->created_at)->format('d/m/Y H:i') }}
-                                            </small>
-                                        </div>
-                                    @endforeach
+                            @if ($previousResponsible)
+                                <div style="margin-top: 8px;">
+                                    <small class="text-muted" style="display: block; margin-bottom: 4px;">Responsable anterior:</small>
+                                    <div style="margin-bottom: 4px;">
+                                        <label class="label label-default" style="margin-bottom: 2px;">{{ $previousResponsible->person->first_name }}</label>
+                                        <br>
+                                        <small class="text-muted">
+                                            {{ optional($previousResponsible->created_at)->format('d/m/Y H:i') }}
+                                        </small>
+                                    </div>
                                 </div>
                             @endif
                         </td>
-                        <td style="text-align: center">
+                        <td style="text-align: center; vertical-align: middle;">
                             @if ($item->status == 1)
                                 <label class="label label-success">Activo</label>
                             @else
                                 <label class="label label-warning">Inactivo</label>
                             @endif
                         </td>
-                        <td style="width: 18%" class="no-sort no-click bread-actions text-right">
+                        <td style="vertical-align: middle;" class="no-sort no-click bread-actions text-right">
                             @if (auth()->user()->hasPermission('read_horarios'))
                                 <a href="{{ route('voyager.horarios.show', ['id' => $item->id]) }}" title="Ver" class="btn btn-sm btn-warning view">
                                     <i class="voyager-eye"></i>
@@ -76,9 +80,6 @@
                             @if (auth()->user()->hasPermission('edit_horarios'))
                                 <a href="{{ route('voyager.horarios.edit', ['id' => $item->id]) }}" title="Editar" class="btn btn-sm btn-primary edit">
                                     <i class="voyager-edit"></i>
-                                </a>
-                                <a href="#" onclick="openResponsableModal('{{ $item->id }}', '{{ addslashes($item->tipo . ' ' . ($item->nombre ?? '')) }}', '{{ $item->dojo_id }}', '{{ addslashes($item->dojo->nombre ?? 'Sin sucursal') }}')" title="Agregar responsable" class="btn btn-sm btn-dark">
-                                    <i class="voyager-people"></i>
                                 </a>
                             @endif
                             @if (auth()->user()->hasPermission('delete_horarios'))
@@ -90,7 +91,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="{{ $showDojoColumn ? 7 : 6 }}">
+                        <td colspan="{{ $showDojoColumn ? 6 : 5 }}">
                             <h5 class="text-center" style="margin-top: 50px">
                                 <img src="{{ asset('images/empty.png') }}" width="120px" alt="" style="opacity: 0.8">
                                 <br><br>

@@ -58,7 +58,7 @@
     @include('partials.modal-delete')
     @include('partials.modal-registerPerson')
 
-    <div class="modal fade" id="modal-assign-responsable" role="dialog">
+    {{-- <div class="modal fade" id="modal-assign-responsable" role="dialog">
         <div class="modal-dialog modal-primary">
             <div class="modal-content">
                 <form id="form-assign-responsable" action="{{ route('horarios.responsables.store') }}" method="POST">
@@ -105,7 +105,7 @@
                 </form>
             </div>
         </div>
-    </div>
+    </div> --}}
 @stop
 
 @section('css')
