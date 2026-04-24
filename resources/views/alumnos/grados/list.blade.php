@@ -3,7 +3,7 @@
         <thead>
             <tr>
                 <th style="text-align:center; width: 70px;">ID</th>
-                <th>Grado</th>
+                <th>Detalle del Grado</th>
                 <th>Fecha</th>
                 <th>Observación</th>
                 <th style="text-align:center; width: 130px;">Estado</th>
@@ -17,7 +17,17 @@
                 @endphp
                 <tr>
                     <td style="text-align:center;">{{ $item->id }}</td>
-                    <td>{{ $gradoLabel ?: 'Grado no disponible' }}</td>
+                    <td>
+                        <strong>{{ $gradoLabel ?: 'Grado no disponible' }}</strong>
+                        @if ($grado)
+                            <br>
+                            <small class="text-muted">
+                                Puntas: <strong>{{ $grado->puntas ?? 0 }}</strong>
+                                |
+                                Días: <strong>{{ $grado->dias ?? 0 }}</strong>
+                            </small>
+                        @endif
+                    </td>
                     <td>{{ $item->fecha ? \Carbon\Carbon::parse($item->fecha)->format('d/m/Y') : 'No registrada' }}</td>
                     <td>{{ $item->observacion ?: 'Sin observación' }}</td>
                     <td style="text-align:center;">
