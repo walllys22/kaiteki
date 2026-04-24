@@ -25,4 +25,9 @@ class Horario extends Model
         'deleteRole',
         'deleteObservation',
     ];
+
+    public function dojo()
+    {
+        return $this->belongsTo(Dojo::class, 'dojo_id');
+    }
 }
