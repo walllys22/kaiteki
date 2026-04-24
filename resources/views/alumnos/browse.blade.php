@@ -182,12 +182,24 @@
 
                                 <div class="col-md-3 form-group">
                                     <label for="modal_fechaIngreso">Fecha de Ingreso</label>
-                                    <input type="date" id="modal_fechaIngreso" class="form-control" name="fechaIngreso" value="{{ old('fechaIngreso') }}" required>
+                                    <input type="date" id="modal_fechaIngreso" class="form-control" name="fechaIngreso" value="{{ old('fechaIngreso') }}" max="{{ now()->format('Y-m-d') }}" required>
                                 </div>
                             </div>
 
                             <div class="row">
                                 <input type="hidden" name="status" value="1">
+
+                                <div class="col-md-6 form-group">
+                                    <label for="modal_grado_id">Grado Inicial</label>
+                                    <select name="grado_id" id="modal_grado_id" class="form-control select2" required>
+                                        <option value="">Seleccione un grado</option>
+                                        @foreach ($grados as $grado)
+                                            <option value="{{ $grado->id }}">
+                                                {{ trim(($grado->tipo ?? '').' '.($grado->numero ?? '').' '.($grado->nombre ?? '')) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
 
                                 <div class="col-md-12 form-group">
                                     <label for="modal_observacion">Observaciones</label>

@@ -13,6 +13,7 @@ use App\Models\Parentesco;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Grado;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 
@@ -65,8 +66,16 @@ class AlumnoController extends Controller
             ->orderBy('nombre')
             ->get();
 
+        $grados = Grado::query()
+            ->whereNull('deleted_at')
+            ->where('status', 1)
+            ->orderBy('tipo')
+            ->orderBy('numero')
+            ->get();
+
         return [
             'dojo' => $dojo,
+            'grados' => $grados,
             'selectedDojoId' => $selectedDojoId,
         ];
     }
@@ -160,7 +169,8 @@ class AlumnoController extends Controller
         $request->validate([
             'dojo_id' => 'nullable|exists:dojos,id',
             'person_id' => 'required|exists:people,id',
-            'fechaIngreso' => 'required|date',
+            'fechaIngreso' => 'required|date|before_or_equal:today',
+            'grado_id' => 'required|exists:grados,id',
             'status' => 'required|integer',
             'observacion' => 'nullable|string|max:255',
         ]);
@@ -169,7 +179,9 @@ class AlumnoController extends Controller
             $this->validateRelationsForDojo((int) $dojoId, $request);
             $this->validateUniqueAlumnoPerson($request);
 
-            Alumno::create([
+            DB::beginTransaction();
+
+            $alumno = Alumno::create([
                 'dojo_id' => $dojoId,
                 'person_id' => $request->person_id,
                 'fechaIngreso' => $request->fechaIngreso,
@@ -177,9 +189,20 @@ class AlumnoController extends Controller
                 'observacion' => $request->observacion,
             ]);
 
+            AlumnoGrado::create([
+                'alumno_id' => $alumno->id,
+                'grado_id' => $request->grado_id,
+                'fecha' => $request->fechaIngreso,
+                'observacion' => 'Registro inicial del alumno',
+                'status' => 1,
+            ]);
+
+            DB::commit();
+
             return redirect()->route('voyager.alumnos.index')
                 ->with(['message' => 'Alumno creado exitosamente', 'alert-type' => 'success']);
         } catch (\Throwable $th) {
+            DB::rollBack();
             return redirect()->back()
                 ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
         }
