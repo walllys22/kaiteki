@@ -312,6 +312,13 @@ class AlumnoController extends Controller
         ]);
 
         try {
+            $alumno = Alumno::with('person')->findOrFail($request->alumno_id);
+
+            if ((int) $alumno->person_id === (int) $request->person_id) {
+                return redirect()->back()
+                    ->with(['message' => 'La misma persona registrada como alumno no puede registrarse como tutor.', 'alert-type' => 'error']);
+            }
+
             AlumnoTutor::create([
                 'alumno_id' => $request->alumno_id,
                 'person_id' => $request->person_id,
