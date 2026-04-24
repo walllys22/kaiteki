@@ -189,13 +189,14 @@
                             <div class="row">
                                 <input type="hidden" name="status" value="1">
 
-                                <div class="col-md-6 form-group">
-                                    <label for="modal_grado_id">Grado Inicial</label>
+                                <div class="col-md-8 form-group">
+                                    <label for="modal_grado_id">Grado Inicial <span class="text-danger">*</span></label>
                                     <select name="grado_id" id="modal_grado_id" class="form-control select2" required>
                                         <option value="">Seleccione un grado</option>
                                         @foreach ($grados as $grado)
                                             <option value="{{ $grado->id }}">
                                                 {{ trim(($grado->tipo ?? '').' '.($grado->numero ?? '').' '.($grado->nombre ?? '')) }}
+                                                ({{ $grado->puntas }} puntas · {{ $grado->dias }} días)
                                             </option>
                                         @endforeach
                                     </select>
