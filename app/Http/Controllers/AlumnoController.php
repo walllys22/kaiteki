@@ -417,11 +417,28 @@ class AlumnoController extends Controller
 
     public function gradoList($alumno_id)
     {
-        $search = request('search');
+        $search   = request('search');
         $paginate = request('paginate') ?? 10;
 
+        // Grado activo (en progreso): el más reciente con status != '1'
+        $activeGrado = AlumnoGrado::with(['grado', 'repasos', 'examenes'])
+            ->where('alumno_id', $alumno_id)
+            ->where(function ($q) {
+                $q->whereNull('status')->orWhere('status', '0');
+            })
+            ->whereNull('deleted_at')
+            ->orderByDesc('id')
+            ->first();
+
+        $progress = null;
+        if ($activeGrado) {
+            $progress = AlumnoGradoController::calcularProgreso($activeGrado);
+        }
+
+        // Grados completados (historial)
         $data = AlumnoGrado::with(['grado'])
             ->where('alumno_id', $alumno_id)
+            ->where('status', '1')
             ->when($search, function ($query, $search) {
                 return $query->whereHas('grado', function ($q) use ($search) {
                     $q->where('tipo', 'like', "%$search%")
@@ -429,11 +446,20 @@ class AlumnoController extends Controller
                         ->orWhere('nombre', 'like', "%$search%");
                 });
             })
+            ->whereNull('deleted_at')
             ->orderByDesc('fecha')
             ->orderByDesc('id')
             ->paginate($paginate);
 
-        return view('alumnos.grados.list', compact('data', 'alumno_id'));
+        // Puede agregar nuevo grado si no hay uno en progreso, o si el activo está completo
+        $puedeAgregarGrado = !$activeGrado || ($progress && $progress['isComplete']);
+
+        // Grados disponibles para el select del modal
+        $grados = Grado::whereNull('deleted_at')->where('status', 1)->orderBy('tipo')->orderBy('numero')->get();
+
+        return view('alumnos.grados.list', compact(
+            'data', 'alumno_id', 'activeGrado', 'progress', 'puedeAgregarGrado', 'grados'
+        ));
     }
 
     public function enfermedadList($alumno_id)

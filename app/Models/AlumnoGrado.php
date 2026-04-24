@@ -17,9 +17,8 @@ class AlumnoGrado extends Model
         'alumno_id',
         'grado_id',
         'fecha',
-
-
         'observacion',
+        // '0' = en progreso, '1' = completado
         'status',
 
         'registerUser_id',
@@ -38,5 +37,20 @@ class AlumnoGrado extends Model
     public function alumno()
     {
         return $this->belongsTo(Alumno::class, 'alumno_id');
+    }
+
+    public function repasos()
+    {
+        return $this->hasMany(AlumnoGradoRepaso::class, 'alumno_grado_id')->whereNull('deleted_at');
+    }
+
+    public function examenes()
+    {
+        return $this->hasMany(AlumnoGradoExamen::class, 'alumno_grado_id')->whereNull('deleted_at');
+    }
+
+    public function isCompletado(): bool
+    {
+        return (string) $this->status === '1';
     }
 }

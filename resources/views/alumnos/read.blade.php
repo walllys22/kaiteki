@@ -178,7 +178,7 @@
                         <div class="tab-content alumno-tab-content">
                             <div role="tabpanel" class="tab-pane active" id="tab-grados">
                                 <div class="row alumno-tab-toolbar">
-                                    <div class="col-sm-9">
+                                    <div class="col-sm-7">
                                         <div class="dataTables_length">
                                             <label>Mostrar <select id="select-paginate-grado" class="form-control input-sm">
                                                 <option value="10">10</option>
@@ -188,7 +188,12 @@
                                             </select> registros</label>
                                         </div>
                                     </div>
-                                    <div class="col-sm-3" style="margin-bottom: 10px;">
+                                    <div class="col-sm-3 text-right" style="margin-bottom: 10px;">
+                                        <button id="btn-add-grado" class="btn btn-success btn-sm" style="display:none;" data-toggle="modal" data-target="#modal-add-grado">
+                                            <i class="voyager-plus"></i> Nuevo Grado
+                                        </button>
+                                    </div>
+                                    <div class="col-sm-2" style="margin-bottom: 10px;">
                                         <input type="text" id="input-search-grado" placeholder="🔍 Buscar..." class="form-control">
                                     </div>
                                 </div>
@@ -294,6 +299,48 @@
                         <div class="modal-footer">
                             <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
                             <button type="submit" class="btn btn-success btn-submit">Guardar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        {{-- Modal: Nuevo Grado --}}
+        <form id="form-add-grado" class="form-edit-add" action="{{ route('alumno.grado.store') }}" method="POST">
+            @csrf
+            <div class="modal fade" tabindex="-1" id="modal-add-grado" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                            <h4 class="modal-title"><i class="fa-solid fa-award"></i> Registrar Nuevo Grado</h4>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="alumno_id" value="{{ $alumno->id }}">
+                            <div class="form-group col-md-8">
+                                <label>Grado <span class="text-danger">*</span></label>
+                                <select name="grado_id" class="form-control select2" required>
+                                    <option value="">Seleccione un grado</option>
+                                    @foreach ($grados as $g)
+                                        <option value="{{ $g->id }}">
+                                            {{ trim(($g->tipo ?? '') . ' ' . ($g->numero ?? '') . ' ' . ($g->nombre ?? '')) }}
+                                            ({{ $g->puntas }} puntas · {{ $g->dias }} días)
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label>Fecha de inicio <span class="text-danger">*</span></label>
+                                <input type="date" name="fecha" class="form-control" value="{{ date('Y-m-d') }}" required>
+                            </div>
+                            <div class="form-group col-md-12">
+                                <label>Observaciones</label>
+                                <textarea name="observacion" class="form-control" rows="2"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success btn-submit">Registrar Grado</button>
                         </div>
                     </div>
                 </div>
@@ -437,7 +484,7 @@
         var timeoutEnfer = null;
 
         $(document).ready(function() {
-            $('#modal-add-tutor, #modal-add-enfermedad').on('shown.bs.modal', function() {
+            $('#modal-add-tutor, #modal-add-enfermedad, #modal-add-grado').on('shown.bs.modal', function() {
                 $(this).find('.select2').select2({
                     dropdownParent: $(this),
                     width: '100%'
@@ -533,10 +580,14 @@
                 success: function(result) {
                     $('#div-grados-list').html(result);
                     $('#div-grados-list').loading('toggle');
+                    // Mostrar u ocultar el botón "Nuevo Grado" según el estado del partial
+                    var puedeAgregar = $('#puede-agregar-grado').val();
+                    $('#btn-add-grado').toggle(puedeAgregar === '1');
                 },
                 error: function() {
                     $('#div-grados-list').html('<p class="text-center">No se pudieron cargar los grados.</p>');
                     $('#div-grados-list').loading('toggle');
+                    $('#btn-add-grado').hide();
                 }
             });
         }
