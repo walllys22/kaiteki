@@ -43,6 +43,11 @@ class Person extends Model
         return $this->belongsTo(Dojo::class, 'dojo_id');
     }
 
+    public function dojoId()
+    {
+        return $this->dojo();
+    }
+
     public function alumno()
     {
         return $this->hasMany(Alumno::class, 'person_id');
