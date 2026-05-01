@@ -28,4 +28,9 @@ class Grado extends Model
         'deleteRole',
         'deleteObservation',
     ];
+
+    public function alumnoGrados()
+    {
+        return $this->hasMany(AlumnoGrado::class, 'grado_id');
+    }
 }

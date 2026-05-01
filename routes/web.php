@@ -13,6 +13,7 @@ use App\Http\Controllers\KumiteController;
 use App\Http\Controllers\TableroKataController;
 use App\Http\Controllers\AlumnoController;
 use App\Http\Controllers\AlumnoGradoController;
+use App\Http\Controllers\GradoController;
 use App\Http\Controllers\HorarioController;
 use Illuminate\Support\Facades\Artisan;
 use TCG\Voyager\Facades\Voyager;
@@ -109,6 +110,9 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     Route::post('people', [PersonController::class, 'store'])->name('voyager.people.store');
     Route::put('people/{id}', [PersonController::class, 'update'])->name('voyager.people.update');
     Route::get('people/{id}', [PersonController::class, 'show'])->name('voyager.people.show');
+
+    Route::get('grados', [GradoController::class, 'index'])->name('voyager.grados.index');
+    Route::get('grados/ajax/list', [GradoController::class, 'list']);
 
     Route::get('horarios', [HorarioController::class, 'index'])->name('voyager.horarios.index');
     Route::get('horarios/ajax/list', [HorarioController::class, 'list']);
