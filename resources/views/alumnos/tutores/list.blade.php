@@ -2,10 +2,11 @@
     <table id="dataTable" class="table table-bordered table-hover">
         <thead>
             <tr>
-                <th style="text-align:center; width: 70px;">ID</th>
+                <th style="text-align:center; width: 70px;">CI/Nit</th>
                 <th>Tutor</th>
                 <th>Parentesco</th>
-                <th>Observación</th>
+                <th>Telefono</th>
+                <th>Dirección</th>
                 <th style="text-align:center; width: 130px;">Estado</th>
                 <th style="text-align:center; width: 110px;">Acciones</th>
             </tr>
@@ -13,10 +14,11 @@
         <tbody>
             @forelse ($data as $item)
                 <tr>
-                    <td style="text-align:center;">{{ $item->id }}</td>
+                    <td style="text-align:center;">{{ $item->tutor->ci }}</td>
                     <td>{{ optional($item->tutor)->first_name ?: 'Tutor no disponible' }}</td>
                     <td>{{ optional($item->pariente)->nombre ?: 'No registrado' }}</td>
-                    <td>{{ $item->observacion ?: 'Sin observación' }}</td>
+                    <td>{{ $item->tutor->phone }}</td>
+                    <td>{{ $item->tutor->address}}</td>
                     <td style="text-align:center;">
                         <span
                             class="label {{ (string) $item->status === '1' || $item->status === 1 || $item->status === null ? 'label-success' : 'label-default' }}">
@@ -33,7 +35,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6">
+                    <td colspan="7">
                         <h5 class="text-center" style="margin-top: 50px">
                             <img src="{{ asset('images/empty.png') }}" width="120px" alt=""
                                 style="opacity: 0.8">

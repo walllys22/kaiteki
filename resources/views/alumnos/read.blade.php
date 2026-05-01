@@ -280,7 +280,6 @@
                                         @endif
                                     @endforeach
                                 </select>
-                                <small class="text-muted">El alumno actual no aparece en esta lista.</small>
                             </div>
                             <div class="form-group col-md-6">
                                 <label for="parentesco_id">Parentesco</label>
