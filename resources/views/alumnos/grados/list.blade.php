@@ -23,10 +23,12 @@
     <div class="panel panel-bordered grado-activo-panel">
         <div class="panel-heading" style="padding: 12px 15px;">
             <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-                <h4 style="margin:0; font-size:15px; font-weight:700;">
-                    <i class="fa-solid fa-award" style="color:#3498db;"></i>
-                    Grado en Progreso: <span style="color:#2c3e50;">{{ $gradoLabel ?: 'Sin nombre' }}</span>
-                </h4>
+                <div>
+                    <h4 style="margin:0; font-size:15px; font-weight:700;">
+                        <i class="fa-solid fa-award" style="color:#3498db;"></i>
+                        Grado en Progreso: <span style="color:#2c3e50;">{{ $gradoLabel ?: 'Sin nombre' }}</span> - <strong>{{ \Carbon\Carbon::parse($activeGrado->fecha)->format('d/m/Y') }}</strong>
+                    </h4>
+                </div>
                 @if($progress['isComplete'])
                     <span class="label label-success" style="font-size:12px; padding:5px 10px;">
                         <i class="fa-solid fa-check-circle"></i> Completado — puede registrar el siguiente grado
