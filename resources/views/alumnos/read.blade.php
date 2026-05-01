@@ -164,6 +164,11 @@
                                 </a>
                             </li>
                             <li role="presentation">
+                                <a href="#tab-horarios" aria-controls="tab-horarios" role="tab" data-toggle="tab">
+                                    <i class="fa-solid fa-clock"></i> Horarios
+                                </a>
+                            </li>
+                            <li role="presentation">
                                 <a href="#tab-enfermedades" aria-controls="tab-enfermedades" role="tab" data-toggle="tab">
                                     <i class="fa-solid fa-briefcase-medical"></i> Enfermedades
                                 </a>
@@ -199,6 +204,34 @@
                                 </div>
                                 <div id="div-grados-list">
                                     <p class="text-center">Cargando grados...</p>
+                                </div>
+                            </div>
+
+                            <div role="tabpanel" class="tab-pane" id="tab-horarios">
+                                <div class="row alumno-tab-toolbar">
+                                    <div class="col-sm-8">
+                                        <div class="dataTables_length">
+                                            <label>Mostrar <select id="select-paginate-horario" class="form-control input-sm">
+                                                <option value="10">10</option>
+                                                <option value="25">25</option>
+                                                <option value="50">50</option>
+                                                <option value="100">100</option>
+                                            </select> registros</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-2 text-right" style="margin-bottom: 10px;">
+                                        @if(auth()->user()->hasPermission('edit_alumnos'))
+                                        <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#modal-add-horario">
+                                            <i class="voyager-plus"></i> Asignar
+                                        </button>
+                                        @endif
+                                    </div>
+                                    <div class="col-sm-2" style="margin-bottom: 10px;">
+                                        <input type="text" id="input-search-horario" placeholder="🔍 Buscar..." class="form-control">
+                                    </div>
+                                </div>
+                                <div id="div-horario-list">
+                                    <p class="text-center">Cargando horarios...</p>
                                 </div>
                             </div>
 
@@ -346,6 +379,45 @@
             </div>
         </form>
 
+        {{-- Modal: Asignar Horario --}}
+        <form id="form-add-horario" class="form-edit-add" action="{{ route('alumno.horario.store') }}" method="POST">
+            @csrf
+            <div class="modal fade" tabindex="-1" id="modal-add-horario" role="dialog">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                            <h4 class="modal-title"><i class="fa-solid fa-clock"></i> Asignar Horario</h4>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="alumno_id" value="{{ $alumno->id }}">
+                            <div class="form-group col-md-12">
+                                <label>Horario <span class="text-danger">*</span></label>
+                                <select name="horario_id" class="form-control select2" required>
+                                    <option value="">Seleccione un horario</option>
+                                    @foreach ($horarios as $h)
+                                        <option value="{{ $h->id }}">
+                                            {{ $h->nombre }}
+                                            @if($h->tipo) · {{ $h->tipo }} @endif
+                                            @if(optional($h->dojo)->nombre) — {{ $h->dojo->nombre }} @endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group col-md-12">
+                                <label>Observaciones</label>
+                                <textarea name="observacion" class="form-control" rows="2"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-success btn-submit">Asignar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
         <form id="form-add-enfermedad" class="form-edit-add" action="{{ route('alumno.enfermedade.store') }}" method="POST">
             @csrf
             <div class="modal fade" tabindex="-1" id="modal-add-enfermedad" role="dialog">
@@ -478,12 +550,14 @@
         var countPageGrado = 10;
         var countPageTutor = 10;
         var countPageEnfer = 10;
+        var countPageHorario = 10;
         var timeoutGrado = null;
         var timeoutTutor = null;
         var timeoutEnfer = null;
+        var timeoutHorario = null;
 
         $(document).ready(function() {
-            $('#modal-add-tutor, #modal-add-enfermedad, #modal-add-grado').on('shown.bs.modal', function() {
+            $('#modal-add-tutor, #modal-add-enfermedad, #modal-add-grado, #modal-add-horario').on('shown.bs.modal', function() {
                 $(this).find('.select2').select2({
                     dropdownParent: $(this),
                     width: '100%'
@@ -493,6 +567,7 @@
             gradoList();
             listTutores();
             enfermedadList();
+            horarioList();
 
             $('#input-search-grado').on('keyup', function(e) {
                 if (e.keyCode == 13) {
@@ -537,6 +612,30 @@
             $('#select-paginate-enfer').change(function() {
                 countPageEnfer = $(this).val();
                 enfermedadList();
+            });
+
+            $('#input-search-horario').on('keyup', function(e) {
+                if (e.keyCode == 13) {
+                    clearTimeout(timeoutHorario);
+                    horarioList();
+                }
+            }).on('input', function() {
+                clearTimeout(timeoutHorario);
+                timeoutHorario = setTimeout(function() { horarioList(); }, 1000);
+            });
+
+            $('#select-paginate-horario').change(function() {
+                countPageHorario = $(this).val();
+                horarioList();
+            });
+
+            $(document).on('click', '#div-horario-list .pagination a', function(e) {
+                e.preventDefault();
+                let link = $(this).attr('href');
+                if (link) {
+                    let page = new URL(link).searchParams.get('page') || 1;
+                    horarioList(page);
+                }
             });
 
             $(document).on('click', '#div-grados-list .pagination a', function(e) {
@@ -635,6 +734,26 @@
                 error: function() {
                     $('#div-enfermedad-list').html('<p class="text-center">No se pudieron cargar las enfermedades.</p>');
                     $('#div-enfermedad-list').loading('toggle');
+                }
+            });
+        }
+
+        function horarioList(page = 1) {
+            $('#div-horario-list').loading({ message: 'Cargando...' });
+            let id = "{{ $alumno->id }}";
+            let search = $('#input-search-horario').val() ? $('#input-search-horario').val() : '';
+            let url = "{{ url('admin/alumnos') }}/" + id + "/horarios/list";
+
+            $.ajax({
+                url: `${url}?search=${search}&paginate=${countPageHorario}&page=${page}`,
+                type: 'get',
+                success: function(result) {
+                    $('#div-horario-list').html(result);
+                    $('#div-horario-list').loading('toggle');
+                },
+                error: function() {
+                    $('#div-horario-list').html('<p class="text-center">No se pudieron cargar los horarios.</p>');
+                    $('#div-horario-list').loading('toggle');
                 }
             });
         }

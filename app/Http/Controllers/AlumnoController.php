@@ -8,11 +8,13 @@ use App\Models\AlumnoTutor;
 use App\Models\AlumnoEnfermedad;
 use App\Models\AlumnoGrado;
 use App\Models\AlumnoGradoExamen;
+use App\Models\AlumnoHorario;
 use App\Models\Person;
 use App\Models\Dojo;
 use App\Models\Parentesco;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Grado;
+use App\Models\Horario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -237,7 +239,13 @@ class AlumnoController extends Controller
             ->orderBy('numero')
             ->get();
 
-        return view('alumnos.read', compact('dojo', 'people', 'enfermedades', 'parientes', 'grados', 'dataTypeContent'));
+        $horarios = Horario::whereNull('deleted_at')
+            ->where('status', 1)
+            ->when($userDojoId, fn($q) => $q->where('dojo_id', $userDojoId))
+            ->orderBy('nombre')
+            ->get();
+
+        return view('alumnos.read', compact('dojo', 'people', 'enfermedades', 'parientes', 'grados', 'horarios', 'dataTypeContent'));
     }
 
     public function updateStatus($id)
@@ -545,20 +553,56 @@ class AlumnoController extends Controller
     public function enfermedadDestroy($id)
     {
         $alumnoEnfer = AlumnoEnfermedad::findOrFail($id);
-   
+
         try {
-            
+
             $alumnoEnfer->delete();
 
             return redirect()->route('voyager.alumnos.show', ['id' => $alumnoEnfer->alumno_id])
                 ->with(['message' => 'Enfermedad eliminada del alumno.', 'alert-type' => 'success']);
-            
+
         } catch (\Throwable $th) {
             return redirect()->back()
                 ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
         }
     }
 
+    public function horarioList($alumno_id)
+    {
+        $this->custom_authorize('read_alumnos');
+
+        $search   = request('search');
+        $paginate = request('paginate') ?? 10;
+        $userDojoId = auth()->user()->dojo_id;
+
+        $data = AlumnoHorario::with(['horario.dojo'])
+            ->where('alumno_id', $alumno_id)
+            ->whereNull('deleted_at')
+            ->when($search, function ($query, $search) {
+                return $query->whereHas('horario', function ($q) use ($search) {
+                    $q->where('nombre', 'like', "%$search%")
+                      ->orWhere('tipo', 'like', "%$search%");
+                });
+            })
+            ->orderByDesc('id')
+            ->paginate($paginate);
+
+        // Horarios disponibles para asignar (activos, del dojo del usuario)
+        $horarioIds = AlumnoHorario::where('alumno_id', $alumno_id)
+            ->where('status', '1')
+            ->whereNull('deleted_at')
+            ->pluck('horario_id')
+            ->toArray();
+
+        $horarios = Horario::whereNull('deleted_at')
+            ->where('status', 1)
+            ->when($userDojoId, fn($q) => $q->where('dojo_id', $userDojoId))
+            ->whereNotIn('id', $horarioIds)
+            ->orderBy('nombre')
+            ->get();
+
+        return view('alumnos.horarios.list', compact('data', 'alumno_id', 'horarios'));
+    }
 
 
 }

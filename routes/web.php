@@ -13,6 +13,7 @@ use App\Http\Controllers\KumiteController;
 use App\Http\Controllers\TableroKataController;
 use App\Http\Controllers\AlumnoController;
 use App\Http\Controllers\AlumnoGradoController;
+use App\Http\Controllers\AlumnoHorarioController;
 use App\Http\Controllers\GradoController;
 use App\Http\Controllers\HorarioController;
 use Illuminate\Support\Facades\Artisan;
@@ -77,6 +78,11 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     Route::get('alumnos/{id}/enfermedade/list', [AlumnoController::class, 'enfermedadList']);
     Route::post('alumnos/enfermedade/store', [AlumnoController::class, 'storeAlumnoEnfermedad'])->name('alumno.enfermedade.store');
     Route::delete('alumnos/enfermedade/{id}/delete', [AlumnoController::class, 'enfermedadDestroy'])->name('alumno.enfermedade.destroy');
+
+    // Rutas Alumno Horarios
+    Route::get('alumnos/{id}/horarios/list', [AlumnoController::class, 'horarioList'])->name('alumno.horario.list');
+    Route::post('alumnos/horario/store', [AlumnoHorarioController::class, 'store'])->name('alumno.horario.store');
+    Route::delete('alumnos/horario/{id}/delete', [AlumnoHorarioController::class, 'destroy'])->name('alumno.horario.destroy');
 
     // Rutas Alumno Grados
     Route::post('alumnos/grado/store', [AlumnoGradoController::class, 'storeGrado'])->name('alumno.grado.store');
