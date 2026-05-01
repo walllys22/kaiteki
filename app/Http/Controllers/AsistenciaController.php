@@ -58,7 +58,8 @@ class AsistenciaController extends Controller
             ? Dojo::where('id', $userDojoId)->whereNull('deleted_at')->get()
             : Dojo::whereNull('deleted_at')->orderBy('nombre')->get();
 
-        $horarios = Horario::whereNull('deleted_at')
+        $horarios = Horario::with('dojo')
+            ->whereNull('deleted_at')
             ->where('status', 1)
             ->when($userDojoId, fn($q) => $q->where('dojo_id', $userDojoId))
             ->orderBy('nombre')
@@ -74,15 +75,18 @@ class AsistenciaController extends Controller
         $request->validate([
             'horario_id' => 'required|exists:horarios,id',
             'fecha'      => 'required|date',
+            'dojo_id'    => 'required|exists:dojos,id',
         ]);
 
         $userDojoId = auth()->user()->dojo_id;
-        $horarioId  = $request->horario_id;
-        $fecha      = $request->fecha;
+        // Branch user: always use their own dojo; global admin: use submitted dojo_id
+        $dojoId    = $userDojoId ?? $request->dojo_id;
+        $horarioId = $request->horario_id;
+        $fecha     = $request->fecha;
 
         $yaExiste = Asistencia::where('horario_id', $horarioId)
             ->where('fecha', $fecha)
-            ->when($userDojoId, fn($q) => $q->where('dojo_id', $userDojoId))
+            ->where('dojo_id', $dojoId)
             ->whereNull('deleted_at')
             ->exists();
 
@@ -94,10 +98,10 @@ class AsistenciaController extends Controller
             ->where('horario_id', $horarioId)
             ->where('status', '1')
             ->whereNull('deleted_at')
-            ->whereHas('alumno', function ($q) use ($userDojoId) {
+            ->whereHas('alumno', function ($q) use ($dojoId) {
                 $q->where('status', 1)
                   ->whereNull('deleted_at')
-                  ->when($userDojoId, fn($sq) => $sq->where('dojo_id', $userDojoId));
+                  ->where('dojo_id', $dojoId);
             })
             ->get()
             ->map(fn($ah) => $ah->alumno)
@@ -118,14 +122,14 @@ class AsistenciaController extends Controller
         $request->validate([
             'horario_id'   => 'required|exists:horarios,id',
             'fecha'        => 'required|date',
+            'dojo_id'      => 'required|exists:dojos,id',
             'observacion'  => 'nullable|string|max:500',
             'estados'      => 'required|array|min:1',
             'estados.*'    => 'required|in:asistencia,licencia,falta',
         ]);
 
         $userDojoId = auth()->user()->dojo_id;
-        $horario    = Horario::findOrFail($request->horario_id);
-        $dojoId     = $userDojoId ?? $horario->dojo_id;
+        $dojoId     = $userDojoId ?? $request->dojo_id;
 
         $yaExiste = Asistencia::where('horario_id', $request->horario_id)
             ->where('fecha', $request->fecha)

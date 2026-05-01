@@ -32,22 +32,40 @@
                 <div class="panel panel-bordered">
                     <div class="panel-body">
 
-                        {{-- Cabecera: fecha + horario --}}
+                        {{-- Fila 1: Dojo --}}
                         <div class="row">
-                            <div class="col-md-3 form-group">
+                            <div class="col-md-4 form-group">
+                                <label>Dojo <span class="text-danger">*</span></label>
+                                @if($userDojoId)
+                                    {{-- Usuario de sucursal: dojo fijo --}}
+                                    <input type="text" class="form-control" value="{{ optional($dojos->first())->nombre ?? '—' }}" disabled>
+                                    <input type="hidden" id="select-dojo" value="{{ $userDojoId }}">
+                                @else
+                                    {{-- Admin global: puede elegir --}}
+                                    <select id="select-dojo" class="form-control select2">
+                                        <option value="">— Seleccione un dojo —</option>
+                                        @foreach($dojos as $d)
+                                            <option value="{{ $d->id }}">{{ $d->nombre }}</option>
+                                        @endforeach
+                                    </select>
+                                @endif
+                            </div>
+                
+                            <div class="col-md-2 form-group">
                                 <label>Fecha <span class="text-danger">*</span></label>
                                 <input type="date" id="input-fecha" class="form-control"
                                        value="{{ date('Y-m-d') }}" max="{{ date('Y-m-d') }}">
                             </div>
-                            <div class="col-md-4 form-group">
+                            <div class="col-md-3 form-group">
                                 <label>Horario <span class="text-danger">*</span></label>
                                 <select id="select-horario" class="form-control select2">
                                     <option value="">— Seleccione un horario —</option>
                                     @foreach($horarios as $h)
-                                        <option value="{{ $h->id }}">
+                                        <option value="{{ $h->id }}" data-dojo="{{ $h->dojo_id }}"
+                                            @if($userDojoId) selected="{{ $h->dojo_id == $userDojoId ? '' : 'none' }}" @endif>
                                             {{ $h->nombre }}
                                             @if($h->tipo) · {{ $h->tipo }} @endif
-                                            @if(optional($h->dojo)->nombre) — {{ $h->dojo->nombre }} @endif
+                                            @if(!$userDojoId && optional($h->dojo)->nombre) — {{ $h->dojo->nombre }} @endif
                                         </option>
                                     @endforeach
                                 </select>
@@ -67,7 +85,8 @@
                               method="POST" style="display:none;">
                             @csrf
                             <input type="hidden" name="horario_id" id="hidden-horario-id">
-                            <input type="hidden" name="fecha" id="hidden-fecha">
+                            <input type="hidden" name="fecha"      id="hidden-fecha">
+                            <input type="hidden" name="dojo_id"    id="hidden-dojo-id">
 
                             <div id="div-alumnos"></div>
 
@@ -117,22 +136,31 @@
 @section('javascript')
     <script src="{{ asset('js/btn-submit.js') }}"></script>
     <script>
-        var loadUrl = "{{ route('asistencias.load_alumnos') }}";
+        var loadUrl    = "{{ route('asistencias.load_alumnos') }}";
+        var isGlobal   = {{ $userDojoId ? 'false' : 'true' }};
 
         $(document).ready(function() {
             $('.select2').select2({ width: '100%' });
 
-            function checkReady() {
-                var fecha    = $('#input-fecha').val();
-                var horario  = $('#select-horario').val();
-                $('#btn-cargar').prop('disabled', !(fecha && horario));
+            // Cuando cambia el dojo (solo admin global): filtrar horarios
+            if (isGlobal) {
+                $('#select-dojo').on('change', function() {
+                    var dojoId = $(this).val();
+                    filterHorarios(dojoId);
+                    resetForm();
+                    checkReady();
+                });
             }
 
-            $('#input-fecha, #select-horario').on('change', checkReady);
+            $('#input-fecha, #select-horario').on('change', function() {
+                resetForm();
+                checkReady();
+            });
 
             $('#btn-cargar').on('click', function() {
                 var fecha   = $('#input-fecha').val();
                 var horario = $('#select-horario').val();
+                var dojo    = $('#select-dojo').val();
 
                 $('#div-error').hide().text('');
                 $('#form-asistencia').hide();
@@ -140,7 +168,7 @@
 
                 $.ajax({
                     url: loadUrl,
-                    data: { horario_id: horario, fecha: fecha },
+                    data: { horario_id: horario, fecha: fecha, dojo_id: dojo },
                     success: function(data) {
                         if (!data.alumnos || data.alumnos.length === 0) {
                             $('#div-error').text('No hay alumnos asignados a ese horario en este dojo.').show();
@@ -149,6 +177,7 @@
                         renderAlumnos(data.alumnos);
                         $('#hidden-horario-id').val(horario);
                         $('#hidden-fecha').val(fecha);
+                        $('#hidden-dojo-id').val(dojo);
                         $('#form-asistencia').show();
                     },
                     error: function(xhr) {
@@ -159,19 +188,53 @@
                     },
                     complete: function() {
                         $('#btn-cargar').prop('disabled', false).html('<i class="fa-solid fa-magnifying-glass"></i> Cargar alumnos');
+                        checkReady();
                     }
                 });
             });
+
+            // Estado inicial: si usuario de sucursal, filtrar horarios de entrada
+            if (!isGlobal) {
+                filterHorarios($('#select-dojo').val());
+            }
+            checkReady();
         });
+
+        function filterHorarios(dojoId) {
+            var $select = $('#select-horario');
+            $select.val('').trigger('change');
+
+            $select.find('option[value!=""]').each(function() {
+                var optDojo = $(this).data('dojo');
+                $(this).toggle(!dojoId || String(optDojo) === String(dojoId));
+            });
+
+            // Forzar actualización de select2
+            $select.trigger('change.select2');
+        }
+
+        function checkReady() {
+            var fecha   = $('#input-fecha').val();
+            var horario = $('#select-horario').val();
+            var dojo    = $('#select-dojo').val();
+            var ok      = fecha && horario && dojo;
+            $('#btn-cargar').prop('disabled', !ok);
+        }
+
+        function resetForm() {
+            $('#form-asistencia').hide();
+            $('#div-alumnos').empty();
+            $('#div-error').hide().text('');
+        }
 
         function renderAlumnos(alumnos) {
             var html = '<div class="table-responsive" style="margin-bottom:20px;">'
                      + '<table class="table table-bordered table-hover asistencia-table">'
                      + '<thead><tr>'
-                     + '<th>#</th><th>Alumno</th>'
-                     + '<th style="text-align:center; width:120px;">Asistencia</th>'
+                     + '<th style="width:40px;">#</th><th>Alumno</th>'
+                     + '<th style="text-align:center; width:130px;">Asistencia</th>'
                      + '<th style="text-align:center; width:120px;">Licencia</th>'
-                     + '<th style="text-align:center; width:120px;">Falta</th>'
+                     + '<th style="text-align:center; width:100px;">Falta</th>'
                      + '</tr></thead><tbody>';
 
             alumnos.forEach(function(a, idx) {
