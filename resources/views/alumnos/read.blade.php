@@ -582,16 +582,13 @@
                     // Mostrar u ocultar el botón "Nuevo Grado"
                     var puedeAgregar = $('#puede-agregar-grado').val();
                     $('#btn-add-grado').toggle(puedeAgregar === '1');
-                    // Aplicar fecha mínima al input del modal
+                    // Pre-cargar fecha del último examen aprobado como fecha de inicio
                     var minFecha = $('#min-fecha-grado').val();
                     var $fechaInput = $('#form-add-grado input[name="fecha"]');
                     if (minFecha) {
-                        $fechaInput.attr('min', minFecha);
-                        if ($fechaInput.val() < minFecha) {
-                            $fechaInput.val(minFecha);
-                        }
+                        $fechaInput.attr('min', minFecha).val(minFecha);
                     } else {
-                        $fechaInput.removeAttr('min');
+                        $fechaInput.removeAttr('min').val('{{ date('Y-m-d') }}');
                     }
                 },
                 error: function() {
