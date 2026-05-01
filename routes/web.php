@@ -70,6 +70,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     Route::get('alumnos/{id}/parentesco/list', [AlumnoController::class, 'tutorList']);
     Route::get('alumnos/{id}/grados/list', [AlumnoController::class, 'gradoList']);
     Route::post('alumnos/tutores/store', [AlumnoController::class, 'storeAlumnoTutor'])->name('alumno.tutores.store');
+    Route::post('alumnos/tutores/{id}/status', [AlumnoController::class, 'tutorUpdateStatus'])->name('alumno.tutores.status.update');
     Route::delete('alumnos/tutores/{id}/delete', [AlumnoController::class, 'tutorDestroy'])->name('alumno.tutores.destroy');
 
     // Rutas Alumno Enfermedad

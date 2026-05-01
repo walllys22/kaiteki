@@ -429,6 +429,27 @@ class AlumnoController extends Controller
         }
     }
 
+    public function tutorUpdateStatus($id)
+    {
+        $this->custom_authorize('edit_alumnos');
+
+        $alumnoTutor = AlumnoTutor::findOrFail($id);
+
+        try {
+            $isActive = (string) $alumnoTutor->status === '1' || $alumnoTutor->status === 1 || $alumnoTutor->status === null;
+            $alumnoTutor->status = $isActive ? 0 : 1;
+            $alumnoTutor->save();
+
+            $msg = $alumnoTutor->status == 1 ? 'Tutor activado correctamente.' : 'Tutor desactivado correctamente.';
+
+            return redirect()->route('voyager.alumnos.show', ['id' => $alumnoTutor->alumno_id])
+                ->with(['message' => $msg, 'alert-type' => 'success']);
+        } catch (\Throwable $th) {
+            return redirect()->back()
+                ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
+        }
+    }
+
     public function gradoList($alumno_id)
     {
         $search   = request('search');

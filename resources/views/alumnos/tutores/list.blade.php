@@ -8,7 +8,7 @@
                 <th>Telefono</th>
                 <th>Dirección</th>
                 <th style="text-align:center; width: 130px;">Estado</th>
-                <th style="text-align:center; width: 110px;">Acciones</th>
+                <th style="text-align:center; width: 160px;">Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -26,6 +26,19 @@
                         </span>
                     </td>
                     <td class="text-center">
+                        @php
+                            $isActive = (string) $item->status === '1' || $item->status === 1 || $item->status === null;
+                        @endphp
+                        @if (auth()->user()->hasPermission('edit_alumnos'))
+                            <form action="{{ route('alumno.tutores.status.update', ['id' => $item->id]) }}" method="POST" style="display:inline-block; margin:0;">
+                                @csrf
+                                <button type="submit"
+                                    class="btn btn-sm {{ $isActive ? 'btn-warning' : 'btn-success' }}"
+                                    title="{{ $isActive ? 'Desactivar' : 'Activar' }}">
+                                    <i class="{{ $isActive ? 'voyager-x' : 'voyager-check' }}"></i>
+                                </button>
+                            </form>
+                        @endif
                         <a href="javascript:void(0);"
                             onclick="deleteItem('{{ route('alumno.tutores.destroy', ['id' => $item->id]) }}')"
                             data-toggle="modal" data-target="#modal-delete" class="btn btn-sm btn-danger">
