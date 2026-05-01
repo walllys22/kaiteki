@@ -26,7 +26,7 @@
                 if ($user->person->image) {
                     $pathInfo = pathinfo($user->person->image);
                     $extension = strtolower($pathInfo['extension'] ?? '');
-
+                    $image = null;
                     if (str_contains($extension, 'avif')) {
                         $image = str_replace('.avif', '', $user->person->image);
                     }

@@ -169,6 +169,11 @@
                                 </a>
                             </li>
                             <li role="presentation">
+                                <a href="#tab-asistencia" aria-controls="tab-asistencia" role="tab" data-toggle="tab">
+                                    <i class="fa-solid fa-clipboard-user"></i> Asistencia
+                                </a>
+                            </li>
+                            <li role="presentation">
                                 <a href="#tab-enfermedades" aria-controls="tab-enfermedades" role="tab" data-toggle="tab">
                                     <i class="fa-solid fa-briefcase-medical"></i> Enfermedades
                                 </a>
@@ -232,6 +237,27 @@
                                 </div>
                                 <div id="div-horario-list">
                                     <p class="text-center">Cargando horarios...</p>
+                                </div>
+                            </div>
+
+                            <div role="tabpanel" class="tab-pane" id="tab-asistencia">
+                                <div class="row alumno-tab-toolbar">
+                                    <div class="col-sm-9">
+                                        <div class="dataTables_length">
+                                            <label>Mostrar <select id="select-paginate-asistencia" class="form-control input-sm">
+                                                <option value="10">10</option>
+                                                <option value="25">25</option>
+                                                <option value="50">50</option>
+                                                <option value="100">100</option>
+                                            </select> registros</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-3" style="margin-bottom: 10px;">
+                                        <input type="text" id="input-search-asistencia" placeholder="🔍 Buscar..." class="form-control">
+                                    </div>
+                                </div>
+                                <div id="div-asistencia-list">
+                                    <p class="text-center">Cargando asistencias...</p>
                                 </div>
                             </div>
 
@@ -551,10 +577,12 @@
         var countPageTutor = 10;
         var countPageEnfer = 10;
         var countPageHorario = 10;
+        var countPageAsistencia = 10;
         var timeoutGrado = null;
         var timeoutTutor = null;
         var timeoutEnfer = null;
         var timeoutHorario = null;
+        var timeoutAsistencia = null;
 
         $(document).ready(function() {
             $('#modal-add-tutor, #modal-add-enfermedad, #modal-add-grado, #modal-add-horario').on('shown.bs.modal', function() {
@@ -568,6 +596,7 @@
             listTutores();
             enfermedadList();
             horarioList();
+            asistenciaList();
 
             $('#input-search-grado').on('keyup', function(e) {
                 if (e.keyCode == 13) {
@@ -635,6 +664,27 @@
                 if (link) {
                     let page = new URL(link).searchParams.get('page') || 1;
                     horarioList(page);
+                }
+            });
+
+            $('#input-search-asistencia').on('keyup', function(e) {
+                if (e.keyCode == 13) { clearTimeout(timeoutAsistencia); asistenciaList(); }
+            }).on('input', function() {
+                clearTimeout(timeoutAsistencia);
+                timeoutAsistencia = setTimeout(function() { asistenciaList(); }, 1000);
+            });
+
+            $('#select-paginate-asistencia').change(function() {
+                countPageAsistencia = $(this).val();
+                asistenciaList();
+            });
+
+            $(document).on('click', '#div-asistencia-list .pagination a', function(e) {
+                e.preventDefault();
+                let link = $(this).attr('href');
+                if (link) {
+                    let page = new URL(link).searchParams.get('page') || 1;
+                    asistenciaList(page);
                 }
             });
 
@@ -754,6 +804,26 @@
                 error: function() {
                     $('#div-horario-list').html('<p class="text-center">No se pudieron cargar los horarios.</p>');
                     $('#div-horario-list').loading('toggle');
+                }
+            });
+        }
+
+        function asistenciaList(page = 1) {
+            $('#div-asistencia-list').loading({ message: 'Cargando...' });
+            let id = "{{ $alumno->id }}";
+            let search = $('#input-search-asistencia').val() ? $('#input-search-asistencia').val() : '';
+            let url = "{{ url('admin/alumnos') }}/" + id + "/asistencias/list";
+
+            $.ajax({
+                url: `${url}?search=${search}&paginate=${countPageAsistencia}&page=${page}`,
+                type: 'get',
+                success: function(result) {
+                    $('#div-asistencia-list').html(result);
+                    $('#div-asistencia-list').loading('toggle');
+                },
+                error: function() {
+                    $('#div-asistencia-list').html('<p class="text-center">No se pudieron cargar las asistencias.</p>');
+                    $('#div-asistencia-list').loading('toggle');
                 }
             });
         }

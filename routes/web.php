@@ -14,6 +14,7 @@ use App\Http\Controllers\TableroKataController;
 use App\Http\Controllers\AlumnoController;
 use App\Http\Controllers\AlumnoGradoController;
 use App\Http\Controllers\AlumnoHorarioController;
+use App\Http\Controllers\AsistenciaController;
 use App\Http\Controllers\GradoController;
 use App\Http\Controllers\HorarioController;
 use Illuminate\Support\Facades\Artisan;
@@ -70,6 +71,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     // Rutas Alumnos Tutores                                            metodo del controlador
     Route::get('alumnos/{id}/parentesco/list', [AlumnoController::class, 'tutorList']);
     Route::get('alumnos/{id}/grados/list', [AlumnoController::class, 'gradoList']);
+    Route::get('alumnos/{id}/asistencias/list', [AlumnoController::class, 'asistenciaList']);
     Route::post('alumnos/tutores/store', [AlumnoController::class, 'storeAlumnoTutor'])->name('alumno.tutores.store');
     Route::post('alumnos/tutores/{id}/status', [AlumnoController::class, 'tutorUpdateStatus'])->name('alumno.tutores.status.update');
     Route::delete('alumnos/tutores/{id}/delete', [AlumnoController::class, 'tutorDestroy'])->name('alumno.tutores.destroy');
@@ -83,6 +85,16 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     Route::get('alumnos/{id}/horarios/list', [AlumnoController::class, 'horarioList'])->name('alumno.horario.list');
     Route::post('alumnos/horario/store', [AlumnoHorarioController::class, 'store'])->name('alumno.horario.store');
     Route::delete('alumnos/horario/{id}/delete', [AlumnoHorarioController::class, 'destroy'])->name('alumno.horario.destroy');
+
+    // Rutas Asistencias
+    Route::get('asistencias', [AsistenciaController::class, 'index'])->name('voyager.asistencias.index');
+    Route::get('asistencias/ajax/list', [AsistenciaController::class, 'list']);
+    Route::get('asistencias/create', [AsistenciaController::class, 'create'])->name('voyager.asistencias.create');
+    Route::get('asistencias/alumnos', [AsistenciaController::class, 'loadAlumnos'])->name('asistencias.load_alumnos');
+    Route::post('asistencias/store', [AsistenciaController::class, 'store'])->name('voyager.asistencias.store');
+    Route::get('asistencias/{id}', [AsistenciaController::class, 'show'])->name('voyager.asistencias.show');
+    Route::delete('asistencias/{id}/delete', [AsistenciaController::class, 'destroy'])->name('voyager.asistencias.destroy');
+    Route::put('asistencias/{id}/update', [AsistenciaController::class, 'update'])->name('asistencias.update');
 
     // Rutas Alumno Grados
     Route::post('alumnos/grado/store', [AlumnoGradoController::class, 'storeGrado'])->name('alumno.grado.store');

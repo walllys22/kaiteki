@@ -9,6 +9,7 @@ use App\Models\AlumnoEnfermedad;
 use App\Models\AlumnoGrado;
 use App\Models\AlumnoGradoExamen;
 use App\Models\AlumnoHorario;
+use App\Models\AsistenciaAlumno;
 use App\Models\Person;
 use App\Models\Dojo;
 use App\Models\Parentesco;
@@ -602,6 +603,46 @@ class AlumnoController extends Controller
             ->get();
 
         return view('alumnos.horarios.list', compact('data', 'alumno_id', 'horarios'));
+    }
+
+    public function asistenciaList($alumno_id)
+    {
+        $this->custom_authorize('read_alumnos');
+
+        $search   = request('search');
+        $paginate = request('paginate') ?? 10;
+
+        $data = AsistenciaAlumno::with(['asistencia.horario', 'asistencia.dojo'])
+            ->where('alumno_id', $alumno_id)
+            ->whereHas('asistencia', fn($q) => $q->whereNull('deleted_at'))
+            ->when($search, function ($q, $search) {
+                $q->whereHas('asistencia', function ($sq) use ($search) {
+                    $sq->where('fecha', 'like', "%$search%")
+                       ->orWhereHas('horario', fn($hq) =>
+                           $hq->where('nombre', 'like', "%$search%")
+                              ->orWhere('tipo', 'like', "%$search%")
+                       );
+                });
+            })
+            ->orderByDesc(
+                \App\Models\Asistencia::select('fecha')
+                    ->whereColumn('asistencias.id', 'asistencia_alumnos.asistencia_id')
+                    ->limit(1)
+            )
+            ->paginate($paginate);
+
+        // Contadores totales del alumno
+        $totales = AsistenciaAlumno::where('alumno_id', $alumno_id)
+            ->whereHas('asistencia', fn($q) => $q->whereNull('deleted_at'))
+            ->selectRaw("
+                COUNT(*) as total,
+                SUM(estado = 'asistencia') as presentes,
+                SUM(estado = 'licencia') as licencias,
+                SUM(estado = 'falta') as faltas
+            ")
+            ->first();
+
+        return view('alumnos.asistencias.list', compact('data', 'alumno_id', 'totales'));
     }
 
 
