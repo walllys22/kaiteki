@@ -6,6 +6,7 @@
                     <th style="text-align: center">ID</th>
                     <th style="text-align: center">Nombre Dojo</th>                    
                     <th style="text-align: center">Nombre Completo</th>
+                    <th style="text-align: center">Ultimo Actual</th>
                     <th style="text-align: center">Ingreso</th>                    
                     <th style="text-align: center">Estado</th>
                     <th style="text-align: center">Acciones</th>
@@ -20,6 +21,10 @@
                     }
                     $personName = optional($item->person)->first_name ?: 'Persona no disponible';
                     $dojoName = optional($item->dojo)->nombre ?: 'Sin dojo';
+                    $ultimoAlumnoGrado = $item->ultimoGrado;
+                    $grado = optional($ultimoAlumnoGrado)->grado;
+                    $gradoLabel = trim(($grado->tipo ?? '') . ' ' . ($grado->numero ?? '') . ' ' . ($grado->nombre ?? ''));
+                    $gradoStatus = optional($ultimoAlumnoGrado)->status;
                 @endphp
                 <tr>
                     <td>{{ $item->id }}</td>
@@ -31,6 +36,18 @@
                                 {{ $personName }} 
                             </div>
                         </div>
+                    </td>
+                    <td style="text-align: center">
+                        @if ($grado)
+                            <strong>{{ $gradoLabel ?: 'Sin nombre' }}</strong><br>
+                            @if ((string) $gradoStatus === '1')
+                                <label class="label label-success">Completado</label>
+                            @else
+                                <label class="label label-info">En progreso</label>
+                            @endif
+                        @else
+                            <span class="text-muted">Sin grado registrado</span>
+                        @endif
                     </td>
                     <td style="text-align: center">
                         {{ $item->fechaIngreso ? \Carbon\Carbon::parse($item->fechaIngreso)->format('d/m/Y') : 'N/A' }}
@@ -63,7 +80,7 @@
                 </tr>
                 @empty
                     <tr>
-                        <td colspan="6">
+                        <td colspan="7">
                             <h5 class="text-center" style="margin-top: 50px">
                                 <img src="{{ asset('images/empty.png') }}" width="120px" alt="" style="opacity: 0.8">
                                 <br><br>

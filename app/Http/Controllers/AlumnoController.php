@@ -128,7 +128,7 @@ class AlumnoController extends Controller
         $userDojoId = auth()->user()->dojo_id;
 
         $data = Alumno::query()
-            ->with(['person', 'dojo'])
+            ->with(['person', 'dojo', 'ultimoGrado.grado'])
             ->when($search, function ($query, $search) {
                 return $query->where(function($q) use ($search) {
                     $q->where('id', $search)

@@ -47,6 +47,11 @@ class Alumno extends Model
         return $this->hasMany(AlumnoGrado::class, 'alumno_id');
     }
 
+    public function ultimoGrado()
+    {
+        return $this->hasOne(AlumnoGrado::class, 'alumno_id')->latestOfMany();
+    }
+
     public function register()
     {
         return $this->belongsTo(User::class, 'registerUser_id');
