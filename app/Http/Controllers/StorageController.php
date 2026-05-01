@@ -62,29 +62,29 @@ class StorageController extends Controller
                 'quality' => 75 // Reducimos un poco la calidad para acelerar la codificación
             ],
             // El banner también es importante, lo mantenemos en AVIF.
-            'banner' => [
-                'suffix' => '-banner',
-                'width' => 900,
-                'height' => null,
-                'format' => 'avif',
-                'quality' => 75
-            ],
+            // 'banner' => [
+            //     'suffix' => '-banner',
+            //     'width' => 900,
+            //     'height' => null,
+            //     'format' => 'avif',
+            //     'quality' => 75
+            // ],
             // Para tamaños intermedios, WebP es una excelente alternativa: rápido y ligero.
-            'medium' => [
-                'suffix' => '-medium',
-                'width' => 600,
-                'height' => null,
-                'format' => 'webp',
-                'quality' => 80
-            ],
+            // 'medium' => [
+            //     'suffix' => '-medium',
+            //     'width' => 600,
+            //     'height' => null,
+            //     'format' => 'webp',
+            //     'quality' => 80
+            // ],
             // La miniatura pequeña también en WebP.
-            'small' => [
-                'suffix' => '-small',
-                'width' => 256,
-                'height' => null,
-                'format' => 'webp',
-                'quality' => 80
-            ],
+            // 'small' => [
+            //     'suffix' => '-small',
+            //     'width' => 256,
+            //     'height' => null,
+            //     'format' => 'webp',
+            //     'quality' => 80
+            // ],
             // La versión recortada (cropped) también en WebP por velocidad.
             'cropped' => [
                 'suffix' => '-cropped',
