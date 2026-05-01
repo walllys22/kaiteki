@@ -58,16 +58,8 @@
                             </div>
                             <div class="col-md-3 form-group">
                                 <label>Horario <span class="text-danger">*</span></label>
-                                <select id="select-horario" class="form-control select2">
+                                <select id="select-horario" class="form-control">
                                     <option value="">— Seleccione un horario —</option>
-                                    @foreach($horarios as $h)
-                                        <option value="{{ $h->id }}" data-dojo="{{ $h->dojo_id }}"
-                                            @if($userDojoId) selected="{{ $h->dojo_id == $userDojoId ? '' : 'none' }}" @endif>
-                                            {{ $h->nombre }}
-                                            @if($h->tipo) · {{ $h->tipo }} @endif
-                                            @if(!$userDojoId && optional($h->dojo)->nombre) — {{ $h->dojo->nombre }} @endif
-                                        </option>
-                                    @endforeach
                                 </select>
                             </div>
                             <div class="col-md-2 form-group" style="padding-top:25px;">
@@ -135,21 +127,29 @@
 
 @section('javascript')
     <script src="{{ asset('js/btn-submit.js') }}"></script>
+    @php
+        $horariosJson = $horarios->map(function($h) {
+            return ['id' => $h->id, 'nombre' => $h->nombre, 'tipo' => $h->tipo, 'dojo_id' => $h->dojo_id];
+        })->values();
+    @endphp
     <script>
-        var loadUrl    = "{{ route('asistencias.load_alumnos') }}";
-        var isGlobal   = {{ $userDojoId ? 'false' : 'true' }};
+        var loadUrl  = "{{ route('asistencias.load_alumnos') }}";
+        var isGlobal = {{ $userDojoId ? 'false' : 'true' }};
+
+        var allHorarios = @json($horariosJson);
 
         $(document).ready(function() {
-            $('.select2').select2({ width: '100%' });
+            $('#select-dojo').select2({ width: '100%' });
+            $('#select-horario').select2({ width: '100%' });
 
-            // Cuando cambia el dojo (solo admin global): filtrar horarios
             if (isGlobal) {
                 $('#select-dojo').on('change', function() {
-                    var dojoId = $(this).val();
-                    filterHorarios(dojoId);
+                    filterHorarios($(this).val());
                     resetForm();
                     checkReady();
                 });
+            } else {
+                filterHorarios($('#select-dojo').val());
             }
 
             $('#input-fecha, #select-horario').on('change', function() {
@@ -193,24 +193,27 @@
                 });
             });
 
-            // Estado inicial: si usuario de sucursal, filtrar horarios de entrada
-            if (!isGlobal) {
-                filterHorarios($('#select-dojo').val());
-            }
             checkReady();
         });
 
         function filterHorarios(dojoId) {
             var $select = $('#select-horario');
-            $select.val('').trigger('change');
 
-            $select.find('option[value!=""]').each(function() {
-                var optDojo = $(this).data('dojo');
-                $(this).toggle(!dojoId || String(optDojo) === String(dojoId));
+            $select.select2('destroy');
+            $select.empty().append('<option value="">— Seleccione un horario —</option>');
+
+            var filtrados = dojoId
+                ? allHorarios.filter(function(h) { return String(h.dojo_id) === String(dojoId); })
+                : allHorarios;
+
+            filtrados.forEach(function(h) {
+                var label = h.nombre;
+                if (h.tipo) label += ' · ' + h.tipo;
+                $select.append(new Option(label, h.id, false, false));
             });
 
-            // Forzar actualización de select2
-            $select.trigger('change.select2');
+            $select.select2({ width: '100%' });
+            checkReady();
         }
 
         function checkReady() {
