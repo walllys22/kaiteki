@@ -7,7 +7,6 @@
         <table id="dataTable" class="table table-bordered table-hover">
             <thead>
                 <tr>
-                    <th style="text-align: center">ID</th>
                     @if ($showDojoColumn)
                         <th style="text-align: center">Dojo</th>
                     @endif
@@ -25,16 +24,9 @@
                         });
                     @endphp
                     <tr>
-                        <td style="text-align: center; vertical-align: middle;">
-                            {{ $item->id }}
-                        </td>
                         @if ($showDojoColumn)
                             <td style="text-align: center; vertical-align: middle;">
-                                @if ($item->dojo)
-                                    <label class="label label-info">{{ $item->dojo->nombre }}</label>
-                                @else
-                                    <span class="text-muted">Sin sucursal</span>
-                                @endif
+                                {{$item->dojo->nombre}}
                             </td>
                         @endif
                         <td style="vertical-align: middle;">
@@ -46,12 +38,12 @@
                         </td>
                         <td style="vertical-align: middle;">
                             @if ($item->activeResponsible && $item->activeResponsible->person)
-                                <label class="label label-success">{{ $item->activeResponsible->person->first_name }}</label>
+                                {{ $item->activeResponsible->person->first_name }}
                             @else
-                                <span class="text-muted">Sin responsable activo</span>
+                                Sin responsable activo
                             @endif
 
-                            @if ($previousResponsible)
+                            {{-- @if ($previousResponsible)
                                 <div style="margin-top: 8px;">
                                     <small class="text-muted" style="display: block; margin-bottom: 4px;">Responsable anterior:</small>
                                     <div style="margin-bottom: 4px;">
@@ -62,7 +54,7 @@
                                         </small>
                                     </div>
                                 </div>
-                            @endif
+                            @endif --}}
                         </td>
                         <td style="text-align: center; vertical-align: middle;">
                             @if ($item->status == 1)
@@ -91,7 +83,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="{{ $showDojoColumn ? 6 : 5 }}">
+                        <td colspan="{{ $showDojoColumn ? 5 : 4 }}">
                             <h5 class="text-center" style="margin-top: 50px">
                                 <img src="{{ asset('images/empty.png') }}" width="120px" alt="" style="opacity: 0.8">
                                 <br><br>
