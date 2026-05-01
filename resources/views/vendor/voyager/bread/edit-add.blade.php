@@ -108,7 +108,7 @@
                                             <small class="text-muted">{{ $itemLabel }} se {{ $edit ? 'mantendra' : 'registrara' }} en tu sucursal asignada.</small>
                                         @else
                                             <select name="dojo_id" class="form-control select2" required>
-                                                <option value="">Seleccione una sucursal</option>
+                                                <option value="">Seleccione una opción</option>
                                                 @foreach ($breadDojos as $dojo)
                                                     <option value="{{ $dojo->id }}" {{ (string) $selectedDojoId === (string) $dojo->id ? 'selected' : '' }}>
                                                         {{ $dojo->nombre }}
