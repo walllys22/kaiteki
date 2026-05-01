@@ -197,7 +197,7 @@
                     <div class="sidebar-dojo-card">
                         <img src="{{ $dojoLogo }}" class="sidebar-dojo-logo" alt="{{ $user->dojo->nombre }}">
                         <div class="sidebar-dojo-meta">
-                            <span class="sidebar-dojo-label">Sucursal</span>
+                            <span class="sidebar-dojo-label">DOJO</span>
                             <div class="sidebar-dojo-name">{{ $user->dojo->nombre }}</div>
                         </div>
                     </div>

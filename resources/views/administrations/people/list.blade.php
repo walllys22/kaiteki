@@ -19,6 +19,10 @@
                     if($item->image){
                         $image = asset('storage/' . str_replace('.avif', '', $item->image) . '-cropped.webp');
                     }
+                    $image = asset('images/default.jpg');
+                    if($item->image){
+                        $image = asset('storage/' . str_replace('.avif', '', $item->image) . '-cropped.webp');
+                    }
                     $now = \Carbon\Carbon::now();
                     $birthday = new \Carbon\Carbon($item->birth_date);
                     $age = $birthday->diffInYears($now);
