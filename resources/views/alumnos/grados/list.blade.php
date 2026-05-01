@@ -343,7 +343,8 @@
                     $hExamenes    = $item->examenes->sortByDesc('fecha');
                     $hPuntasObt   = $hRepasos->where('aprobado', 1)->count();
                     $hPuntasReq   = $grado ? (int) $grado->puntas : 0;
-                    $hExamAprobado = $hExamenes->where('aprobado', 1)->count() > 0;
+                    $hExamenFinal = $hExamenes->where('aprobado', 1)->first();
+                    $hExamAprobado = $hExamenFinal !== null;
                 @endphp
 
                 {{-- Fila principal (clickeable) --}}
@@ -369,6 +370,7 @@
                     <td style="text-align:center; vertical-align:middle;">
                         @if($hExamAprobado)
                             <span class="label label-success"><i class="fa-solid fa-check"></i> Aprobado</span>
+                            <br><small class="text-muted" style="font-size:11px;">{{ \Carbon\Carbon::parse($hExamenFinal->fecha)->format('d/m/Y') }}</small>
                         @else
                             <span class="label label-default">—</span>
                         @endif
