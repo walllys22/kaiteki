@@ -139,18 +139,17 @@
         var allHorarios = @json($horariosJson);
 
         $(document).ready(function() {
-            $('#select-dojo').select2({ width: '100%' });
-            $('#select-horario').select2({ width: '100%' });
-
             if (isGlobal) {
+                $('#select-dojo').select2({ width: '100%' });
                 $('#select-dojo').on('change', function() {
                     filterHorarios($(this).val());
                     resetForm();
                     checkReady();
                 });
-            } else {
-                filterHorarios($('#select-dojo').val());
             }
+
+            // Cargar horarios al inicio (filtra por dojo del usuario o deja vacío para admin global)
+            filterHorarios($('#select-dojo').val());
 
             $('#input-fecha, #select-horario').on('change', function() {
                 resetForm();
@@ -199,7 +198,7 @@
         function filterHorarios(dojoId) {
             var $select = $('#select-horario');
 
-            $select.select2('destroy');
+            try { $select.select2('destroy'); } catch(e) {}
             $select.empty().append('<option value="">— Seleccione un horario —</option>');
 
             var filtrados = dojoId
