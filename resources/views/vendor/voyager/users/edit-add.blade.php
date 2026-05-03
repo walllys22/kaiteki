@@ -98,7 +98,7 @@
                                     <select name="role_id" id="role_id" class="form-control select2" required>
                                         <option value="" disabled selected>Ninguno</option>
                                         @foreach ($role as $item)
-                                            <option value="{{$item->id}}" @if($dataTypeContent) {{$dataTypeContent->role_id==$item->id? 'selected':''}} @endif >{{$item->name}}</option>  
+                                            <option value="{{$item->id}}" @if($dataTypeContent) {{$dataTypeContent->role_id==$item->id? 'selected':''}} @endif >{{$item->display_name}}</option>  
                                         @endforeach
                                     </select>
                                 </div>   

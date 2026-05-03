@@ -1,5 +1,5 @@
 <div class="table-responsive">
-    <table class="table table-bordered table-hover" style="font-size:13px;">
+    <table id="dataTable" class="table table-bordered table-hover" style="font-size:13px;">
         <thead>
             <tr>
                 <th style="width:120px;">Fecha</th>

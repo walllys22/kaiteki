@@ -27,16 +27,41 @@ class PermissionRoleTableSeeder extends Seeder
         $role = Role::where('name', 'administrador')->firstOrFail();
         $permissions = Permission::whereRaw('table_name = "admin" or
 
-                                            `key` = "browse_grados" or
-                                            `key` = "read_grados" or
+                                            table_name = "people" or
+                                            table_name = "alumnos" or
+                                            table_name = "asistencias" or
+
+                                            table_name = "horarios" or
+                                            table_name = "parentescos" or
+                                            table_name = "ciudads" or
+                                            table_name = "dojos" or
+                                            table_name = "grados" or
+
+                                            table_name = "users" or
+                                            table_name = "settings" or
+                                            
+                                            `key` = "browse_clear-cache"')->get();
+        $role->permissions()->sync($permissions->pluck('id')->all());
+
+
+        $role = Role::where('name', 'administrador_dojo')->firstOrFail();
+        $permissions = Permission::whereRaw('table_name = "admin" or
+
+                                            
 
 
                                             table_name = "people" or
                                             table_name = "alumnos" or
+                                            table_name = "asistencias" or
+
                                             table_name = "horarios" or
-                                            table_name = "roles" or
+                                            table_name = "parentescos" or
+                                           
+                                         
+                                            `key` = "browse_grados" or
+                                            `key` = "read_grados" or
+
                                             table_name = "users" or
-                                            table_name = "settings" or
                                             
                                             `key` = "browse_clear-cache"')->get();
         $role->permissions()->sync($permissions->pluck('id')->all());

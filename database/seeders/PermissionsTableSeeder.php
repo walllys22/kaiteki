@@ -58,7 +58,7 @@ class PermissionsTableSeeder extends Seeder
 
         // Peopple
         $permissions = [
-            'browse_people' => 'Ver lista de C',
+            'browse_people' => 'Ver lista de personas',
             'read_people' => 'Ver detalles de una persona',
             'edit_people' => 'Editar información de personas',
             'add_people' => 'Agregar nuevas personas',
@@ -94,11 +94,11 @@ class PermissionsTableSeeder extends Seeder
 
         //Ciudad
         $permissions = [
-            'browse_ciudads' => 'Ver lista de C',
-            'read_ciudads' => 'Ver detalles de una persona',
-            'edit_ciudads' => 'Editar información de C',
-            'add_ciudads' => 'Agregar nuevas C',
-            'delete_ciudads' => 'Eliminar C',
+            'browse_ciudads' => 'Ver lista de ciudad',
+            'read_ciudads' => 'Ver detalles de ciudad',
+            'edit_ciudads' => 'Editar información de ciudad',
+            'add_ciudads' => 'Agregar nuevas ciudad',
+            'delete_ciudads' => 'Eliminar ciudad',
         ];
 
         foreach ($permissions as $key => $description) {
@@ -184,11 +184,11 @@ class PermissionsTableSeeder extends Seeder
         
         //Parentesco
         $permissions = [
-            'browse_parentescos' => 'Ver lista de C',
-            'read_parentescos' => 'Ver detalles de una persona',
-            'edit_parentescos' => 'Editar información de C',
-            'add_parentescos' => 'Agregar nuevas C',
-            'delete_parentescos' => 'Eliminar C',
+            'browse_parentescos' => 'Ver lista de parentesco',
+            'read_parentescos' => 'Ver detalles de un parentesco',
+            'edit_parentescos' => 'Editar información de parentesco',
+            'add_parentescos' => 'Agregar nuevos parentesco',
+            'delete_parentescos' => 'Eliminar parentesco',
         ];
 
         foreach ($permissions as $key => $description) {
@@ -238,11 +238,11 @@ class PermissionsTableSeeder extends Seeder
 
         //Alumnos
         $permissions = [
-            'browse_alumnos' => 'Ver lista de C',
-            'read_alumnos' => 'Ver detalles de una persona',
-            'edit_alumnos' => 'Editar información de C',
-            'add_alumnos' => 'Agregar nuevas C',
-            'delete_alumnos' => 'Eliminar C',
+            'browse_alumnos' => 'Ver lista de alumnos',
+            'read_alumnos' => 'Ver detalles de un alumnos',
+            'edit_alumnos' => 'Editar información de alumnos',
+            'add_alumnos' => 'Agregar nuevos alumnos',
+            'delete_alumnos' => 'Eliminar alumnos',
         ];
 
         foreach ($permissions as $key => $description) {
@@ -250,7 +250,24 @@ class PermissionsTableSeeder extends Seeder
                 'key'        => $key,
                 'keyDescription'=> $description,
                 'table_name' => 'alumnos',
-                'tableDescription'=>'alumnos'
+                'tableDescription'=>'Alumnos'
+            ]);
+        }
+
+        $permissions = [
+            'browse_asistencias' => 'Ver lista de asistencias',
+            'read_asistencias' => 'Ver detalles de asistencias',
+            'edit_asistencias' => 'Editar información de asistencias',
+            'add_asistencias' => 'Agregar nuevas asistencias',
+            'delete_asistencias' => 'Eliminar asistencias',
+        ];
+
+        foreach ($permissions as $key => $description) {
+            Permission::firstOrCreate([
+                'key'        => $key,
+                'keyDescription'=> $description,
+                'table_name' => 'asistencias',
+                'tableDescription'=>'Asistencias'
             ]);
         }
 
