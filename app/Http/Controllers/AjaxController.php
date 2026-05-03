@@ -28,7 +28,7 @@ class AjaxController extends Controller
         $userDojoId = auth()->user()->dojo_id;
         $dojoId = $userDojoId ?: request('dojo_id');
 
-        $data = Person::query()
+        $data = Person::with('dojo')
                         ->when($q, function ($query, $q) {
                             $query->where(function ($subQ) use ($q) {
                                 $subQ->where('ci', 'like', "%$q%")
