@@ -63,7 +63,8 @@ class PermissionRoleTableSeeder extends Seeder
                                             `key` = "browse_grados" or
                                             `key` = "read_grados" or
 
-                                            table_name = "users" or
+                                            `key` = "browse_users" or
+                                            `key` = "read_users" or
                                             
                                             `key` = "browse_clear-cache"')->get();
         $role->permissions()->sync($permissions->pluck('id')->all());
