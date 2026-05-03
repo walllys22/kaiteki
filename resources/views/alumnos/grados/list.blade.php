@@ -73,7 +73,7 @@
                     <div class="grado-progress-card">
                         <div class="grado-progress-label">
                             <i class="fa-solid fa-calendar-days" style="color:#3498db;"></i>
-                            Días de práctica
+                            Asistencias desde el grado
                             <strong class="pull-right">{{ $progress['diasTranscurridos'] }} / {{ $progress['diasRequeridos'] }}</strong>
                         </div>
                         <div class="progress" style="margin-bottom:4px; height:12px;">
@@ -84,9 +84,12 @@
                             </div>
                         </div>
                         @if($progress['cumpleDias'])
-                            <small class="text-success"><i class="fa-solid fa-check"></i> Días cumplidos</small>
+                            <small class="text-success"><i class="fa-solid fa-check"></i> Referencia cumplida</small>
                         @else
-                            <small class="text-muted">Faltan {{ $progress['diasRequeridos'] - $progress['diasTranscurridos'] }} día(s) (desde {{ \Carbon\Carbon::parse($activeGrado->fecha)->format('d/m/Y') }})</small>
+                            <small class="text-muted">
+                                {{ $progress['diasTranscurridos'] }} asistencia(s) desde {{ \Carbon\Carbon::parse($activeGrado->fecha)->format('d/m/Y') }}
+                                <span class="label label-default" style="font-size:10px; margin-left:4px;">referencia</span>
+                            </small>
                         @endif
                     </div>
                 </div>

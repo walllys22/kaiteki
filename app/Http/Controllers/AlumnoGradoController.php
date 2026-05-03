@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AlumnoGrado;
 use App\Models\AlumnoGradoRepaso;
 use App\Models\AlumnoGradoExamen;
+use App\Models\AsistenciaAlumno;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -27,7 +28,11 @@ class AlumnoGradoController extends Controller
         $repasos         = $alumnoGrado->repasos;
         $examenes        = $alumnoGrado->examenes;
         $puntasObtenidas = $repasos->where('aprobado', 1)->count();
-        $diasTranscurridos = (int) Carbon::parse($alumnoGrado->fecha)->diffInDays(Carbon::now());
+        $diasTranscurridos = AsistenciaAlumno::where('alumno_id', $alumnoGrado->alumno_id)
+            ->where('estado', 'asistencia')
+            ->whereHas('asistencia', fn($q) => $q->whereNull('deleted_at')
+                ->where('fecha', '>=', $alumnoGrado->fecha))
+            ->count();
 
         $cumplePuntas   = $puntasObtenidas >= $puntasRequeridas;
         $cumpleDias     = $diasTranscurridos >= $diasRequeridos;
