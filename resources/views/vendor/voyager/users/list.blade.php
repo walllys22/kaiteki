@@ -6,7 +6,7 @@
                     <th>ID</th>
                     <th>Nombre</th>                    
                     <th>Email.</th>
-                    <th>Sucursal</th>
+                    <th>Dojo</th>
                     <th>Role</th>
                     <th>Estado</th>
                     <th class="text-right">Acciones</th>

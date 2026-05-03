@@ -20,9 +20,10 @@ class UserController extends Controller
 
     public function list()
     {
-        $roleId = Auth::user()->role->id;
-        $search = request('search') ?? null;
-        $paginate = request('paginate') ?? 10;
+        $roleId     = Auth::user()->role->id;
+        $userDojoId = Auth::user()->dojo_id;
+        $search     = request('search') ?? null;
+        $paginate   = request('paginate') ?? 10;
 
         $data = User::with(['person', 'dojo', 'role'])
             ->when($search, function ($query, $search) {
@@ -35,6 +36,7 @@ class UserController extends Controller
             ->when($roleId != 1, function ($query) {
                 $query->where('role_id', '!=', 1);
             })
+            ->when($userDojoId, fn($q) => $q->where('dojo_id', $userDojoId))
             ->orderBy('id', 'DESC')
             ->paginate($paginate);
 

@@ -3,7 +3,6 @@
         <table id="dataTable" class="table table-bordered table-hover">
             <thead>
                 <tr>
-                    <th style="text-align: center">ID</th>
                     <th style="text-align: center">Documento</th>
                     <th style="text-align: center">Nombre completo</th>                    
                     <th style="text-align: center">Datos personales</th>
@@ -28,7 +27,6 @@
                     $age = $birthday->diffInYears($now);
                 @endphp
                 <tr>
-                    <td>{{ $item->id }}</td>
                     <td style="text-align: center">
                         <strong>{{ $item->documentType }}</strong><br>
                         <span>{{ $item->ci ?: 'Sin documento' }}</span>
@@ -118,7 +116,7 @@
                 </tr>
                 @empty
                     <tr>
-                        <td colspan="7">
+                        <td colspan="6">
                             <h5 class="text-center" style="margin-top: 50px">
                                 <img src="{{ asset('images/empty.png') }}" width="120px" alt="" style="opacity: 0.8">
                                 <br><br>
