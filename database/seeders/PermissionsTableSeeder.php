@@ -58,7 +58,7 @@ class PermissionsTableSeeder extends Seeder
 
         // Peopple
         $permissions = [
-            'browse_people' => 'Ver lista de personas',
+            'browse_people' => 'Ver lista de persona',
             'read_people' => 'Ver detalles de una persona',
             'edit_people' => 'Editar información de personas',
             'add_people' => 'Agregar nuevas personas',
