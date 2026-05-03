@@ -165,6 +165,10 @@
                         </div>
 
                         <div class="modal-body">
+                            <div id="modal-alumno-alert" class="alert alert-warning" style="display:none; margin-bottom:12px;">
+                                <i class="fa fa-exclamation-triangle"></i> <span id="modal-alumno-alert-msg"></span>
+                            </div>
+
                             <div class="row">
                                 <input type="hidden" name="dojo_id" id="modal_alumno_dojo_id" value="{{ $currentDojoId }}">
 
@@ -189,9 +193,9 @@
                             <div class="row">
                                 <input type="hidden" name="status" value="1">
 
-                                <div class="col-md-8 form-group">
+                                <div class="col-md-6 form-group">
                                     <label for="modal_grado_id">Grado Inicial <span class="text-danger">*</span></label>
-                                    <select name="grado_id" id="modal_grado_id" class="form-control select2" required>
+                                    <select name="grado_id" id="modal_grado_id" class="form-control" required>
                                         <option value="">Seleccione un grado</option>
                                         @foreach ($grados as $grado)
                                             <option value="{{ $grado->id }}">
@@ -199,6 +203,13 @@
                                                 ({{ $grado->puntas }} puntas · {{ $grado->dias }} días)
                                             </option>
                                         @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6 form-group">
+                                    <label for="modal_horario_id">Horario <span class="text-danger">*</span></label>
+                                    <select name="horario_id" id="modal_horario_id" class="form-control" required>
+                                        <option value="">— Seleccione un horario —</option>
                                     </select>
                                 </div>
 
@@ -284,6 +295,43 @@
         var shouldRestoreAlumnoModal = false;
         var alumnoPersonSelected = null;
 
+        @php
+            $horariosModalJson = $horarios->map(function($h) {
+                return ['id' => $h->id, 'nombre' => $h->nombre, 'tipo' => $h->tipo, 'dojo_id' => $h->dojo_id];
+            })->values();
+        @endphp
+        var allHorariosModal = @json($horariosModalJson);
+
+        function filterHorariosModal(dojoId) {
+            var $sel = $('#modal_horario_id');
+            $sel.empty().append('<option value="">— Seleccione un horario —</option>');
+
+            if (!dojoId) return; // Sin dojo determinado, dejar vacío
+
+            var lista = allHorariosModal.filter(function(h) {
+                return String(h.dojo_id) === String(dojoId);
+            });
+            lista.forEach(function(h) {
+                var label = h.nombre + (h.tipo ? ' · ' + h.tipo : '');
+                $sel.append(new Option(label, h.id, false, false));
+            });
+        }
+
+        function showAlumnoAlert(msg) {
+            $('#modal-alumno-alert-msg').html(msg);
+            $('#modal-alumno-alert').show();
+        }
+
+        function hideAlumnoAlert() {
+            $('#modal-alumno-alert').hide().find('#modal-alumno-alert-msg').html('');
+        }
+
+        function resetPersonSelect() {
+            $('#modal_alumno_dojo_id').val('{{ $userDojoId ?: '' }}');
+            $('#modal_select_person_id').val(null).trigger('change');
+            filterHorariosModal('{{ $userDojoId ?: '' }}');
+        }
+
         window.getPersonListParams = function () {
             if ('{{ $userDojoId }}') {
                 return {
@@ -296,7 +344,7 @@
 
         function initAlumnoPersonSelect() {
             if ($('#modal_select_person_id').hasClass('select2-hidden-accessible')) {
-                return;
+                $('#modal_select_person_id').select2('destroy');
             }
 
             $('#modal_select_person_id').select2({
@@ -321,7 +369,7 @@
                     data: function (params) {
                         return {
                             q: params.term || '',
-                            dojo_id: $('#modal_alumno_dojo_id').val() || '{{ $userDojoId }}'
+                            dojo_id: '{{ $userDojoId }}'
                         };
                     },
                     processResults: function (data) {
@@ -334,7 +382,7 @@
                         });
                         return { results };
                     },
-                    cache: true
+                    cache: false
                 },
                 templateResult: formatPersonResult,
                 templateSelection: function (opt) {
@@ -347,29 +395,36 @@
 
         function validateAlumnoRegistration() {
             const personId = $('#modal_select_person_id').val();
-            const dojoId = '{{ $userDojoId }}' || (alumnoPersonSelected ? alumnoPersonSelected.dojo_id : null);
+
+            // Leer directo de select2 para evitar datos desactualizados de alumnoPersonSelected
+            const selectedData = $('#modal_select_person_id').select2('data');
+            const selectedPerson = (selectedData && selectedData.length && selectedData[0].id) ? selectedData[0] : null;
+            const dojoId = '{{ $userDojoId }}' || (selectedPerson ? selectedPerson.dojo_id : null);
 
             if (!personId || !dojoId) {
                 return;
             }
 
             $('#modal_alumno_dojo_id').val(dojoId);
+            filterHorariosModal(dojoId);
 
             let url = '{{ route('alumnos.check_registration', ['person_id' => 'TEMP_ID']) }}'.replace('TEMP_ID', personId);
             url += '?dojo_id=' + dojoId;
 
             $.get(url, function(data) {
-                $('.nombre-dojo').text(data.dojo || '');
+                var dojo = data.dojo || '';
 
                 if (data.status === 'exists') {
-                    $('#modal-alumno-exists').modal('show');
-                    $('#modal_select_person_id').val(null).trigger('change');
+                    showAlumnoAlert('Alumno ya existe en el Dojo <strong>' + dojo + '</strong>.');
+                    resetPersonSelect();
                 } else if (data.status === 'other_dojo') {
-                    $('#modal-alumno-other-dojo').modal('show');
-                    $('#modal_select_person_id').val(null).trigger('change');
+                    showAlumnoAlert('Alumno registrado en el Dojo <strong>' + dojo + '</strong>. Para registrarlo aquí debe inactivarse en ese Dojo.');
+                    resetPersonSelect();
                 } else if (data.status === 'responsible_same_dojo') {
-                    $('#modal-responsible-same-dojo').modal('show');
-                    $('#modal_select_person_id').val(null).trigger('change');
+                    showAlumnoAlert('La persona seleccionada es responsable del Dojo <strong>' + dojo + '</strong> y no puede registrarse como alumno en esa misma sucursal.');
+                    resetPersonSelect();
+                } else {
+                    hideAlumnoAlert();
                 }
             });
         }
@@ -407,6 +462,7 @@
 
             $('#modal_alumno_dojo_id').on('change', function() {
                 $('#modal_select_person_id').val(null).trigger('change');
+                filterHorariosModal($(this).val());
             });
 
             $('#modal_select_person_id').on('change', function() {
@@ -462,7 +518,9 @@
             $('#modal-add-alumno').on('shown.bs.modal', function() {
                 shouldRestoreAlumnoModal = false;
                 alumnoPersonSelected = null;
+                hideAlumnoAlert();
                 $('#modal_alumno_dojo_id').val('{{ $userDojoId ?: '' }}');
+                filterHorariosModal('{{ $userDojoId ?: '' }}');
                 initAlumnoPersonSelect();
                 $('#modal_select_person_id').val(null).trigger('change');
             });

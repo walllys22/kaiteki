@@ -77,9 +77,17 @@ class AlumnoController extends Controller
             ->orderBy('numero')
             ->get();
 
+        $horarios = Horario::with('dojo')
+            ->whereNull('deleted_at')
+            ->where('status', 1)
+            ->when($userDojoId, fn($q) => $q->where('dojo_id', $userDojoId))
+            ->orderBy('nombre')
+            ->get();
+
         return [
             'dojo' => $dojo,
             'grados' => $grados,
+            'horarios' => $horarios,
             'selectedDojoId' => $selectedDojoId,
         ];
     }
@@ -171,11 +179,12 @@ class AlumnoController extends Controller
                 ->with(['message' => 'Debe seleccionar un dojo para registrar al alumno.', 'alert-type' => 'error']);
         }
         $request->validate([
-            'dojo_id' => 'nullable|exists:dojos,id',
-            'person_id' => 'required|exists:people,id',
-            'fechaIngreso' => 'required|date|before_or_equal:today',
-            'grado_id' => 'required|exists:grados,id',
-            'status' => 'required|integer',
+            'dojo_id'     => 'nullable|exists:dojos,id',
+            'person_id'   => 'required|exists:people,id',
+            'fechaIngreso'=> 'required|date|before_or_equal:today',
+            'grado_id'    => 'required|exists:grados,id',
+            'horario_id'  => 'required|exists:horarios,id',
+            'status'      => 'required|integer',
             'observacion' => 'nullable|string|max:255',
         ]);
 
@@ -195,11 +204,19 @@ class AlumnoController extends Controller
 
             AlumnoGrado::create([
                 'alumno_id' => $alumno->id,
-                'grado_id' => $request->grado_id,
-                'fecha' => $request->fechaIngreso,
+                'grado_id'  => $request->grado_id,
+                'fecha'     => $request->fechaIngreso,
                 'observacion' => 'Registro inicial del alumno',
-                'status' => '0',
+                'status'    => '0',
             ]);
+
+            if ($request->horario_id) {
+                AlumnoHorario::create([
+                    'alumno_id'  => $alumno->id,
+                    'horario_id' => $request->horario_id,
+                    'status'     => '1',
+                ]);
+            }
 
             DB::commit();
 
