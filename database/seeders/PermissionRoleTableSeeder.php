@@ -55,7 +55,9 @@ class PermissionRoleTableSeeder extends Seeder
                                             table_name = "asistencias" or
 
                                             table_name = "horarios" or
-                                            table_name = "parentescos" or
+
+                                            `key` = "browse_parentescos" or
+                                            `key` = "read_parentescos" or
                                            
                                          
                                             `key` = "browse_grados" or
