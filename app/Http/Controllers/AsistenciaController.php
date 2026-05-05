@@ -162,7 +162,7 @@ class AsistenciaController extends Controller
 
             DB::commit();
 
-            return redirect()->route('voyager.asistencias.show', $asistencia->id)
+            return redirect()->route('voyager.asistencias.index')
                 ->with(['message' => 'Asistencia registrada exitosamente.', 'alert-type' => 'success']);
         } catch (\Throwable $th) {
             DB::rollBack();
