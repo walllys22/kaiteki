@@ -146,23 +146,6 @@ class PermissionsTableSeeder extends Seeder
             ]);
         }
 
-        //Modalidades
-        $permissions = [
-            'browse_modalidas' => 'Ver lista de C',
-            'read_modalidas' => 'Ver detalles de una persona',
-            'edit_modalidas' => 'Editar información de C',
-            'add_modalidas' => 'Agregar nuevas C',
-            'delete_modalidas' => 'Eliminar C',
-        ];
-
-        foreach ($permissions as $key => $description) {
-            Permission::firstOrCreate([
-                'key'        => $key,
-                'keyDescription'=> $description,
-                'table_name' => 'modalidas',
-                'tableDescription'=>'modalidas'
-            ]);
-        }
     
         //Katas
         $permissions = [

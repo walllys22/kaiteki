@@ -7,9 +7,6 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\MicroServiceController;
 use App\Http\Controllers\RoleController;
-use App\Http\Controllers\WhatsappController;
-use App\Http\Controllers\TorneoController;
-use App\Http\Controllers\KumiteController;
 use App\Http\Controllers\TableroKataController;
 use App\Http\Controllers\AlumnoController;
 use App\Http\Controllers\AlumnoGradoController;
@@ -104,25 +101,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     Route::delete('alumnos/grado/examen/{id}/delete', [AlumnoGradoController::class, 'destroyExamen'])->name('alumno.grado.examen.destroy');
 
 
-
-    // Rutas Torneos
-    Route::get('torneos', [TorneoController::class, 'index'])->name('voyager.torneos.index');
-    Route::get('torneos/ajax/list', [TorneoController::class, 'list']);
-    Route::get('torneos/create', [TorneoController::class, 'create'])->name('voyager.torneos.create');
-    Route::post('torneos/store', [TorneoController::class, 'store'])->name('voyager.torneos.store');
-    Route::get('torneos/{id}/edit', [TorneoController::class, 'edit'])->name('voyager.torneos.edit');
-    Route::get('torneos/{id}', [TorneoController::class, 'show'])->name('voyager.torneos.show');
-    Route::put('torneos/{id}', [TorneoController::class, 'update'])->name('voyager.torneos.update');
-    // Nota: El index de torneos usualmente lo maneja el BREAD de Voyager
-
-    Route::get('torneos/{id}/categories/list', [TorneoController::class, 'categoryList'])->name('torneos.categories.list');
-    Route::post('torneos/categories/store', [TorneoController::class, 'categoryStore'])->name('torneos.categories.store');
-    Route::delete('torneos/categories/{id}/delete', [TorneoController::class, 'categoryDestroy'])->name('torneos.categories.destroy');
-
-    // rutas del Toreno Dojos
-    Route::get('torneos/{id}/dojos/list', [TorneoController::class, 'listDojos']);
-    Route::post('torneos/dojos/store', [TorneoController::class, 'torneosDojosStore'])->name('torneos.torneosDojosStore.store'); 
-    Route::delete('torneos/dojos/{id}/delete', [TorneoController::class, 'dojoDestroy'])->name('torneos.dojos.destroy');   
+ 
 
     Route::get('people', [PersonController::class, 'index'])->name('voyager.people.index');
     Route::get('people/ajax/list', [PersonController::class, 'list']);
@@ -159,7 +138,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
 
 });
 
-Route::get('/kumite-temporizador', [KumiteController::class, 'index'])->name('kumite.temporizador');
+// Route::get('/kumite-temporizador', [KumiteController::class, 'index'])->name('kumite.temporizador');
 Route::get('/tablero-kata', [TableroKataController::class, 'index'])->name('tablero.kata');
 
 // Clear cache
