@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class MenuItemsTableSeeder extends Seeder
 {
@@ -420,7 +419,7 @@ class MenuItemsTableSeeder extends Seeder
                 'route' => NULL,
                 'parameters' => '',
             ),
-            25 =>
+            25 => 
             array (
                 'id' => 50,
                 'menu_id' => 1,
@@ -436,7 +435,7 @@ class MenuItemsTableSeeder extends Seeder
                 'route' => 'voyager.asistencias.index',
                 'parameters' => NULL,
             ),
-            26 =>
+            26 => 
             array (
                 'id' => 51,
                 'menu_id' => 1,

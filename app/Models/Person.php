@@ -27,6 +27,7 @@ class Person extends Model
         'phone',
         'address',
         'gender',
+        'sangre',
         'image',
         'status',
 

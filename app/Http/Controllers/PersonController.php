@@ -70,6 +70,7 @@ class PersonController extends Controller
             'dojo_id' => 'nullable|exists:dojos,id',
             'ci' => 'required|string|max:255|unique:people,ci',
             'gender' => 'required|string|in:Masculino,Femenino',
+            'sangre' => 'nullable|string|max:255',
             'first_name' => 'required|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,bmp,webp|max:2048',
         ], [
@@ -96,6 +97,7 @@ class PersonController extends Controller
                 'country_code' => $request->country_code,
                 'phone' => $request->phone,
                 'address' => $request->address,
+                'sangre' => $request->sangre,
                 'status' => 1,
                 'image' => $this->storageController->store_image($request->image, 'people'),
             ]);
@@ -121,6 +123,7 @@ class PersonController extends Controller
             'dojo_id' => 'nullable|exists:dojos,id',
             'ci' => $ciValidationRule,
             'gender' => 'required|string|in:Masculino,Femenino',
+            'sangre' => 'nullable|string|max:255',
             'first_name' => 'required|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,bmp,webp|max:2048',
         ], [
@@ -147,6 +150,7 @@ class PersonController extends Controller
             $person->country_code = $request->country_code;
             $person->phone = $request->phone;
             $person->address = $request->address;
+            $person->sangre = $request->sangre;
             $person->status = $request->status == 'on' ? 1 : 0;
 
             if ($request->image) {
