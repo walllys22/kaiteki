@@ -109,27 +109,27 @@ class GradoController extends Controller
             })
             ->findOrFail($dojoId);
 
-        $arancel = Arancele::query()
+        $arancelExistente = Arancele::query()
             ->where('grado_id', $request->grado_id)
             ->where('dojo_id', $dojoId)
             ->where('tipo', $request->tipo)
             ->whereNull('deleted_at')
             ->first();
 
-        if (!$arancel) {
-            $arancel = new Arancele([
-                'grado_id' => $request->grado_id,
-                'dojo_id' => $dojoId,
-                'tipo' => $request->tipo,
-            ]);
+        if ($arancelExistente) {
+            return redirect()->back()
+                ->withInput()
+                ->with(['message' => 'Ya existe un arancel de tipo ' . $request->tipo . ' para este grado y dojo.', 'alert-type' => 'error']);
         }
 
-        $arancel->fill([
+        Arancele::create([
+            'grado_id' => $request->grado_id,
+            'dojo_id' => $dojoId,
+            'tipo' => $request->tipo,
             'precio' => $request->precio,
             'observacion' => $request->observacion,
             'status' => 1,
         ]);
-        $arancel->save();
 
         return redirect()->route('voyager.grados.show', ['id' => $request->grado_id])
             ->with(['message' => 'Arancel registrado correctamente.', 'alert-type' => 'success']);
