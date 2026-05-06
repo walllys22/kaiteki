@@ -166,6 +166,14 @@ class AlumnoGradoController extends Controller
                 ->with(['message' => 'Ya se cumplió con la cantidad de puntas requeridas. Debe rendir el examen final.', 'alert-type' => 'warning']);
         }
 
+        // La fecha debe ser posterior al inicio del grado
+        if ($request->fecha <= $alumnoGrado->fecha) {
+            $fechaFormateada = Carbon::parse($alumnoGrado->fecha)->format('d/m/Y');
+            return redirect()->back()
+                ->withInput()
+                ->with(['message' => "La fecha del repaso debe ser posterior al inicio del grado ({$fechaFormateada}).", 'alert-type' => 'error']);
+        }
+
         // La fecha debe ser posterior al último repaso registrado
         $ultimoRepaso = AlumnoGradoRepaso::where('alumno_grado_id', $alumnoGrado->id)
             ->whereNull('deleted_at')
@@ -210,7 +218,7 @@ class AlumnoGradoController extends Controller
         }
     }
 
-    public function destroyRepaso($id)
+    public function destroyRepaso(int $id)
     {
         $this->custom_authorize('delete_alumnos');
         $repaso = AlumnoGradoRepaso::findOrFail($id);
@@ -255,6 +263,14 @@ class AlumnoGradoController extends Controller
                 ->with(['message' => "No puede rendir el examen final aún: faltan {$faltan} punta(s) aprobada(s).", 'alert-type' => 'error']);
         }
 
+        // La fecha debe ser posterior al inicio del grado
+        if ($request->fecha <= $alumnoGrado->fecha) {
+            $fechaFormateada = Carbon::parse($alumnoGrado->fecha)->format('d/m/Y');
+            return redirect()->back()
+                ->withInput()
+                ->with(['message' => "La fecha del examen debe ser posterior al inicio del grado ({$fechaFormateada}).", 'alert-type' => 'error']);
+        }
+
         // La fecha del examen debe ser posterior al último examen registrado
         $ultimoExamen = AlumnoGradoExamen::where('alumno_grado_id', $request->alumno_grado_id)
             ->whereNull('deleted_at')
@@ -295,7 +311,7 @@ class AlumnoGradoController extends Controller
         }
     }
 
-    public function destroyExamen($id)
+    public function destroyExamen(int $id)
     {
         $this->custom_authorize('delete_alumnos');
         $examen = AlumnoGradoExamen::findOrFail($id);

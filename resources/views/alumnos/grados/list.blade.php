@@ -142,7 +142,7 @@
                                     @if(!$activeGrado->isCompletado())
                                     <td style="text-align:center;">
                                         <a href="#" onclick="deleteItem('{{ route('alumno.grado.repaso.destroy', $repaso->id) }}')"
-                                           data-toggle="modal" data-target="#modal_delete_confirm"
+                                           data-toggle="modal" data-target="#modal-delete"
                                            class="btn btn-danger btn-xs">
                                             <i class="voyager-trash"></i>
                                         </a>
@@ -211,7 +211,7 @@
                                     @if(!$activeGrado->isCompletado())
                                     <td style="text-align:center;">
                                         <a href="#" onclick="deleteItem('{{ route('alumno.grado.examen.destroy', $examen->id) }}')"
-                                           data-toggle="modal" data-target="#modal_delete_confirm"
+                                           data-toggle="modal" data-target="#modal-delete"
                                            class="btn btn-danger btn-xs">
                                             <i class="voyager-trash"></i>
                                         </a>
@@ -234,24 +234,19 @@
     {{-- Modal: Agregar Repaso --}}
     @if(!$activeGrado->isCompletado())
     @php
-        // Fecha mínima para repaso: día siguiente al último repaso o último examen (el más reciente de ambos)
-        $ultimoRepasoFechaRaw  = $repasos->first()  ? $repasos->first()->fecha  : null;
-        $ultimoExamenFechaRaw  = $examenes->first() ? $examenes->first()->fecha : null;
-        $candidatos = array_filter([$ultimoRepasoFechaRaw, $ultimoExamenFechaRaw]);
-        $minFechaRepaso = count($candidatos)
-            ? \Carbon\Carbon::parse(max($candidatos))->addDay()->format('Y-m-d')
-            : null;
-        $defaultFechaRepaso = $minFechaRepaso && $minFechaRepaso > date('Y-m-d')
-            ? $minFechaRepaso
-            : date('Y-m-d');
+        $fechaInicioGrado     = $activeGrado->fecha;
+        $ultimoRepasoFechaRaw = $repasos->first()  ? $repasos->first()->fecha  : null;
+        $ultimoExamenFechaRaw = $examenes->first() ? $examenes->first()->fecha : null;
 
-        // Fecha mínima para examen: día siguiente al último examen
-        $minFechaExamen = $ultimoExamenFechaRaw
-            ? \Carbon\Carbon::parse($ultimoExamenFechaRaw)->addDay()->format('Y-m-d')
-            : null;
-        $defaultFechaExamen = $minFechaExamen && $minFechaExamen > date('Y-m-d')
-            ? $minFechaExamen
-            : date('Y-m-d');
+        // Fecha mínima para repaso: día siguiente al más reciente entre inicio del grado, último repaso y último examen
+        $candidatosRepaso = array_filter([$fechaInicioGrado, $ultimoRepasoFechaRaw, $ultimoExamenFechaRaw]);
+        $minFechaRepaso   = \Carbon\Carbon::parse(max($candidatosRepaso))->addDay()->format('Y-m-d');
+        $defaultFechaRepaso = $minFechaRepaso > date('Y-m-d') ? $minFechaRepaso : date('Y-m-d');
+
+        // Fecha mínima para examen: día siguiente al más reciente entre inicio del grado y último examen
+        $candidatosExamen = array_filter([$fechaInicioGrado, $ultimoExamenFechaRaw]);
+        $minFechaExamen   = \Carbon\Carbon::parse(max($candidatosExamen))->addDay()->format('Y-m-d');
+        $defaultFechaExamen = $minFechaExamen > date('Y-m-d') ? $minFechaExamen : date('Y-m-d');
     @endphp
 
     <div class="modal fade" tabindex="-1" id="modal-add-repaso" role="dialog">
@@ -271,18 +266,19 @@
                                    value="{{ $defaultFechaRepaso }}"
                                    @if($minFechaRepaso) min="{{ $minFechaRepaso }}" @endif
                                    required>
-                            @if($minFechaRepaso)
-                                <small class="text-muted">
-                                    Debe ser posterior al
-                                    @if($ultimoRepasoFechaRaw && $ultimoExamenFechaRaw)
-                                        último repaso/examen ({{ \Carbon\Carbon::parse(max($candidatos))->format('d/m/Y') }})
-                                    @elseif($ultimoRepasoFechaRaw)
-                                        último repaso ({{ \Carbon\Carbon::parse($ultimoRepasoFechaRaw)->format('d/m/Y') }})
+                            <small class="text-muted">
+                                Debe ser posterior al
+                                @if($ultimoRepasoFechaRaw || $ultimoExamenFechaRaw)
+                                    @php $refRepaso = max(array_filter([$ultimoRepasoFechaRaw, $ultimoExamenFechaRaw])); @endphp
+                                    @if($refRepaso > $fechaInicioGrado)
+                                        último repaso/examen ({{ \Carbon\Carbon::parse($refRepaso)->format('d/m/Y') }})
                                     @else
-                                        último examen ({{ \Carbon\Carbon::parse($ultimoExamenFechaRaw)->format('d/m/Y') }})
+                                        inicio del grado ({{ \Carbon\Carbon::parse($fechaInicioGrado)->format('d/m/Y') }})
                                     @endif
-                                </small>
-                            @endif
+                                @else
+                                    inicio del grado ({{ \Carbon\Carbon::parse($fechaInicioGrado)->format('d/m/Y') }})
+                                @endif
+                            </small>
                         </div>
                         <div class="form-group col-md-6">
                             <label>Resultado <span class="text-danger">*</span></label>
@@ -327,13 +323,16 @@
                             <label>Fecha del examen <span class="text-danger">*</span></label>
                             <input type="date" name="fecha" class="form-control"
                                    value="{{ $defaultFechaExamen }}"
-                                   @if($minFechaExamen) min="{{ $minFechaExamen }}" @endif
+                                   min="{{ $minFechaExamen }}"
                                    required>
-                            @if($minFechaExamen)
-                                <small class="text-muted">
-                                    Debe ser posterior al examen anterior ({{ \Carbon\Carbon::parse($ultimoExamenFechaRaw)->format('d/m/Y') }})
-                                </small>
-                            @endif
+                            <small class="text-muted">
+                                Debe ser posterior al
+                                @if($ultimoExamenFechaRaw && $ultimoExamenFechaRaw > $fechaInicioGrado)
+                                    examen anterior ({{ \Carbon\Carbon::parse($ultimoExamenFechaRaw)->format('d/m/Y') }})
+                                @else
+                                    inicio del grado ({{ \Carbon\Carbon::parse($fechaInicioGrado)->format('d/m/Y') }})
+                                @endif
+                            </small>
                         </div>
                         <div class="form-group col-md-6">
                             <label>Resultado <span class="text-danger">*</span></label>
