@@ -7,7 +7,6 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\MicroServiceController;
 use App\Http\Controllers\RoleController;
-use App\Http\Controllers\TableroKataController;
 use App\Http\Controllers\AlumnoController;
 use App\Http\Controllers\AlumnoGradoController;
 use App\Http\Controllers\AlumnoHorarioController;
@@ -138,8 +137,6 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
 
 });
 
-// Route::get('/kumite-temporizador', [KumiteController::class, 'index'])->name('kumite.temporizador');
-Route::get('/tablero-kata', [TableroKataController::class, 'index'])->name('tablero.kata');
 
 // Clear cache
 Route::get('/admin/clear-cache', function() {

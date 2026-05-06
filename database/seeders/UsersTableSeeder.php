@@ -56,7 +56,7 @@ class UsersTableSeeder extends Seeder
                 'created_at' => '2026-05-03 13:07:11',
                 'updated_at' => '2026-05-03 13:07:11',
                 'status' => 1,
-                'person_id' => 1,
+                'person_id' => NULL,
                 'dojo_id' => NULL,
                 'registerUser_id' => NULL,
                 'registerRole' => NULL,

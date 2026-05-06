@@ -93,9 +93,9 @@ class MenuItemsTableSeeder extends Seeder
                 'icon_class' => 'voyager-tools',
                 'color' => '#000000',
                 'parent_id' => NULL,
-                'order' => 6,
+                'order' => 7,
                 'created_at' => '2024-10-18 06:28:27',
-                'updated_at' => '2026-05-05 22:40:23',
+                'updated_at' => '2026-05-05 22:51:27',
                 'route' => NULL,
                 'parameters' => '',
             ),
@@ -173,9 +173,9 @@ class MenuItemsTableSeeder extends Seeder
                 'icon_class' => 'voyager-settings',
                 'color' => '#000000',
                 'parent_id' => NULL,
-                'order' => 7,
+                'order' => 8,
                 'created_at' => '2024-10-18 06:28:27',
-                'updated_at' => '2026-05-05 22:40:23',
+                'updated_at' => '2026-05-05 22:51:27',
                 'route' => 'voyager.settings.index',
                 'parameters' => 'null',
             ),
@@ -189,9 +189,9 @@ class MenuItemsTableSeeder extends Seeder
                 'icon_class' => 'fa-solid fa-broom',
                 'color' => '#000000',
                 'parent_id' => NULL,
-                'order' => 8,
+                'order' => 9,
                 'created_at' => '2024-12-09 04:33:25',
-                'updated_at' => '2026-05-05 22:40:23',
+                'updated_at' => '2026-05-05 22:51:27',
                 'route' => 'clear.cache',
                 'parameters' => NULL,
             ),
@@ -293,38 +293,6 @@ class MenuItemsTableSeeder extends Seeder
             ),
             17 => 
             array (
-                'id' => 31,
-                'menu_id' => 1,
-                'title' => 'Tablero Kumite',
-                'url' => '',
-                'target' => '_self',
-                'icon_class' => 'fa-solid fa-hand-fist',
-                'color' => '#000000',
-                'parent_id' => 32,
-                'order' => 5,
-                'created_at' => '2026-04-05 11:54:13',
-                'updated_at' => '2026-04-22 14:00:01',
-                'route' => 'kumite.temporizador',
-                'parameters' => 'null',
-            ),
-            18 => 
-            array (
-                'id' => 32,
-                'menu_id' => 1,
-                'title' => 'Campeonatos - Eventos',
-                'url' => '',
-                'target' => '_self',
-                'icon_class' => 'fa-brands fa-meetup',
-                'color' => '#000000',
-                'parent_id' => NULL,
-                'order' => 3,
-                'created_at' => '2026-04-05 11:54:49',
-                'updated_at' => '2026-05-05 22:40:23',
-                'route' => NULL,
-                'parameters' => '',
-            ),
-            19 => 
-            array (
                 'id' => 35,
                 'menu_id' => 1,
                 'title' => 'Horarios',
@@ -339,7 +307,7 @@ class MenuItemsTableSeeder extends Seeder
                 'route' => 'voyager.horarios.index',
                 'parameters' => NULL,
             ),
-            20 => 
+            18 => 
             array (
                 'id' => 36,
                 'menu_id' => 1,
@@ -355,7 +323,7 @@ class MenuItemsTableSeeder extends Seeder
                 'route' => 'voyager.dojos.index',
                 'parameters' => NULL,
             ),
-            21 => 
+            19 => 
             array (
                 'id' => 38,
                 'menu_id' => 1,
@@ -371,7 +339,7 @@ class MenuItemsTableSeeder extends Seeder
                 'route' => 'voyager.alumnos.index',
                 'parameters' => NULL,
             ),
-            22 => 
+            20 => 
             array (
                 'id' => 39,
                 'menu_id' => 1,
@@ -387,7 +355,7 @@ class MenuItemsTableSeeder extends Seeder
                 'route' => 'voyager.parentescos.index',
                 'parameters' => NULL,
             ),
-            23 => 
+            21 => 
             array (
                 'id' => 40,
                 'menu_id' => 1,
@@ -403,7 +371,7 @@ class MenuItemsTableSeeder extends Seeder
                 'route' => NULL,
                 'parameters' => '',
             ),
-            24 => 
+            22 => 
             array (
                 'id' => 44,
                 'menu_id' => 1,
@@ -419,23 +387,7 @@ class MenuItemsTableSeeder extends Seeder
                 'route' => 'voyager.katas.index',
                 'parameters' => 'null',
             ),
-            25 => 
-            array (
-                'id' => 45,
-                'menu_id' => 1,
-                'title' => 'Tablero Kata',
-                'url' => '',
-                'target' => '_self',
-                'icon_class' => 'fa-solid fa-chess-board',
-                'color' => '#000000',
-                'parent_id' => 32,
-                'order' => 6,
-                'created_at' => '2026-04-20 03:50:43',
-                'updated_at' => '2026-04-22 14:00:01',
-                'route' => 'tablero.kata',
-                'parameters' => NULL,
-            ),
-            26 => 
+            23 => 
             array (
                 'id' => 48,
                 'menu_id' => 1,
@@ -445,13 +397,13 @@ class MenuItemsTableSeeder extends Seeder
                 'icon_class' => 'voyager-person',
                 'color' => '#000000',
                 'parent_id' => NULL,
-                'order' => 5,
+                'order' => 6,
                 'created_at' => '2026-04-23 02:50:51',
-                'updated_at' => '2026-05-05 22:40:23',
+                'updated_at' => '2026-05-05 22:51:27',
                 'route' => 'voyager.users.index',
                 'parameters' => NULL,
             ),
-            27 => 
+            24 => 
             array (
                 'id' => 49,
                 'menu_id' => 1,
@@ -461,13 +413,13 @@ class MenuItemsTableSeeder extends Seeder
                 'icon_class' => 'voyager-params',
                 'color' => '#000000',
                 'parent_id' => NULL,
-                'order' => 4,
+                'order' => 5,
                 'created_at' => '2026-04-23 03:54:29',
-                'updated_at' => '2026-05-05 22:40:23',
+                'updated_at' => '2026-05-05 22:51:27',
                 'route' => NULL,
                 'parameters' => '',
             ),
-            28 => 
+            25 => 
             array (
                 'id' => 50,
                 'menu_id' => 1,
