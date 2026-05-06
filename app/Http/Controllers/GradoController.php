@@ -90,7 +90,6 @@ class GradoController extends Controller
             'dojo_id' => 'nullable|exists:dojos,id',
             'tipo' => 'required|in:Repaso,Examen',
             'precio' => 'required|numeric|min:0|max:99999999.99',
-            'observacion' => 'nullable|string|max:1000',
         ]);
 
         $dojoId = $userDojoId ?: $request->dojo_id;
@@ -127,7 +126,6 @@ class GradoController extends Controller
             'dojo_id' => $dojoId,
             'tipo' => $request->tipo,
             'precio' => $request->precio,
-            'observacion' => $request->observacion,
             'status' => 1,
         ]);
 

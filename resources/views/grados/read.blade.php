@@ -29,48 +29,50 @@
     @php
         $gradoLabel = trim(($grado->tipo ?? '') . ' ' . ($grado->numero ?? '') . ' ' . ($grado->nombre ?? ''));
         $selectedDojo = $userDojoId ? $dojos->first() : null;
+        $canManageAranceles = auth()->user()->hasPermission('read_grados');
     @endphp
 
     <div class="page-content read container-fluid">
         <div class="row">
-            <div class="col-md-5">
-                <div class="panel panel-bordered">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">
-                            <i class="fa-solid fa-medal"></i> Información del grado
-                        </h3>
-                    </div>
+            <div class="col-md-12">
+                <div class="panel panel-bordered grado-summary-panel">
                     <div class="panel-body">
-                        <div class="form-group">
-                            <label>Grado</label>
-                            <p class="form-control-static"><strong>{{ $gradoLabel ?: 'Sin nombre' }}</strong></p>
-                        </div>
-                        <div class="form-group">
-                            <label>Puntas</label>
-                            <p class="form-control-static">{{ $grado->puntas }} punta(s)</p>
-                        </div>
-                        <div class="form-group">
-                            <label>Dias</label>
-                            <p class="form-control-static">{{ $grado->dias }} dia(s)</p>
-                        </div>
-                        <div class="form-group">
-                            <label>Estado</label>
-                            <p class="form-control-static">
-                                @if ($grado->status == 1)
-                                    <label class="label label-success">Activo</label>
-                                @else
-                                    <label class="label label-warning">Inactivo</label>
-                                @endif
-                            </p>
+                        <div class="row">
+                            <div class="col-sm-5">
+                                <span class="grado-kicker">Grado</span>
+                                <h2 class="grado-title">{{ $gradoLabel ?: 'Sin nombre' }}</h2>
+                            </div>
+                            <div class="col-sm-2">
+                                <span class="grado-kicker">Puntas</span>
+                                <div class="grado-stat">{{ $grado->puntas }}</div>
+                            </div>
+                            <div class="col-sm-2">
+                                <span class="grado-kicker">Dias</span>
+                                <div class="grado-stat">{{ $grado->dias }}</div>
+                            </div>
+                            <div class="col-sm-3">
+                                <span class="grado-kicker">Estado</span>
+                                <div>
+                                    @if ($grado->status == 1)
+                                        <label class="label label-success grado-label">Activo</label>
+                                    @else
+                                        <label class="label label-warning grado-label">Inactivo</label>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                @if(auth()->user()->hasPermission('read_grados'))
+        <div class="row">
+            <div class="col-md-4">
+                @if($canManageAranceles)
                     <div class="panel panel-bordered">
                         <div class="panel-heading">
                             <h3 class="panel-title">
-                                <i class="fa-solid fa-money-bill"></i> Registrar arancel
+                                <i class="fa-solid fa-money-bill"></i> Nuevo arancel
                             </h3>
                         </div>
                         <form action="{{ route('grados.aranceles.store') }}" method="POST">
@@ -82,8 +84,9 @@
                                     <label>Dojo <span class="text-danger">*</span></label>
                                     @if($userDojoId)
                                         <input type="hidden" name="dojo_id" value="{{ $userDojoId }}">
-                                        <p class="form-control-static">
-                                            <label class="label label-info">{{ optional($selectedDojo)->nombre ?: 'Sucursal asignada' }}</label>
+                                        <p class="form-control-static dojo-selected">
+                                            <i class="fa-solid fa-location-dot"></i>
+                                            {{ optional($selectedDojo)->nombre ?: 'Sucursal asignada' }}
                                         </p>
                                     @else
                                         <select name="dojo_id" class="form-control select2" required>
@@ -107,13 +110,12 @@
 
                                 <div class="form-group">
                                     <label>Precio <span class="text-danger">*</span></label>
-                                    <input type="number" name="precio" class="form-control" min="0" step="0.01" value="{{ old('precio') }}" required>
+                                    <div class="input-group">
+                                        <span class="input-group-addon">Bs</span>
+                                        <input type="number" name="precio" class="form-control" min="0" step="0.01" value="{{ old('precio') }}" required>
+                                    </div>
                                 </div>
 
-                                <div class="form-group">
-                                    <label>Observación</label>
-                                    <textarea name="observacion" class="form-control" rows="3">{{ old('observacion') }}</textarea>
-                                </div>
                             </div>
                             <div class="panel-footer text-right">
                                 <button type="submit" class="btn btn-success">
@@ -125,7 +127,7 @@
                 @endif
             </div>
 
-            <div class="col-md-7">
+            <div class="col-md-8">
                 <div class="panel panel-bordered">
                     <div class="panel-heading">
                         <h3 class="panel-title">
@@ -140,8 +142,8 @@
                                         <th>Dojo</th>
                                         <th style="width: 120px; text-align:center;">Tipo</th>
                                         <th style="width: 120px; text-align:right;">Precio</th>
-                                        <th>Observación</th>
-                                        @if(auth()->user()->hasPermission('read_grados'))
+                                        <th style="width: 120px; text-align:center;">Estado</th>
+                                        @if($canManageAranceles)
                                             <th style="width: 80px; text-align:center;">Acc.</th>
                                         @endif
                                     </tr>
@@ -158,8 +160,14 @@
                                             <td style="text-align:right; vertical-align: middle;">
                                                 {{ number_format($arancel->precio, 2, '.', ',') }}
                                             </td>
-                                            <td style="vertical-align: middle;">{{ $arancel->observacion ?: '—' }}</td>
-                                            @if(auth()->user()->hasPermission('read_grados'))
+                                            <td style="text-align:center; vertical-align: middle;">
+                                                @if ($arancel->status == 1)
+                                                    <label class="label label-success">Activo</label>
+                                                @else
+                                                    <label class="label label-warning">Inactivo</label>
+                                                @endif
+                                            </td>
+                                            @if($canManageAranceles)
                                                 <td style="text-align:center; vertical-align: middle;">
                                                     <a href="#" onclick="deleteItem('{{ route('grados.aranceles.destroy', $arancel->id) }}')"
                                                        data-toggle="modal" data-target="#modal-delete"
@@ -171,7 +179,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="{{ auth()->user()->hasPermission('read_grados') ? 5 : 4 }}" class="text-center text-muted">
+                                            <td colspan="{{ $canManageAranceles ? 5 : 4 }}" class="text-center text-muted">
                                                 Sin aranceles registrados para este grado.
                                             </td>
                                         </tr>
@@ -186,6 +194,56 @@
     </div>
 
     @include('partials.modal-delete')
+@stop
+
+@section('css')
+    <style>
+        .grado-summary-panel .panel-body {
+            padding: 22px 24px;
+        }
+
+        .grado-kicker {
+            color: #7a869a;
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+
+        .grado-title {
+            font-size: 24px;
+            font-weight: 700;
+            line-height: 1.25;
+            margin: 0;
+        }
+
+        .grado-stat {
+            font-size: 24px;
+            font-weight: 700;
+            line-height: 1.25;
+        }
+
+        .grado-label {
+            display: inline-block;
+            font-size: 12px;
+            margin-top: 6px;
+            padding: 6px 10px;
+        }
+
+        .dojo-selected {
+            background: #f5f8fb;
+            border: 1px solid #e4eaef;
+            border-radius: 4px;
+            margin: 0;
+            padding: 8px 10px;
+        }
+
+        .table > tbody > tr > td,
+        .table > thead > tr > th {
+            vertical-align: middle;
+        }
+    </style>
 @stop
 
 @section('javascript')
