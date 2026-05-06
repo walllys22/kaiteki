@@ -22,5 +22,7 @@ class DatabaseSeeder extends Seeder
         $this->call(MenuItemsTableSeeder::class);
         $this->call(GradosTableSeeder::class);
         $this->call(ParentescosTableSeeder::class);
+        $this->call(DojosTableSeeder::class);
+        $this->call(PeopleTableSeeder::class);
     }
 }
