@@ -11,6 +11,7 @@ use App\Http\Controllers\AlumnoController;
 use App\Http\Controllers\AlumnoGradoController;
 use App\Http\Controllers\AlumnoHorarioController;
 use App\Http\Controllers\AsistenciaController;
+use App\Http\Controllers\ConsultaController;
 use App\Http\Controllers\GradoController;
 use App\Http\Controllers\HorarioController;
 use Illuminate\Support\Facades\Artisan;
@@ -131,6 +132,11 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     // Roles
     Route::get('roles/ajax/list', [RoleController::class, 'list']);
 
+
+    // Consulta Inter-Dojo (solo lectura)
+    Route::get('consulta', [ConsultaController::class, 'index'])->name('consulta.index');
+    Route::get('consulta/search', [ConsultaController::class, 'searchAlumnos'])->name('consulta.search');
+    Route::get('consulta/alumno/{id}', [ConsultaController::class, 'show'])->name('consulta.show');
 
     Route::get('ajax/personList', [AjaxController::class, 'personList']);
     Route::post('ajax/person/store', [AjaxController::class, 'personStore']);

@@ -160,6 +160,38 @@ DELETE admin/alumnos/grado/examen/{id}/delete  alumno.grado.examen.destroy
 - `/kumite-temporizador` — fight timer board
 - `/tablero-kata` — kata scoreboard
 
+### Consulta Inter-Dojo (`ConsultaController`)
+Read-only cross-branch lookup. Allows users to search and view students from **other** dojos without being able to edit anything.
+
+**Controller:** `app/Http/Controllers/ConsultaController.php`
+
+**Views:**
+- `resources/views/consulta/browse.blade.php` — dojo selector + AJAX student search + results table
+- `resources/views/consulta/show.blade.php` — read-only student detail (personal info, active grade progress, completed grades history, health conditions)
+
+**Routes:**
+```
+GET  admin/consulta                    consulta.index
+GET  admin/consulta/search             consulta.search   (AJAX JSON)
+GET  admin/consulta/alumno/{id}        consulta.show
+```
+
+**Permission:** `browse_consulta`
+
+**Security rules (enforced in every method):**
+- Branch user (`dojo_id` set): can query any dojo **except** their own (`where('dojo_id', '!=', $userDojoId)`)
+- Global admin (`dojo_id` null): can query all dojos
+- `searchAlumnos()` returns 403 if the requested `dojo_id` matches the user's own dojo
+- `show()` applies `when($userDojoId, fn($q) => $q->where('dojo_id', '!=', $userDojoId))` so a branch user cannot fetch their own alumno through this endpoint
+
+**Data shown (read-only, no action buttons):**
+- Personal info (name, CI, gender, birth date, phone, email, address)
+- Active grade: name, start date, puntas progress bar, exam status
+- Completed grades history: table with grade name, start date, puntas, exam approval date
+- Health conditions: condition name + medication
+
+**What is NOT shown:** tutors, attendance, schedule assignments — those are operational and belong to the owning dojo only.
+
 ## Key constraints from `.codex`
 
 - `Person` uses only `first_name` — old fields (`middle_name`, `paternal_surname`, `maternal_surname`, `last_name`) are removed and must not be reintroduced.

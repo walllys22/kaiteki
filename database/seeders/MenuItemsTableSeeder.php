@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class MenuItemsTableSeeder extends Seeder
 {
@@ -419,7 +420,7 @@ class MenuItemsTableSeeder extends Seeder
                 'route' => NULL,
                 'parameters' => '',
             ),
-            25 => 
+            25 =>
             array (
                 'id' => 50,
                 'menu_id' => 1,
@@ -433,6 +434,22 @@ class MenuItemsTableSeeder extends Seeder
                 'created_at' => '2026-05-01 13:19:25',
                 'updated_at' => '2026-05-05 22:24:44',
                 'route' => 'voyager.asistencias.index',
+                'parameters' => NULL,
+            ),
+            26 =>
+            array (
+                'id' => 51,
+                'menu_id' => 1,
+                'title' => 'Consulta Inter-Dojo',
+                'url' => '',
+                'target' => '_self',
+                'icon_class' => 'fa-solid fa-magnifying-glass-location',
+                'color' => NULL,
+                'parent_id' => 40,
+                'order' => 4,
+                'created_at' => '2026-05-05 00:00:00',
+                'updated_at' => '2026-05-05 00:00:00',
+                'route' => 'consulta.index',
                 'parameters' => NULL,
             ),
         ));

@@ -254,6 +254,19 @@ class PermissionsTableSeeder extends Seeder
             ]);
         }
 
+        $permissions = [
+            'browse_consulta' => 'Ver lista consulta de alumnos de otro dojo',
+        ];
+
+        foreach ($permissions as $key => $description) {
+            Permission::firstOrCreate([
+                'key'        => $key,
+                'keyDescription'=> $description,
+                'table_name' => 'browse_consulta',
+                'tableDescription'=>'Consulta'
+            ]);
+        }
+
         
     }
 }
