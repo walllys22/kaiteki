@@ -14,11 +14,11 @@
                             </h1>
                         </div>
                         <div class="col-md-6 text-right" style="margin-top: 30px">
-                            {{-- @if (auth()->user()->hasPermission('edit_horarios'))
-                                <button type="button" class="btn btn-info btn-sm" onclick="openResponsableModal()">
-                                    <i class="voyager-people"></i> <span>Asignar Responsable</span>
-                                </button>
-                            @endif --}}
+                            @if(auth()->user()->hasPermission('edit_horarios'))
+                                <a href="{{ route('voyager.horarios.edit', $horario->id) }}" class="btn btn-info btn-sm">
+                                    <i class="voyager-edit"></i> <span>Editar</span>
+                                </a>
+                            @endif
                             <a href="{{ route('voyager.horarios.index') }}" class="btn btn-warning btn-sm">
                                 <i class="voyager-list"></i> <span>Volver</span>
                             </a>

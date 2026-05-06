@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Dojo;
 use App\Models\Horario;
 use App\Models\HorarioReponsable;
 use App\Models\Person;
@@ -55,7 +56,93 @@ class HorarioController extends Controller
         return view('horarios.list', compact('data'));
     }
 
-    public function show($id)
+    public function create()
+    {
+        $this->custom_authorize('add_horarios');
+
+        $userDojoId = auth()->user()->dojo_id;
+
+        $dojos = $userDojoId
+            ? Dojo::where('id', $userDojoId)->whereNull('deleted_at')->get()
+            : Dojo::whereNull('deleted_at')->where('status', 1)->orderBy('nombre')->get();
+
+        return view('horarios.edit-add', compact('dojos', 'userDojoId'));
+    }
+
+    public function store(Request $request)
+    {
+        $this->custom_authorize('add_horarios');
+
+        $request->validate([
+            'nombre'  => 'required|string|max:255',
+            'tipo'    => 'required|in:Mañana,Tarde,Noche',
+            'dojo_id' => 'required|exists:dojos,id',
+        ]);
+
+        $userDojoId = auth()->user()->dojo_id;
+        $dojoId     = $userDojoId ?? $request->dojo_id;
+
+        try {
+            Horario::create([
+                'nombre'  => $request->nombre,
+                'tipo'    => $request->tipo,
+                'dojo_id' => $dojoId,
+                'status'  => 1,
+            ]);
+
+            return redirect()->route('voyager.horarios.index')
+                ->with(['message' => 'Horario creado exitosamente.', 'alert-type' => 'success']);
+        } catch (\Throwable $th) {
+            return redirect()->back()->withInput()
+                ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
+        }
+    }
+
+    public function edit(int $id)
+    {
+        $this->custom_authorize('edit_horarios');
+
+        $userDojoId = auth()->user()->dojo_id;
+
+        $horario = Horario::when($userDojoId, fn($q) => $q->where('dojo_id', $userDojoId))
+            ->whereNull('deleted_at')
+            ->findOrFail($id);
+
+        $dojos = $userDojoId
+            ? Dojo::where('id', $userDojoId)->whereNull('deleted_at')->get()
+            : Dojo::whereNull('deleted_at')->where('status', 1)->orderBy('nombre')->get();
+
+        return view('horarios.edit-add', compact('horario', 'dojos', 'userDojoId'));
+    }
+
+    public function update(Request $request, int $id)
+    {
+        $this->custom_authorize('edit_horarios');
+
+        $request->validate([
+            'nombre'  => 'required|string|max:255',
+            'tipo'    => 'required|in:Mañana,Tarde,Noche',
+            'dojo_id' => 'required|exists:dojos,id',
+            'status'  => 'nullable|boolean',
+        ]);
+
+        $userDojoId = auth()->user()->dojo_id;
+
+        $horario = Horario::when($userDojoId, fn($q) => $q->where('dojo_id', $userDojoId))
+            ->whereNull('deleted_at')
+            ->findOrFail($id);
+
+        $horario->update([
+            'nombre' => $request->nombre,
+            'tipo'   => $request->tipo,
+            'status' => $request->has('status') ? 1 : 0,
+        ]);
+
+        return redirect()->route('voyager.horarios.show', $horario->id)
+            ->with(['message' => 'Horario actualizado correctamente.', 'alert-type' => 'success']);
+    }
+
+    public function show(int $id)
     {
         $this->custom_authorize('read_horarios');
 
@@ -139,7 +226,7 @@ class HorarioController extends Controller
             return response()->json([
                 'message' => 'Responsable asignado correctamente.',
             ]);
-        } catch (\Throwable $th) {
+        } catch (\Throwable) {
             DB::rollBack();
 
             return response()->json([

@@ -118,6 +118,10 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
 
     Route::get('horarios', [HorarioController::class, 'index'])->name('voyager.horarios.index');
     Route::get('horarios/ajax/list', [HorarioController::class, 'list']);
+    Route::get('horarios/create', [HorarioController::class, 'create'])->name('voyager.horarios.create');
+    Route::post('horarios/store', [HorarioController::class, 'store'])->name('voyager.horarios.store');
+    Route::get('horarios/{id}/edit', [HorarioController::class, 'edit'])->name('voyager.horarios.edit');
+    Route::put('horarios/{id}/update', [HorarioController::class, 'update'])->name('voyager.horarios.update');
     Route::get('horarios/{id}', [HorarioController::class, 'show'])->name('voyager.horarios.show');
     Route::post('horarios/responsables/store', [HorarioController::class, 'storeResponsible'])->name('horarios.responsables.store');
     
