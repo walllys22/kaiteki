@@ -136,7 +136,7 @@
                     </div>
                     <div class="panel-body">
                         <div class="table-responsive">
-                            <table class="table table-bordered table-hover">
+                            <table id="dataTable" class="table table-bordered table-hover">
                                 <thead>
                                     <tr>
                                         <th>Dojo</th>
@@ -144,7 +144,7 @@
                                         <th style="width: 120px; text-align:right;">Precio</th>
                                         <th style="width: 120px; text-align:center;">Estado</th>
                                         @if($canManageAranceles)
-                                            <th style="width: 80px; text-align:center;">Acc.</th>
+                                            <th style="width: 95px; text-align:center;">Acc.</th>
                                         @endif
                                     </tr>
                                 </thead>
@@ -169,6 +169,17 @@
                                             </td>
                                             @if($canManageAranceles)
                                                 <td style="text-align:center; vertical-align: middle;">
+                                                    <button type="button"
+                                                            class="btn btn-primary btn-xs"
+                                                            title="Editar precio"
+                                                            data-toggle="modal"
+                                                            data-target="#modal-edit-precio"
+                                                            data-url="{{ route('grados.aranceles.precio.update', $arancel->id) }}"
+                                                            data-dojo="{{ optional($arancel->dojo)->nombre ?: 'Sin dojo' }}"
+                                                            data-tipo="{{ $arancel->tipo }}"
+                                                            data-precio="{{ $arancel->precio }}">
+                                                        <i class="voyager-edit"></i>
+                                                    </button>
                                                     <a href="#" onclick="deleteItem('{{ route('grados.aranceles.destroy', $arancel->id) }}')"
                                                        data-toggle="modal" data-target="#modal-delete"
                                                        class="btn btn-danger btn-xs" title="Eliminar">
@@ -192,6 +203,51 @@
             </div>
         </div>
     </div>
+
+    <form id="form-edit-precio" action="#" method="POST">
+        @csrf
+        @method('PUT')
+        <div class="modal fade" id="modal-edit-precio" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 class="modal-title">
+                            <i class="voyager-edit"></i> Editar precio
+                        </h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="price-context">
+                            <div>
+                                <span>Dojo</span>
+                                <strong id="edit-precio-dojo">-</strong>
+                            </div>
+                            <div>
+                                <span>Tipo</span>
+                                <strong id="edit-precio-tipo">-</strong>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Precio <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-addon">Bs</span>
+                                <input type="number" name="precio" id="edit-precio-input" class="form-control" min="0" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="voyager-check"></i> Guardar precio
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
 
     @include('partials.modal-delete')
 @stop
@@ -243,6 +299,30 @@
         .table > thead > tr > th {
             vertical-align: middle;
         }
+
+        .price-context {
+            background: #f5f8fb;
+            border: 1px solid #e4eaef;
+            border-radius: 4px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+            padding: 12px;
+        }
+
+        .price-context span {
+            color: #7a869a;
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .price-context strong {
+            display: block;
+        }
     </style>
 @stop
 
@@ -252,5 +332,14 @@
         function deleteItem(url) {
             $('#delete_form').attr('action', url);
         }
+
+        $('#modal-edit-precio').on('show.bs.modal', function(event) {
+            var button = $(event.relatedTarget);
+
+            $('#form-edit-precio').attr('action', button.data('url'));
+            $('#edit-precio-dojo').text(button.data('dojo'));
+            $('#edit-precio-tipo').text(button.data('tipo'));
+            $('#edit-precio-input').val(button.data('precio'));
+        });
     </script>
 @stop

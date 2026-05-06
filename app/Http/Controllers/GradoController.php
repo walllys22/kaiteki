@@ -152,4 +152,28 @@ class GradoController extends Controller
         return redirect()->route('voyager.grados.show', ['id' => $gradoId])
             ->with(['message' => 'Arancel eliminado correctamente.', 'alert-type' => 'success']);
     }
+
+    public function updateArancelPrecio(Request $request, $id)
+    {
+        $this->custom_authorize('read_grados');
+
+        $request->validate([
+            'precio' => 'required|numeric|min:0|max:99999999.99',
+        ]);
+
+        $userDojoId = auth()->user()->dojo_id;
+
+        $arancel = Arancele::query()
+            ->when($userDojoId, function ($query, $userDojoId) {
+                return $query->where('dojo_id', $userDojoId);
+            })
+            ->whereNull('deleted_at')
+            ->findOrFail($id);
+
+        $arancel->precio = $request->precio;
+        $arancel->save();
+
+        return redirect()->route('voyager.grados.show', ['id' => $arancel->grado_id])
+            ->with(['message' => 'Precio actualizado correctamente.', 'alert-type' => 'success']);
+    }
 }
