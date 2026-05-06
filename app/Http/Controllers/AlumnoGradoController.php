@@ -263,25 +263,29 @@ class AlumnoGradoController extends Controller
                 ->with(['message' => "No puede rendir el examen final aún: faltan {$faltan} punta(s) aprobada(s).", 'alert-type' => 'error']);
         }
 
-        // La fecha debe ser posterior al inicio del grado
-        if ($request->fecha <= $alumnoGrado->fecha) {
-            $fechaFormateada = Carbon::parse($alumnoGrado->fecha)->format('d/m/Y');
-            return redirect()->back()
-                ->withInput()
-                ->with(['message' => "La fecha del examen debe ser posterior al inicio del grado ({$fechaFormateada}).", 'alert-type' => 'error']);
-        }
+        // Calcular la fecha mínima permitida: máximo entre inicio del grado, último repaso y último examen
+        $ultimoRepaso = AlumnoGradoRepaso::where('alumno_grado_id', $request->alumno_grado_id)
+            ->whereNull('deleted_at')
+            ->orderByDesc('fecha')
+            ->value('fecha');
 
-        // La fecha del examen debe ser posterior al último examen registrado
         $ultimoExamen = AlumnoGradoExamen::where('alumno_grado_id', $request->alumno_grado_id)
             ->whereNull('deleted_at')
             ->orderByDesc('fecha')
             ->value('fecha');
 
-        if ($ultimoExamen && $request->fecha <= $ultimoExamen) {
-            $fechaFormateada = Carbon::parse($ultimoExamen)->format('d/m/Y');
+        $fechaMinima = max(array_filter([$alumnoGrado->fecha, $ultimoRepaso, $ultimoExamen]));
+
+        if ($request->fecha <= $fechaMinima) {
+            $fechaFormateada = Carbon::parse($fechaMinima)->format('d/m/Y');
+            $referencia = match(true) {
+                $fechaMinima === $ultimoExamen => "examen anterior ({$fechaFormateada})",
+                $fechaMinima === $ultimoRepaso => "último repaso ({$fechaFormateada})",
+                default                        => "inicio del grado ({$fechaFormateada})",
+            };
             return redirect()->back()
                 ->withInput()
-                ->with(['message' => "La fecha del examen debe ser posterior al examen anterior ({$fechaFormateada}).", 'alert-type' => 'error']);
+                ->with(['message' => "La fecha del examen debe ser posterior al {$referencia}.", 'alert-type' => 'error']);
         }
 
         try {
