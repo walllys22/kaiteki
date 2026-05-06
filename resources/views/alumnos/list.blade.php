@@ -6,6 +6,7 @@
                     <th style="text-align: center">ID</th>
                     <th style="text-align: center">Nombre Dojo</th>                    
                     <th style="text-align: center">Nombre Completo</th>
+                    <th style="text-align: center">Horario</th>
                     <th style="text-align: center">Ultimo Actual</th>
                     <th style="text-align: center">Ingreso</th>                    
                     <th style="text-align: center">Estado</th>
@@ -25,6 +26,9 @@
                     $grado = optional($ultimoAlumnoGrado)->grado;
                     $gradoLabel = trim(($grado->tipo ?? '') . ' ' . ($grado->numero ?? '') . ' ' . ($grado->nombre ?? ''));
                     $gradoStatus = optional($ultimoAlumnoGrado)->status;
+                    $horariosAsignados = $item->alumnoHorarios->filter(function ($alumnoHorario) {
+                        return $alumnoHorario->horario;
+                    });
                 @endphp
                 <tr>
                     <td>{{ $item->id }}</td>
@@ -36,6 +40,24 @@
                                 {{ $personName }} 
                             </div>
                         </div>
+                    </td>
+                    <td style="text-align: center">
+                        @forelse ($horariosAsignados as $alumnoHorario)
+                            @php
+                                $horario = $alumnoHorario->horario;
+                            @endphp
+                            <div style="{{ !$loop->last ? 'margin-bottom: 6px;' : '' }}">
+                                <strong>{{ $horario->nombre ?: 'Sin nombre' }}</strong>
+                                @if ($horario->tipo)
+                                    <br><small class="text-muted">{{ $horario->tipo }}</small>
+                                @endif
+                                @if ((string) $alumnoHorario->status !== '1')
+                                    <br><label class="label label-default">Inactivo</label>
+                                @endif
+                            </div>
+                        @empty
+                            <span class="text-muted">Sin horario asignado</span>
+                        @endforelse
                     </td>
                     <td style="text-align: center">
                         @if ($grado)
@@ -80,7 +102,7 @@
                 </tr>
                 @empty
                     <tr>
-                        <td colspan="7">
+                        <td colspan="8">
                             <h5 class="text-center" style="margin-top: 50px">
                                 <img src="{{ asset('images/empty.png') }}" width="120px" alt="" style="opacity: 0.8">
                                 <br><br>
