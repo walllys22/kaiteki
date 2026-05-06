@@ -132,6 +132,9 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
 
     Route::get('grados', [GradoController::class, 'index'])->name('voyager.grados.index');
     Route::get('grados/ajax/list', [GradoController::class, 'list']);
+    Route::get('grados/{id}', [GradoController::class, 'show'])->name('voyager.grados.show');
+    Route::post('grados/aranceles/store', [GradoController::class, 'storeArancel'])->name('grados.aranceles.store');
+    Route::delete('grados/aranceles/{id}/delete', [GradoController::class, 'destroyArancel'])->name('grados.aranceles.destroy');
 
     Route::get('horarios', [HorarioController::class, 'index'])->name('voyager.horarios.index');
     Route::get('horarios/ajax/list', [HorarioController::class, 'list']);

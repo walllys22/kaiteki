@@ -7,20 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\RegistersUserEvents;
 
-class Grado extends Model
+class Arancele extends Model
 {
     use HasFactory, RegistersUserEvents, SoftDeletes;
 
     protected $dates = ['deleted_at'];
 
     protected $fillable = [
-        'tipo', 'numero', 'nombre', 
-
-        'puntas',
-        'dias',
-
+        'grado_id',
+        'dojo_id',
+        'tipo',
+        'precio',
+        'observacion',
         'status',
-
         'registerUser_id',
         'registerRole',
         'deleted_at',
@@ -29,13 +28,13 @@ class Grado extends Model
         'deleteObservation',
     ];
 
-    public function alumnoGrados()
+    public function grado()
     {
-        return $this->hasMany(AlumnoGrado::class, 'grado_id');
+        return $this->belongsTo(Grado::class, 'grado_id');
     }
 
-    public function aranceles()
+    public function dojo()
     {
-        return $this->hasMany(Arancele::class, 'grado_id');
+        return $this->belongsTo(Dojo::class, 'dojo_id');
     }
 }
