@@ -166,6 +166,32 @@ class AlumnoGradoController extends Controller
                 ->with(['message' => 'Ya se cumplió con la cantidad de puntas requeridas. Debe rendir el examen final.', 'alert-type' => 'warning']);
         }
 
+        // La fecha debe ser posterior al último repaso registrado
+        $ultimoRepaso = AlumnoGradoRepaso::where('alumno_grado_id', $alumnoGrado->id)
+            ->whereNull('deleted_at')
+            ->orderByDesc('fecha')
+            ->value('fecha');
+
+        if ($ultimoRepaso && $request->fecha <= $ultimoRepaso) {
+            $fechaFormateada = Carbon::parse($ultimoRepaso)->format('d/m/Y');
+            return redirect()->back()
+                ->withInput()
+                ->with(['message' => "La fecha del repaso debe ser posterior al último repaso ({$fechaFormateada}).", 'alert-type' => 'error']);
+        }
+
+        // La fecha también debe ser posterior al último examen registrado
+        $ultimoExamen = AlumnoGradoExamen::where('alumno_grado_id', $alumnoGrado->id)
+            ->whereNull('deleted_at')
+            ->orderByDesc('fecha')
+            ->value('fecha');
+
+        if ($ultimoExamen && $request->fecha <= $ultimoExamen) {
+            $fechaFormateada = Carbon::parse($ultimoExamen)->format('d/m/Y');
+            return redirect()->back()
+                ->withInput()
+                ->with(['message' => "La fecha del repaso debe ser posterior al último examen ({$fechaFormateada}).", 'alert-type' => 'error']);
+        }
+
         try {
             AlumnoGradoRepaso::create([
                 'alumno_grado_id' => $request->alumno_grado_id,
@@ -227,6 +253,19 @@ class AlumnoGradoController extends Controller
             $faltan = $progress['puntasRequeridas'] - $progress['puntasObtenidas'];
             return redirect()->back()
                 ->with(['message' => "No puede rendir el examen final aún: faltan {$faltan} punta(s) aprobada(s).", 'alert-type' => 'error']);
+        }
+
+        // La fecha del examen debe ser posterior al último examen registrado
+        $ultimoExamen = AlumnoGradoExamen::where('alumno_grado_id', $request->alumno_grado_id)
+            ->whereNull('deleted_at')
+            ->orderByDesc('fecha')
+            ->value('fecha');
+
+        if ($ultimoExamen && $request->fecha <= $ultimoExamen) {
+            $fechaFormateada = Carbon::parse($ultimoExamen)->format('d/m/Y');
+            return redirect()->back()
+                ->withInput()
+                ->with(['message' => "La fecha del examen debe ser posterior al examen anterior ({$fechaFormateada}).", 'alert-type' => 'error']);
         }
 
         try {

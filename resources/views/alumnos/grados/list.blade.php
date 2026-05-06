@@ -233,6 +233,27 @@
 
     {{-- Modal: Agregar Repaso --}}
     @if(!$activeGrado->isCompletado())
+    @php
+        // Fecha mínima para repaso: día siguiente al último repaso o último examen (el más reciente de ambos)
+        $ultimoRepasoFechaRaw  = $repasos->first()  ? $repasos->first()->fecha  : null;
+        $ultimoExamenFechaRaw  = $examenes->first() ? $examenes->first()->fecha : null;
+        $candidatos = array_filter([$ultimoRepasoFechaRaw, $ultimoExamenFechaRaw]);
+        $minFechaRepaso = count($candidatos)
+            ? \Carbon\Carbon::parse(max($candidatos))->addDay()->format('Y-m-d')
+            : null;
+        $defaultFechaRepaso = $minFechaRepaso && $minFechaRepaso > date('Y-m-d')
+            ? $minFechaRepaso
+            : date('Y-m-d');
+
+        // Fecha mínima para examen: día siguiente al último examen
+        $minFechaExamen = $ultimoExamenFechaRaw
+            ? \Carbon\Carbon::parse($ultimoExamenFechaRaw)->addDay()->format('Y-m-d')
+            : null;
+        $defaultFechaExamen = $minFechaExamen && $minFechaExamen > date('Y-m-d')
+            ? $minFechaExamen
+            : date('Y-m-d');
+    @endphp
+
     <div class="modal fade" tabindex="-1" id="modal-add-repaso" role="dialog">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -246,7 +267,22 @@
                     <div class="modal-body">
                         <div class="form-group col-md-6">
                             <label>Fecha del repaso <span class="text-danger">*</span></label>
-                            <input type="date" name="fecha" class="form-control" value="{{ date('Y-m-d') }}" required>
+                            <input type="date" name="fecha" class="form-control"
+                                   value="{{ $defaultFechaRepaso }}"
+                                   @if($minFechaRepaso) min="{{ $minFechaRepaso }}" @endif
+                                   required>
+                            @if($minFechaRepaso)
+                                <small class="text-muted">
+                                    Debe ser posterior al
+                                    @if($ultimoRepasoFechaRaw && $ultimoExamenFechaRaw)
+                                        último repaso/examen ({{ \Carbon\Carbon::parse(max($candidatos))->format('d/m/Y') }})
+                                    @elseif($ultimoRepasoFechaRaw)
+                                        último repaso ({{ \Carbon\Carbon::parse($ultimoRepasoFechaRaw)->format('d/m/Y') }})
+                                    @else
+                                        último examen ({{ \Carbon\Carbon::parse($ultimoExamenFechaRaw)->format('d/m/Y') }})
+                                    @endif
+                                </small>
+                            @endif
                         </div>
                         <div class="form-group col-md-6">
                             <label>Resultado <span class="text-danger">*</span></label>
@@ -289,7 +325,15 @@
                         </div>
                         <div class="form-group col-md-6">
                             <label>Fecha del examen <span class="text-danger">*</span></label>
-                            <input type="date" name="fecha" class="form-control" value="{{ date('Y-m-d') }}" required>
+                            <input type="date" name="fecha" class="form-control"
+                                   value="{{ $defaultFechaExamen }}"
+                                   @if($minFechaExamen) min="{{ $minFechaExamen }}" @endif
+                                   required>
+                            @if($minFechaExamen)
+                                <small class="text-muted">
+                                    Debe ser posterior al examen anterior ({{ \Carbon\Carbon::parse($ultimoExamenFechaRaw)->format('d/m/Y') }})
+                                </small>
+                            @endif
                         </div>
                         <div class="form-group col-md-6">
                             <label>Resultado <span class="text-danger">*</span></label>
