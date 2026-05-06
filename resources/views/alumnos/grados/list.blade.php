@@ -261,36 +261,40 @@
                         <h4 class="modal-title"><i class="fa-solid fa-repeat"></i> Agregar Repaso</h4>
                     </div>
                     <div class="modal-body">
-                        <div class="form-group col-md-6">
-                            <label>Fecha del repaso <span class="text-danger">*</span></label>
-                            <input type="date" name="fecha" class="form-control"
-                                   value="{{ $defaultFechaRepaso }}"
-                                   @if($minFechaRepaso) min="{{ $minFechaRepaso }}" @endif
-                                   required>
-                            <small class="text-muted">
-                                Debe ser posterior al
-                                @if($ultimoRepasoFechaRaw || $ultimoExamenFechaRaw)
-                                    @php $refRepaso = max(array_filter([$ultimoRepasoFechaRaw, $ultimoExamenFechaRaw])); @endphp
-                                    @if($refRepaso > $fechaInicioGrado)
-                                        último repaso/examen ({{ \Carbon\Carbon::parse($refRepaso)->format('d/m/Y') }})
+                        <div class="row">
+                            <div class="form-group col-md-6">
+                                <label>Fecha del repaso <span class="text-danger">*</span></label>
+                                <input type="date" name="fecha" class="form-control"
+                                       value="{{ $defaultFechaRepaso }}"
+                                       @if($minFechaRepaso) min="{{ $minFechaRepaso }}" @endif
+                                       required>
+                                <small class="text-muted">
+                                    Debe ser posterior al
+                                    @if($ultimoRepasoFechaRaw || $ultimoExamenFechaRaw)
+                                        @php $refRepaso = max(array_filter([$ultimoRepasoFechaRaw, $ultimoExamenFechaRaw])); @endphp
+                                        @if($refRepaso > $fechaInicioGrado)
+                                            último repaso/examen ({{ \Carbon\Carbon::parse($refRepaso)->format('d/m/Y') }})
+                                        @else
+                                            inicio del grado ({{ \Carbon\Carbon::parse($fechaInicioGrado)->format('d/m/Y') }})
+                                        @endif
                                     @else
                                         inicio del grado ({{ \Carbon\Carbon::parse($fechaInicioGrado)->format('d/m/Y') }})
                                     @endif
-                                @else
-                                    inicio del grado ({{ \Carbon\Carbon::parse($fechaInicioGrado)->format('d/m/Y') }})
-                                @endif
-                            </small>
+                                </small>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>Resultado <span class="text-danger">*</span></label>
+                                <select name="aprobado" class="form-control" required>
+                                    <option value="1">✅ Aprobado (cuenta como punta)</option>
+                                    <option value="0">❌ No aprobado</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="form-group col-md-6">
-                            <label>Resultado <span class="text-danger">*</span></label>
-                            <select name="aprobado" class="form-control" required>
-                                <option value="1">✅ Aprobado (cuenta como punta)</option>
-                                <option value="0">❌ No aprobado</option>
-                            </select>
-                        </div>
-                        <div class="form-group col-md-12">
-                            <label>Observaciones</label>
-                            <textarea name="observacion" class="form-control" rows="2" placeholder="Notas sobre el repaso..."></textarea>
+                        <div class="row">
+                            <div class="form-group col-md-12">
+                                <label>Observaciones</label>
+                                <textarea name="observacion" class="form-control" rows="2" placeholder="Notas sobre el repaso..."></textarea>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -320,33 +324,37 @@
                             Puntas: <strong>{{ $progress['puntasObtenidas'] }}/{{ $progress['puntasRequeridas'] }}</strong> —
                             Días: <strong>{{ $progress['diasTranscurridos'] }}/{{ $progress['diasRequeridos'] }}</strong>
                         </div>
-                        <div class="form-group col-md-6">
-                            <label>Fecha del examen <span class="text-danger">*</span></label>
-                            <input type="date" name="fecha" class="form-control"
-                                   value="{{ $defaultFechaExamen }}"
-                                   min="{{ $minFechaExamen }}"
-                                   required>
-                            <small class="text-muted">
-                                Debe ser posterior al
-                                @if($ultimoExamenFechaRaw && $ultimoExamenFechaRaw >= $refExamenLabel)
-                                    examen anterior ({{ \Carbon\Carbon::parse($ultimoExamenFechaRaw)->format('d/m/Y') }})
-                                @elseif($ultimoRepasoFechaRaw && $ultimoRepasoFechaRaw >= $refExamenLabel)
-                                    último repaso ({{ \Carbon\Carbon::parse($ultimoRepasoFechaRaw)->format('d/m/Y') }})
-                                @else
-                                    inicio del grado ({{ \Carbon\Carbon::parse($fechaInicioGrado)->format('d/m/Y') }})
-                                @endif
-                            </small>
+                        <div class="row">
+                            <div class="form-group col-md-6">
+                                <label>Fecha del examen <span class="text-danger">*</span></label>
+                                <input type="date" name="fecha" class="form-control"
+                                       value="{{ $defaultFechaExamen }}"
+                                       min="{{ $minFechaExamen }}"
+                                       required>
+                                <small class="text-muted">
+                                    Debe ser posterior al
+                                    @if($ultimoExamenFechaRaw && $ultimoExamenFechaRaw >= $refExamenLabel)
+                                        examen anterior ({{ \Carbon\Carbon::parse($ultimoExamenFechaRaw)->format('d/m/Y') }})
+                                    @elseif($ultimoRepasoFechaRaw && $ultimoRepasoFechaRaw >= $refExamenLabel)
+                                        último repaso ({{ \Carbon\Carbon::parse($ultimoRepasoFechaRaw)->format('d/m/Y') }})
+                                    @else
+                                        inicio del grado ({{ \Carbon\Carbon::parse($fechaInicioGrado)->format('d/m/Y') }})
+                                    @endif
+                                </small>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>Resultado <span class="text-danger">*</span></label>
+                                <select name="aprobado" class="form-control" required>
+                                    <option value="1">✅ Aprobado</option>
+                                    <option value="0">❌ Aplazado</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="form-group col-md-6">
-                            <label>Resultado <span class="text-danger">*</span></label>
-                            <select name="aprobado" class="form-control" required>
-                                <option value="1">✅ Aprobado</option>
-                                <option value="0">❌ Aplazado</option>
-                            </select>
-                        </div>
-                        <div class="form-group col-md-12">
-                            <label>Observaciones</label>
-                            <textarea name="observacion" class="form-control" rows="2" placeholder="Notas sobre el examen..."></textarea>
+                        <div class="row">
+                            <div class="form-group col-md-12">
+                                <label>Observaciones</label>
+                                <textarea name="observacion" class="form-control" rows="2" placeholder="Notas sobre el examen..."></textarea>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
