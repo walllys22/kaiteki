@@ -74,7 +74,7 @@
         }
         .student-photo {
             height: 23.5%;
-            left: 70.2%;
+            left: 71%;
             object-fit: cover;
             position: absolute;
             top: 9.2%;
@@ -125,7 +125,7 @@
             display: flex;
             gap: 70px;
             justify-content: center;
-            margin: 48px auto 0;
+            margin: 50px auto 0;
             width: 72%;
         }
         .signature-box {
