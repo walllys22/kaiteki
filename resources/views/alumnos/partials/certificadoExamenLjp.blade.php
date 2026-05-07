@@ -20,6 +20,11 @@
     if (optional($person)->image) {
         $photo = asset('storage/' . str_replace('.avif', '', $person->image) . '-cropped.webp');
     }
+
+    $gradoImage = null;
+    if (optional($grado)->image) {
+        $gradoImage = asset('storage/' . str_replace('.avif', '', $grado->image) . '-cropped.webp');
+    }
 @endphp
 
 <!DOCTYPE html>
@@ -105,6 +110,13 @@
             text-align: justify;
             text-align-last: left;
         }
+        .grade-image {
+            display: block;
+            margin: 70px auto 0;
+            max-height: 135px;
+            max-width: 260px;
+            object-fit: contain;
+        }
         @media print {
             body {
                 background: #fff;
@@ -132,6 +144,9 @@
             <span class="line" style="font-size: 28px">
                 A: <strong>{{ optional($person)->first_name ?: 'Alumno no registrado' }}</strong>, por haber vencido las pruebas fisicas y teoricas, se lo promueve al grado <span class="belt">{{ $gradoCertificado }}</span>, es dado a los {{ $dia }} dias del mes de {{ $mes }} del Año {{ $anio }}, en la ciudad de la Santisima Trinidad, Departamento del Beni, Bolivia.
             </span>
+            @if($gradoImage)
+                <img src="{{ $gradoImage }}" class="grade-image" alt="Imagen del grado" onerror="this.style.display='none';">
+            @endif
         </div>
     </div>
 </body>
