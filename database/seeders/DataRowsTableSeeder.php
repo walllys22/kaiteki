@@ -554,7 +554,7 @@ class DataRowsTableSeeder extends Seeder
                 'field' => 'id',
                 'type' => 'text',
                 'display_name' => 'Id',
-                'required' => 0,
+                'required' => 1,
                 'browse' => 0,
                 'read' => 0,
                 'edit' => 0,
@@ -624,7 +624,7 @@ class DataRowsTableSeeder extends Seeder
                 'edit' => 1,
                 'add' => 1,
                 'delete' => 0,
-                'details' => '{"validation":{"rule":"max:191"},"display":{"width":6},"model":"App\\\\Models\\\\Ciudad","table":"ciudads","type":"belongsTo","column":"ciudad_id","key":"id","label":"nombre","pivot_table":"alumnos","pivot":"0","taggable":"0"}',
+                'details' => '{"validation":{"rule":"max:191"},"display":{"width":3},"model":"App\\\\Models\\\\Ciudad","table":"ciudads","type":"belongsTo","column":"ciudad_id","key":"id","label":"nombre","pivot_table":"alumnos","pivot":"0","taggable":"0"}',
                 'order' => 5,
             ),
             38 => 
@@ -641,7 +641,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 1,
                 'delete' => 0,
                 'details' => '{"validation":{"rule":"max:191"},"display":{"width":6},"model":"App\\\\Models\\\\Person","table":"people","type":"belongsTo","column":"person_id","key":"id","label":"first_name","pivot_table":"alumnos","pivot":"0","taggable":"0"}',
-                'order' => 6,
+                'order' => 7,
             ),
             39 => 
             array (
@@ -657,7 +657,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 1,
                 'delete' => 0,
                 'details' => '{"display":{"width":12},"resize":{"width":"1000","height":null},"quality":"70%","upsize":true,"thumbnails":[{"name":"medium","scale":"50%"},{"name":"small","scale":"25%"},{"name":"cropped","crop":{"width":"300","height":"250"}}]}',
-                'order' => 7,
+                'order' => 8,
             ),
             40 => 
             array (
@@ -673,7 +673,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 1,
                 'delete' => 0,
                 'details' => '{"validation":{"rule":"max:191"},"display":{"width":6}}',
-                'order' => 8,
+                'order' => 9,
             ),
             41 => 
             array (
@@ -689,7 +689,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 1,
                 'delete' => 0,
                 'details' => '{"validation":{"rule":"max:191"},"display":{"width":6}}',
-                'order' => 9,
+                'order' => 10,
             ),
             42 => 
             array (
@@ -705,7 +705,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 1,
                 'delete' => 0,
                 'details' => '{"validation":{"rule":"max:191"},"display":{"width":12}}',
-                'order' => 10,
+                'order' => 11,
             ),
             43 => 
             array (
@@ -721,7 +721,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 1,
                 'delete' => 0,
                 'details' => '{"on":"Activo","off":"Inactivo","checked":true}',
-                'order' => 11,
+                'order' => 12,
             ),
             44 => 
             array (
@@ -737,7 +737,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 0,
                 'delete' => 0,
                 'details' => '{}',
-                'order' => 12,
+                'order' => 13,
             ),
             45 => 
             array (
@@ -753,7 +753,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 0,
                 'delete' => 0,
                 'details' => '{}',
-                'order' => 13,
+                'order' => 14,
             ),
             46 => 
             array (
@@ -769,7 +769,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 0,
                 'delete' => 0,
                 'details' => '{}',
-                'order' => 14,
+                'order' => 15,
             ),
             47 => 
             array (
@@ -785,7 +785,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 0,
                 'delete' => 0,
                 'details' => '{}',
-                'order' => 15,
+                'order' => 16,
             ),
             48 => 
             array (
@@ -801,7 +801,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 0,
                 'delete' => 0,
                 'details' => '{}',
-                'order' => 16,
+                'order' => 17,
             ),
             49 => 
             array (
@@ -817,7 +817,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 0,
                 'delete' => 0,
                 'details' => '{}',
-                'order' => 17,
+                'order' => 18,
             ),
             50 => 
             array (
@@ -833,7 +833,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 0,
                 'delete' => 0,
                 'details' => '{}',
-                'order' => 18,
+                'order' => 19,
             ),
             51 => 
             array (
@@ -849,7 +849,7 @@ class DataRowsTableSeeder extends Seeder
                 'add' => 0,
                 'delete' => 0,
                 'details' => '{}',
-                'order' => 19,
+                'order' => 20,
             ),
             52 => 
             array (
@@ -1394,6 +1394,22 @@ class DataRowsTableSeeder extends Seeder
                 'delete' => 0,
                 'details' => '{"display":{"width":12},"resize":{"width":"1000","height":null},"quality":"70%","upsize":true,"thumbnails":[{"name":"medium","scale":"50%"},{"name":"small","scale":"25%"},{"name":"cropped","crop":{"width":"300","height":"250"}}]}',
                 'order' => 7,
+            ),
+            86 => 
+            array (
+                'id' => 153,
+                'data_type_id' => 24,
+                'field' => 'grado_responsable',
+                'type' => 'text',
+                'display_name' => 'Grado',
+                'required' => 0,
+                'browse' => 1,
+                'read' => 1,
+                'edit' => 1,
+                'add' => 1,
+                'delete' => 0,
+                'details' => '{"validation":{"rule":"nullable|max:191"},"display":{"width":3}}',
+                'order' => 6,
             ),
         ));
         

@@ -13,7 +13,7 @@ class Dojo extends Model
 
     protected $dates = ['deleted_at'];
 
-    protected $fillable = ['nombre', 'logo', 'person_id', 'ciudad_id', 'phone', 'address', 'email', 'status', 'registerUser_id', 'registerRole', 'deleted_at', 'deleteUser_id', 'deleteRole', 'deleteObservation'];
+    protected $fillable = ['nombre', 'logo', 'grado_responsable', 'person_id', 'ciudad_id', 'phone', 'address', 'email', 'status', 'registerUser_id', 'registerRole', 'deleted_at', 'deleteUser_id', 'deleteRole', 'deleteObservation'];
 
     public function person()
     {

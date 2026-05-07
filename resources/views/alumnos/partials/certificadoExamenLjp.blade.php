@@ -17,6 +17,7 @@
     $mes = ucfirst($fecha->translatedFormat('F'));
     $anio = $fecha->format('Y');
     $responsableNombre = trim((string) optional($responsable)->first_name) ?: 'Responsable';
+    $responsableGrado = trim((string) optional($dojo)->grado_responsable);
 
     $template = asset('images/dojos/ljp/certificados/examen.png');
     $photo = asset('images/default.jpg');
@@ -143,6 +144,12 @@
         .signature-name {
             line-height: 1.2;
         }
+        .signature-grade {
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-top: 4px;
+        }
         .signature-label {
             font-size: 16px;
             font-weight: 600;
@@ -184,6 +191,9 @@
                 <div class="signature-box">
                     <div class="signature-line"></div>
                     <div class="signature-name">{{ $responsableNombre }}</div>
+                    @if($responsableGrado)
+                        <div class="signature-grade">{{ $responsableGrado }}</div>
+                    @endif
                 </div>
             </div>
         </div>
