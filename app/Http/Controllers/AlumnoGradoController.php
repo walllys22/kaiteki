@@ -261,7 +261,7 @@ class AlumnoGradoController extends Controller
             'arancel',
             'alumnoGrado.grado',
             'alumnoGrado.alumno.person',
-            'alumnoGrado.alumno.dojo',
+            'alumnoGrado.alumno.dojo.person',
         ])
             ->whereNull('deleted_at')
             ->when($userDojoId, function ($query, $userDojoId) {

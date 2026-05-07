@@ -1,7 +1,9 @@
 @php
     $alumnoGrado = $examen->alumnoGrado;
     $alumno = optional($alumnoGrado)->alumno;
+    $dojo = optional($alumno)->dojo;
     $person = optional($alumno)->person;
+    $responsable = optional($dojo)->person;
     $grado = optional($alumnoGrado)->grado;
 
     $gradoNumero = trim((string) optional($grado)->numero);
@@ -14,6 +16,7 @@
     $dia = $fecha->format('d');
     $mes = ucfirst($fecha->translatedFormat('F'));
     $anio = $fecha->format('Y');
+    $responsableNombre = trim((string) optional($responsable)->first_name) ?: 'Responsable';
 
     $template = asset('images/dojos/ljp/certificados/examen.png');
     $photo = asset('images/default.jpg');
@@ -35,7 +38,7 @@
     <title>Certificado de Examen</title>
     <style>
         @page {
-            size: 280mm 210mm;
+            size: A4 landscape;
             margin: 0;
         }
         * { box-sizing: border-box; }
@@ -112,10 +115,38 @@
         }
         .grade-image {
             display: block;
-            margin: 70px auto 0;
+            margin: 0;
             max-height: 135px;
             max-width: 260px;
             object-fit: contain;
+        }
+        .certificate-footer {
+            align-items: flex-end;
+            display: flex;
+            gap: 70px;
+            justify-content: center;
+            margin: 48px auto 0;
+            width: 72%;
+        }
+        .signature-box {
+            color: #000;
+            font-size: 20px;
+            font-weight: 700;
+            min-width: 285px;
+            text-align: center;
+        }
+        .signature-line {
+            border-top: 2px solid #000;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+        .signature-name {
+            line-height: 1.2;
+        }
+        .signature-label {
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 4px;
         }
         @media print {
             body {
@@ -125,7 +156,7 @@
             .actions { display: none; }
             .certificate {
                 height: 210mm;
-                width: 280mm;
+                width: 297mm;
             }
         }
     </style>
@@ -144,9 +175,17 @@
             <span class="line" style="font-size: 28px">
                 A: <strong>{{ optional($person)->first_name ?: 'Alumno no registrado' }}</strong>, por haber vencido las pruebas fisicas y teoricas, se lo promueve al grado <span class="belt">{{ $gradoCertificado }}</span>, es dado a los {{ $dia }} dias del mes de {{ $mes }} del Año {{ $anio }}, en la ciudad de la Santisima Trinidad, Departamento del Beni, Bolivia.
             </span>
-            @if($gradoImage)
-                <img src="{{ $gradoImage }}" class="grade-image" alt="Imagen del grado" onerror="this.style.display='none';">
-            @endif
+            <div class="certificate-footer">
+                <div class="signature-box">
+                </div>
+                @if($gradoImage)
+                    <img src="{{ $gradoImage }}" class="grade-image" alt="Imagen del grado" onerror="this.style.display='none';">
+                @endif
+                <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <div class="signature-name">{{ $responsableNombre }}</div>
+                </div>
+            </div>
         </div>
     </div>
 </body>
