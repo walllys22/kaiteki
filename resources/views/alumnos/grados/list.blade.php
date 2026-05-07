@@ -197,7 +197,7 @@
                                                 <i class="fa-solid fa-money-bill"></i>
                                             </button>
                                         @endif
-                                        @if(!$activeGrado->isCompletado() && $loop->first)
+                                        @if(!$activeGrado->isCompletado() && $loop->first && $examenes->isEmpty())
                                         <a href="#" onclick="deleteItem('{{ route('alumno.grado.repaso.destroy', $repaso->id) }}')"
                                            data-toggle="modal" data-target="#modal-delete"
                                            class="btn btn-danger btn-xs"
@@ -315,7 +315,7 @@
                                                 <i class="fa-solid fa-money-bill"></i>
                                             </button>
                                         @endif
-                                        @if(!$activeGrado->isCompletado())
+                                        @if(!$activeGrado->isCompletado() && $loop->first)
                                             <a href="#" onclick="deleteItem('{{ route('alumno.grado.examen.destroy', $examen->id) }}')"
                                                data-toggle="modal" data-target="#modal-delete"
                                                class="btn btn-danger btn-xs">

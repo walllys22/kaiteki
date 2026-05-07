@@ -322,6 +322,15 @@ class AlumnoGradoController extends Controller
         $repaso = AlumnoGradoRepaso::findOrFail($id);
         $alumnoId = AlumnoGrado::findOrFail($repaso->alumno_grado_id)->alumno_id;
 
+        $hayExamen = AlumnoGradoExamen::where('alumno_grado_id', $repaso->alumno_grado_id)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($hayExamen) {
+            return redirect()->back()
+                ->with(['message' => 'No se puede eliminar un repaso cuando ya hay un examen registrado.', 'alert-type' => 'error']);
+        }
+
         $ultimoRepaso = AlumnoGradoRepaso::where('alumno_grado_id', $repaso->alumno_grado_id)
             ->whereNull('deleted_at')
             ->orderByDesc('fecha')
@@ -527,6 +536,16 @@ class AlumnoGradoController extends Controller
         $alumnoGrado = AlumnoGrado::findOrFail($examen->alumno_grado_id);
         $alumnoId    = $alumnoGrado->alumno_id;
         $eraAprobado = (bool) $examen->aprobado;
+
+        $ultimoExamen = AlumnoGradoExamen::where('alumno_grado_id', $examen->alumno_grado_id)
+            ->whereNull('deleted_at')
+            ->orderByDesc('fecha')
+            ->value('id');
+
+        if ($ultimoExamen !== $examen->id) {
+            return redirect()->back()
+                ->with(['message' => 'Solo se puede eliminar el examen más reciente.', 'alert-type' => 'error']);
+        }
 
         try {
             $examen->delete();
