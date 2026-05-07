@@ -240,13 +240,11 @@ class AlumnoGradoController extends Controller
 
             $msg = $request->aprobado == 1 ? 'Repaso registrado como punta aprobada.' : 'Repaso registrado (no aprobado).';
 
-            if ($request->estado_pago === 'pagado') {
-                return redirect()->route('alumno.grado.repaso.comprobante', ['id' => $repaso->id])
-                    ->with(['message' => $msg, 'alert-type' => 'success']);
-            }
-
             return redirect()->route('voyager.alumnos.show', ['id' => $alumnoGrado->alumno_id])
-                ->with(['message' => $msg . ' El pago quedó pendiente.', 'alert-type' => 'success']);
+                ->with([
+                    'message' => $request->estado_pago === 'pagado' ? $msg . ' Pago registrado.' : $msg . ' El pago quedó pendiente.',
+                    'alert-type' => 'success',
+                ]);
         } catch (\Throwable $th) {
             return redirect()->back()
                 ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
@@ -284,11 +282,55 @@ class AlumnoGradoController extends Controller
         return view('alumnos.partials.comprobantePunta', compact('repaso'));
     }
 
+    public function pagarRepaso(Request $request, int $id)
+    {
+        $this->custom_authorize('edit_alumnos');
+
+        $request->validate([
+            'monto' => 'required|numeric|min:0.01|max:99999999.99',
+        ]);
+
+        $userDojoId = auth()->user()->dojo_id;
+
+        $repaso = AlumnoGradoRepaso::with(['alumnoGrado.alumno'])
+            ->whereNull('deleted_at')
+            ->when($userDojoId, function ($query, $userDojoId) {
+                return $query->whereHas('alumnoGrado.alumno', function ($alumnoQuery) use ($userDojoId) {
+                    $alumnoQuery->where('dojo_id', $userDojoId);
+                });
+            })
+            ->findOrFail($id);
+
+        $monto = (float) $request->monto;
+
+        try {
+            $repaso->monto = $monto;
+            $repaso->monto_pagado = $monto;
+            $repaso->save();
+
+            return redirect()->route('voyager.alumnos.show', ['id' => $repaso->alumnoGrado->alumno_id])
+                ->with(['message' => 'Pago de la punta registrado correctamente.', 'alert-type' => 'success']);
+        } catch (\Throwable $th) {
+            return redirect()->back()
+                ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
+        }
+    }
+
     public function destroyRepaso(int $id)
     {
         $this->custom_authorize('delete_alumnos');
         $repaso = AlumnoGradoRepaso::findOrFail($id);
         $alumnoId = AlumnoGrado::findOrFail($repaso->alumno_grado_id)->alumno_id;
+
+        $ultimoRepaso = AlumnoGradoRepaso::where('alumno_grado_id', $repaso->alumno_grado_id)
+            ->whereNull('deleted_at')
+            ->orderByDesc('fecha')
+            ->value('id');
+
+        if ($ultimoRepaso !== $repaso->id) {
+            return redirect()->back()
+                ->with(['message' => 'Solo se puede eliminar el repaso más reciente.', 'alert-type' => 'error']);
+        }
 
         try {
             $repaso->delete();

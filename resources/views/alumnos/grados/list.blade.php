@@ -186,8 +186,18 @@
                                                title="Imprimir comprobante">
                                                 <i class="fa-solid fa-print"></i>
                                             </a>
+                                        @else
+                                            <button type="button"
+                                                    class="btn btn-success btn-xs btn-pagar-repaso"
+                                                    title="Registrar pago"
+                                                    data-toggle="modal"
+                                                    data-target="#modal-pagar-repaso"
+                                                    data-url="{{ route('alumno.grado.repaso.pagar', $repaso->id) }}"
+                                                    data-monto="{{ number_format((float) ($repaso->monto ?? 0), 2, '.', '') }}">
+                                                <i class="fa-solid fa-money-bill"></i>
+                                            </button>
                                         @endif
-                                        @if(!$activeGrado->isCompletado())
+                                        @if(!$activeGrado->isCompletado() && $loop->first)
                                         <a href="#" onclick="deleteItem('{{ route('alumno.grado.repaso.destroy', $repaso->id) }}')"
                                            data-toggle="modal" data-target="#modal-delete"
                                            class="btn btn-danger btn-xs"
@@ -443,6 +453,42 @@
     <div class="alert alert-warning">El grado activo no tiene un grado asociado válido.</div>
 @endif
 
+{{-- Modal: Registrar pago de repaso pendiente --}}
+<div class="modal fade" tabindex="-1" id="modal-pagar-repaso" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="form-pagar-repaso" action="#" method="POST" class="form-edit-add">
+                @csrf
+                @method('PUT')
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                    <h4 class="modal-title"><i class="fa-solid fa-money-bill"></i> Registrar Pago</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Monto pagado <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-addon">Bs</span>
+                            <input type="number"
+                                   name="monto"
+                                   id="pagar-repaso-monto"
+                                   class="form-control"
+                                   min="0.01"
+                                   max="99999999.99"
+                                   step="0.01"
+                                   required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success btn-submit">Guardar Pago</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {{-- ══════════════════════════════════════════════════════
      SECCIÓN: HISTORIAL DE GRADOS COMPLETADOS
      ══════════════════════════════════════════════════════ --}}
@@ -512,7 +558,7 @@
                             <div class="row">
 
                                 {{-- Repasos --}}
-                                <div class="col-md-7">
+                                <div class="col-md-8">
                                     <p style="font-weight:600; margin-bottom:6px; font-size:13px;">
                                         <i class="fa-solid fa-repeat" style="color:#8e44ad;"></i>
                                         Repasos
@@ -524,7 +570,10 @@
                                                 <tr>
                                                     <th style="width:100px;">Fecha</th>
                                                     <th style="width:100px; text-align:center;">Resultado</th>
+                                                    <th style="width:85px; text-align:right;">Monto</th>
+                                                    <th style="width:80px; text-align:center;">Pago</th>
                                                     <th>Observación</th>
+                                                    <th style="width:70px; text-align:center;">Acc.</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -538,7 +587,35 @@
                                                             <span class="label label-default">No aprobado</span>
                                                         @endif
                                                     </td>
+                                                    <td style="text-align:right;">Bs {{ number_format((float) ($r->monto ?? 0), 2, '.', ',') }}</td>
+                                                    <td style="text-align:center;">
+                                                        @if((float) ($r->monto ?? 0) > 0 && (float) ($r->monto_pagado ?? 0) >= (float) ($r->monto ?? 0))
+                                                            <span class="label label-success">Pagado</span>
+                                                        @else
+                                                            <span class="label label-warning">Pendiente</span>
+                                                        @endif
+                                                    </td>
                                                     <td>{{ $r->observacion ?: '—' }}</td>
+                                                    <td style="text-align:center;">
+                                                        @if((float) ($r->monto ?? 0) > 0 && (float) ($r->monto_pagado ?? 0) >= (float) ($r->monto ?? 0))
+                                                            <a href="{{ route('alumno.grado.repaso.comprobante', $r->id) }}"
+                                                               target="_blank"
+                                                               class="btn btn-info btn-xs"
+                                                               title="Imprimir comprobante">
+                                                                <i class="fa-solid fa-print"></i>
+                                                            </a>
+                                                        @else
+                                                            <button type="button"
+                                                                    class="btn btn-success btn-xs btn-pagar-repaso"
+                                                                    title="Registrar pago"
+                                                                    data-toggle="modal"
+                                                                    data-target="#modal-pagar-repaso"
+                                                                    data-url="{{ route('alumno.grado.repaso.pagar', $r->id) }}"
+                                                                    data-monto="{{ number_format((float) ($r->monto ?? 0), 2, '.', '') }}">
+                                                                <i class="fa-solid fa-money-bill"></i>
+                                                            </button>
+                                                        @endif
+                                                    </td>
                                                 </tr>
                                                 @endforeach
                                             </tbody>
@@ -549,7 +626,7 @@
                                 </div>
 
                                 {{-- Exámenes --}}
-                                <div class="col-md-5">
+                                <div class="col-md-4">
                                     <p style="font-weight:600; margin-bottom:6px; font-size:13px;">
                                         <i class="fa-solid fa-graduation-cap" style="color:#e74c3c;"></i>
                                         Examen Final
@@ -637,6 +714,12 @@
         var isOpen = detailRow.style.display !== 'none';
         detailRow.style.display = isOpen ? 'none' : 'table-row';
         if (chevron) chevron.classList.toggle('open', !isOpen);
+    });
+
+    $('#modal-pagar-repaso').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        $('#form-pagar-repaso').attr('action', button.data('url'));
+        $('#pagar-repaso-monto').val(button.data('monto') || '');
     });
 })();
 </script>

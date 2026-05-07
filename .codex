@@ -110,6 +110,9 @@ con `person_id` y `dojo_id` vinculados.
 - Cada repaso guarda `monto_pagado`.
   Si se registra como `Pagado`, `monto_pagado = monto`.
   Si se registra como `Pendiente`, `monto_pagado = 0`.
+- Un repaso pendiente puede pagarse despues desde la tabla de repasos.
+  Al pagar, se puede ajustar el monto y el sistema guarda `monto_pagado = monto`.
+- La accion de pago posterior esta disponible tanto en el grado activo como en el historial de grados completados.
 - La tabla de repasos muestra monto, pagado, saldo y estado de pago.
 - El comprobante de punta solo se puede imprimir cuando el repaso esta pagado.
 
@@ -272,6 +275,8 @@ Todos usan `HasFactory`, `RegistersUserEvents`, `SoftDeletes`.
 11. El usuario debe seleccionar si el repaso queda `Pagado` o `Pendiente`.
 12. Si queda `Pagado`, se puede imprimir comprobante.
 13. Si queda `Pendiente`, el comprobante no se muestra y la ruta de comprobante bloquea la impresion.
+14. Un repaso pendiente puede pagarse posteriormente ajustando el monto; al confirmar, queda pagado y vuelve al detalle del alumno.
+15. El pago posterior tambien se permite desde el historial si el grado ya fue completado.
 
 ### Detalle de implementacion
 
@@ -289,7 +294,9 @@ Todos usan `HasFactory`, `RegistersUserEvents`, `SoftDeletes`.
   - `pagado` guarda `monto_pagado = monto`.
   - `pendiente` guarda `monto_pagado = 0`.
 
-- **Comprobante de punta**: cuando el repaso se registra como pagado, `storeRepaso()` redirige a `alumno.grado.repaso.comprobante`. Cuando queda pendiente, vuelve al detalle del alumno.
+- **Pago posterior de repaso pendiente**: `pagarRepaso()` recibe un `monto`, valida que sea mayor a cero, actualiza `monto` y `monto_pagado` con ese valor, y vuelve al detalle del alumno. Esta accion se muestra en el grado activo y en el historial de grados completados.
+
+- **Comprobante de punta**: `storeRepaso()` siempre vuelve al detalle del alumno. Si el repaso esta pagado, el comprobante queda disponible desde el boton de impresion en la tabla.
 
 - **Bloqueo de comprobante pendiente**: `comprobanteRepaso()` verifica que `monto > 0` y `monto_pagado >= monto`. Si no se cumple, redirige al detalle del alumno con aviso.
 
@@ -299,6 +306,7 @@ Todos usan `HasFactory`, `RegistersUserEvents`, `SoftDeletes`.
 POST   admin/alumnos/grado/store               alumno.grado.store
 POST   admin/alumnos/grado/repaso/store        alumno.grado.repaso.store
 GET    admin/alumnos/grado/repaso/{id}/comprobante  alumno.grado.repaso.comprobante
+PUT    admin/alumnos/grado/repaso/{id}/pagar   alumno.grado.repaso.pagar
 DELETE admin/alumnos/grado/repaso/{id}/delete  alumno.grado.repaso.destroy
 POST   admin/alumnos/grado/examen/store        alumno.grado.examen.store
 DELETE admin/alumnos/grado/examen/{id}/delete  alumno.grado.examen.destroy
@@ -339,6 +347,7 @@ Ademas, este partial:
 - calcula total de repasos, total pagado y saldo
 - muestra monto, pagado, saldo y estado de pago por repaso
 - muestra el boton de comprobante solo para repasos pagados
+- muestra boton para registrar pago cuando el repaso esta pendiente
 - muestra aviso si falta arancel activo de tipo `Repaso`
 - deshabilita el boton "Agregar Repaso" si falta arancel activo
 
@@ -356,5 +365,6 @@ Los select con clase `select2` dentro de modales deben reinicializarse con `drop
 - `Arancele` define precios por grado, dojo y tipo
 - Para registrar repaso/punta debe existir arancel activo tipo `Repaso`
 - Cada repaso guarda `monto` y `monto_pagado`
+- Los repasos pendientes se pueden pagar despues y habilitan comprobante al quedar pagados
 - Comprobante de punta solo se imprime si esta pagado
 - `.codex` = documento central del proyecto
