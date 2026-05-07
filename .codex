@@ -6,6 +6,9 @@ Este archivo centraliza decisiones tecnicas, reglas de negocio y notas operativa
 
 - La documentacion de multisucursal fue migrada desde `MULTISUCURSAL_NOTAS.md` a este archivo.
 - `MULTISUCURSAL_NOTAS.md` puede mantenerse temporalmente como referencia, pero `.codex` pasa a ser la fuente principal.
+- Se integro Consulta Inter-Dojo como vista de solo lectura entre sucursales.
+- Se integro control economico basico para puntas/repasos usando aranceles por dojo y grado.
+- Se integro comprobante imprimible de punta pagada.
 
 ## Multisucursal
 
@@ -35,21 +38,23 @@ Existen 2 tipos de usuarios en la estructura actual:
 
 Archivo: `database/seeders/UsersTableSeeder.php`
 
-- email: `admin@admin.com`
+- email: `admin@soluciondigital.dev`
 - `person_id = null`
 - `dojo_id = null`
 
 Este usuario queda libre para administracion global del sistema.
 
-#### Usuario operativo de sucursal
+#### Usuarios operativos / secundarios actuales
 
-Archivo: `database/seeders/DojoUsersTableSeeder.php`
+Archivo: `database/seeders/UsersTableSeeder.php`
 
-- email: `ignacio@admin.com`
-- `person_id = 1`
-- `dojo_id = 1`
+- email: `wallys@admin.com`
+- `person_id = null`
+- `dojo_id = null`
 
-Este usuario representa un usuario vinculado a una persona y a un dojo.
+Actualmente no existe `database/seeders/DojoUsersTableSeeder.php` en el repo.
+Si se necesita un usuario operativo de sucursal por seeder, debe crearse explicitamente
+con `person_id` y `dojo_id` vinculados.
 
 ### Cambios realizados
 
@@ -58,6 +63,9 @@ Este usuario representa un usuario vinculado a una persona y a un dojo.
 - Se agrego `dojo_id` a `users`.
 - Se agrego `dojo_id` a `people`.
 - Se corrigio migracion de `alumnos` porque tenia `status` duplicado.
+- Se creo la tabla `aranceles` para definir precios por `grado_id`, `dojo_id` y `tipo`.
+- Se agregaron a `alumno_grado_repasos` los campos:
+  `arancel_id`, `monto`, `monto_pagado`.
 
 #### Modelos
 
@@ -67,6 +75,10 @@ Este usuario representa un usuario vinculado a una persona y a un dojo.
   ahora incluye `dojo_id` en `fillable` y relacion `dojo()`.
 - `App\Models\Dojo`
   ahora incluye relaciones `users()` y `people()`.
+- `App\Models\Arancele`
+  representa precios configurables por grado, dojo y tipo (`Repaso`, `Examen`).
+- `App\Models\AlumnoGradoRepaso`
+  ahora guarda `arancel_id`, `monto`, `monto_pagado` y relacion `arancel()`.
 
 #### Usuarios
 
@@ -91,6 +103,15 @@ Este usuario representa un usuario vinculado a una persona y a un dojo.
 - El detalle del alumno se ve desde `resources/views/alumnos/read.blade.php`.
 - Solo se permite crear alumno; la edicion fue deshabilitada en rutas y listado.
 - Tutores y enfermedades se administran desde la vista detalle del alumno.
+- Los repasos/puntas se administran desde `resources/views/alumnos/grados/list.blade.php`.
+- Al registrar un repaso se usa como base el arancel activo de tipo `Repaso`
+  del mismo dojo y grado, pero el precio puede ajustarse en el formulario.
+- Cada repaso guarda su propio `monto` para conservar historico aunque luego cambie el arancel.
+- Cada repaso guarda `monto_pagado`.
+  Si se registra como `Pagado`, `monto_pagado = monto`.
+  Si se registra como `Pendiente`, `monto_pagado = 0`.
+- La tabla de repasos muestra monto, pagado, saldo y estado de pago.
+- El comprobante de punta solo se puede imprimir cuando el repaso esta pagado.
 
 #### Personas
 
@@ -126,15 +147,43 @@ Este usuario representa un usuario vinculado a una persona y a un dojo.
 
 #### Seeders
 
-- `UsersTableSeeder` ahora solo crea el usuario admin global.
-- `DojoUsersTableSeeder` crea el usuario operativo relacionado a persona/dojo.
-- `DatabaseSeeder` fue reordenado para respetar dependencias:
+- `UsersTableSeeder` crea usuarios globales/administrativos sin `person_id` ni `dojo_id`
+  en el estado actual del repo.
+- No existe `DojoUsersTableSeeder` actualmente.
+- `DatabaseSeeder` fue reordenado para respetar dependencias actuales:
   1. `VoyagerDatabaseSeeder`
   2. `UsersTableSeeder`
   3. `CiudadsTableSeeder`
-  4. `PeopleTableSeeder`
-  5. `DojosTableSeeder`
-  6. `DojoUsersTableSeeder`
+  4. `DataTypesTableSeeder`
+  5. `DataRowsTableSeeder`
+  6. `MenuItemsTableSeeder`
+  7. `GradosTableSeeder`
+  8. `ParentescosTableSeeder`
+  9. `DojosTableSeeder`
+  10. `PeopleTableSeeder`
+
+#### Consulta Inter-Dojo
+
+- `ConsultaController` permite consultar alumnos de otros dojos en modo solo lectura.
+- Una sucursal puede consultar otros dojos, pero no su propio dojo desde este modulo.
+- El admin global puede consultar todos los dojos.
+- La vista de detalle `resources/views/consulta/show.blade.php` fue ajustada con CSS propio
+  para mostrar foto, datos del alumno, grado en progreso, historial y salud de forma compacta.
+- El detalle de consulta no muestra acciones operativas ni botones de edicion.
+
+#### Aranceles
+
+- Los aranceles se administran desde el detalle de grados:
+  `resources/views/grados/read.blade.php`.
+- Modelo: `App\Models\Arancele`.
+- Tabla: `aranceles`.
+- Campos principales:
+  `grado_id`, `dojo_id`, `tipo`, `precio`, `observacion`, `status`.
+- `tipo` acepta `Repaso` y `Examen`.
+- Para registrar una punta/repaso debe existir un arancel activo de tipo `Repaso`
+  para el mismo `grado_id` y `dojo_id`.
+- Si no existe el arancel, el boton "Agregar Repaso" aparece deshabilitado y se muestra aviso.
+- El backend tambien bloquea el guardado si no existe arancel, aunque se intente enviar el formulario manualmente.
 
 ### Problemas corregidos durante el proceso
 
@@ -143,15 +192,28 @@ Este usuario representa un usuario vinculado a una persona y a un dojo.
 - Error de foreign key en `users.person_id` durante `example:install`.
 - Referencias rotas a campos viejos de `Person`.
 - Referencias inconsistentes a modelos de alumnos, enfermedades y detalle.
+- Vista de `consulta/show.blade.php` sin estilos propios, que hacia que foto y datos salieran desproporcionados.
+- Registro de repasos sin monto ni relacion con arancel.
+- Falta de comprobante imprimible para puntas pagadas.
 
 ### Lo que todavia NO significa
 
 Aunque ya existe base multisucursal, eso no implica que todo el sistema este aislado por sucursal.
 
-Todavia falta, si se quiere multisucursal real:
+Ya hay aislamiento o uso de `dojo_id` en modulos como:
+
+- personas
+- usuarios
+- alumnos
+- grados/aranceles
+- horarios
+- asistencias
+- consulta inter-dojo
+
+Todavia puede faltar, si se quiere multisucursal completa en todo el sistema:
 
 - filtrar otros modulos por `auth()->user()->dojo_id`
-- restringir accesos por sucursal en personas, alumnos, pagos, reportes, etc.
+- restringir accesos por sucursal en pagos avanzados, reportes y modulos nuevos
 - impedir que usuarios de una sucursal vean o editen datos de otra
 
 ## Comandos utiles
@@ -180,8 +242,9 @@ php artisan view:clear
 ### Modelos involucrados
 
 - `App\Models\AlumnoGrado` — relacion alumno-grado. Tiene `repasos()`, `examenes()` (ambos con `whereNull('deleted_at')`), e `isCompletado()`.
-- `App\Models\AlumnoGradoRepaso` — cada sesion de practica. Campo `aprobado` (0/1). Un repaso aprobado cuenta como una punta.
+- `App\Models\AlumnoGradoRepaso` — cada sesion de practica. Campo `aprobado` (0/1). Un repaso aprobado cuenta como una punta. Guarda `arancel_id`, `monto` y `monto_pagado`.
 - `App\Models\AlumnoGradoExamen` — cada intento de examen final. Campo `aprobado` (0/1).
+- `App\Models\Arancele` — precio base por grado, dojo y tipo (`Repaso`, `Examen`).
 
 Todos usan `HasFactory`, `RegistersUserEvents`, `SoftDeletes`.
 
@@ -189,7 +252,10 @@ Todos usan `HasFactory`, `RegistersUserEvents`, `SoftDeletes`.
 
 - `alumno_grados` — ya existia; `status='0'` o null = en progreso, `status='1'` = completado.
 - `alumno_grado_repasos` — creada en migracion `2026_04_24_100000`.
+  Luego se amplio con migracion `2026_05_06_000000_add_arancel_amounts_to_alumno_grado_repasos_table.php`
+  para agregar `arancel_id`, `monto`, `monto_pagado`.
 - `alumno_grado_examens` — creada en migracion `2026_04_24_100001`.
+- `aranceles` — creada en migracion `2026_05_05_000003_create_aranceles_table.php`.
 
 ### Reglas de negocio (todas validadas en servidor)
 
@@ -201,6 +267,11 @@ Todos usan `HasFactory`, `RegistersUserEvents`, `SoftDeletes`.
 6. El mismo grado no puede registrarse dos veces para el mismo alumno (se verifica incluyendo soft-deleted).
 7. El select de grados excluye los que el alumno ya tiene registrados (completados o en progreso).
 8. La fecha de inicio de un nuevo grado no puede ser anterior a la fecha del examen final aprobado del grado anterior.
+9. Para agregar un repaso debe existir arancel activo tipo `Repaso` para el grado y dojo del alumno.
+10. El precio del repaso viene precargado desde el arancel, pero puede ajustarse al momento de registrar.
+11. El usuario debe seleccionar si el repaso queda `Pagado` o `Pendiente`.
+12. Si queda `Pagado`, se puede imprimir comprobante.
+13. Si queda `Pendiente`, el comprobante no se muestra y la ruta de comprobante bloquea la impresion.
 
 ### Detalle de implementacion
 
@@ -210,15 +281,50 @@ Todos usan `HasFactory`, `RegistersUserEvents`, `SoftDeletes`.
 
 - **Grado inicial al registrar alumno**: Al crear un alumno desde el modal de registro, el `AlumnoGrado` inicial se crea con `status='0'` para que el alumno deba completar el ciclo normal de puntas + examen.
 
+- **Arancel de repaso**: `storeRepaso()` carga el `AlumnoGrado` con `alumno`, `grado`, `repasos`, `examenes`; toma el `dojo_id` desde `alumno.dojo_id`; busca `Arancele` con `grado_id`, `dojo_id`, `tipo='Repaso'`, `status=1` y `deleted_at=null`.
+
+- **Monto historico del repaso**: aunque el precio base viene de `Arancele.precio`, el formulario permite ajustar `monto`. Ese valor se copia a `alumno_grado_repasos.monto` para mantener historico independiente de futuros cambios de arancel.
+
+- **Estado de pago del repaso**: el formulario envia `estado_pago`.
+  - `pagado` guarda `monto_pagado = monto`.
+  - `pendiente` guarda `monto_pagado = 0`.
+
+- **Comprobante de punta**: cuando el repaso se registra como pagado, `storeRepaso()` redirige a `alumno.grado.repaso.comprobante`. Cuando queda pendiente, vuelve al detalle del alumno.
+
+- **Bloqueo de comprobante pendiente**: `comprobanteRepaso()` verifica que `monto > 0` y `monto_pagado >= monto`. Si no se cumple, redirige al detalle del alumno con aviso.
+
 ### Rutas (AlumnoGradoController)
 
 ```
 POST   admin/alumnos/grado/store               alumno.grado.store
 POST   admin/alumnos/grado/repaso/store        alumno.grado.repaso.store
+GET    admin/alumnos/grado/repaso/{id}/comprobante  alumno.grado.repaso.comprobante
 DELETE admin/alumnos/grado/repaso/{id}/delete  alumno.grado.repaso.destroy
 POST   admin/alumnos/grado/examen/store        alumno.grado.examen.store
 DELETE admin/alumnos/grado/examen/{id}/delete  alumno.grado.examen.destroy
 ```
+
+### Comprobante de Punta
+
+Vista: `resources/views/alumnos/partials/comprobantePunta.blade.php`
+
+El comprobante muestra:
+
+- datos del dojo: nombre, direccion, telefono, email, logo
+- datos del alumno: nombre, documento, telefono
+- datos del grado: tipo, numero, nombre
+- datos de la punta/repaso: fecha, resultado, observacion, arancel base
+- control de pago: monto, pagado, saldo, estado
+- numero de comprobante basado en `repaso.id`
+- botones de volver e imprimir
+
+Reglas:
+
+- Solo aparece boton de imprimir comprobante en la tabla si la punta esta pagada.
+- Una punta esta pagada cuando `monto > 0` y `monto_pagado >= monto`.
+- Si esta pendiente, no se muestra la accion de imprimir.
+- Si se intenta abrir el comprobante pendiente por URL, el controlador bloquea y redirige.
+- El comprobante se abre en una vista imprimible con `window.print()`.
 
 ### Comunicacion AJAX entre partial y vista principal
 
@@ -228,15 +334,27 @@ DELETE admin/alumnos/grado/examen/{id}/delete  alumno.grado.examen.destroy
 - `#min-fecha-grado` — fecha ISO minima para el campo `fecha` del modal de nuevo grado.
 - `#active-grado-id` — ID del grado activo actual.
 
+Ademas, este partial:
+
+- calcula total de repasos, total pagado y saldo
+- muestra monto, pagado, saldo y estado de pago por repaso
+- muestra el boton de comprobante solo para repasos pagados
+- muestra aviso si falta arancel activo de tipo `Repaso`
+- deshabilita el boton "Agregar Repaso" si falta arancel activo
+
 ### Select2 dentro de modales Bootstrap
 
 Los select con clase `select2` dentro de modales deben reinicializarse con `dropdownParent: $(modal)` cuando el modal abre (`shown.bs.modal`), de lo contrario el dropdown queda detras del overlay. Ver `initGradoSelect()` en `browse.blade.php`.
 
 ## Resumen corto
 
-- `admin@admin.com` = usuario global, sin persona ni dojo
-- `ignacio@admin.com` = usuario operativo, con persona y dojo
+- `admin@soluciondigital.dev` = usuario global, sin persona ni dojo
+- `wallys@admin.com` = usuario actual en seeder, sin persona ni dojo
 - `registerUser_id` = auditoria
 - `dojo_id` = pertenencia a sucursal
 - `AlumnoGrado.status` = `'0'`/null en progreso, `'1'` completado
+- `Arancele` define precios por grado, dojo y tipo
+- Para registrar repaso/punta debe existir arancel activo tipo `Repaso`
+- Cada repaso guarda `monto` y `monto_pagado`
+- Comprobante de punta solo se imprime si esta pagado
 - `.codex` = documento central del proyecto

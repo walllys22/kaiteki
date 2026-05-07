@@ -180,7 +180,7 @@
 </head>
 <body>
     <div class="actions">
-        <a href="{{ route('voyager.alumnos.show', optional($alumno)->id) }}" class="btn-back">Volver</a>
+        <button type="button" class="btn-back" onclick="window.close()">Cancelar</button>
         <button type="button" class="btn-print" onclick="window.print()">Imprimir</button>
     </div>
 
