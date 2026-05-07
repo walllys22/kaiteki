@@ -102,6 +102,8 @@
         }
         .line {
             display: block;
+            text-align: justify;
+            text-align-last: left;
         }
         @media print {
             body {
