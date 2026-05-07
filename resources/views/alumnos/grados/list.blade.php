@@ -315,6 +315,14 @@
                                                 <i class="fa-solid fa-money-bill"></i>
                                             </button>
                                         @endif
+                                        @if((int) optional($activeGrado->alumno)->dojo_id === 3 && $examen->aprobado)
+                                            <a href="{{ route('alumno.grado.examen.certificado', $examen->id) }}"
+                                               target="_blank"
+                                               class="btn btn-primary btn-xs"
+                                               title="Imprimir certificado">
+                                                <i class="fa-solid fa-certificate"></i>
+                                            </a>
+                                        @endif
                                         @if(!$activeGrado->isCompletado() && $loop->first)
                                             <a href="#" onclick="deleteItem('{{ route('alumno.grado.examen.destroy', $examen->id) }}')"
                                                data-toggle="modal" data-target="#modal-delete"
@@ -652,6 +660,17 @@
                         @if($hExamAprobado)
                             <span class="label label-success"><i class="fa-solid fa-check"></i> Aprobado</span>
                             <br><small class="text-muted" style="font-size:11px;">{{ \Carbon\Carbon::parse($hExamenFinal->fecha)->format('d/m/Y') }}</small>
+                            @if((int) optional($item->alumno)->dojo_id === 3)
+                                <br>
+                                <a href="{{ route('alumno.grado.examen.certificado', $hExamenFinal->id) }}"
+                                   target="_blank"
+                                   class="btn btn-primary btn-xs"
+                                   style="margin-top:4px;"
+                                   onclick="event.stopPropagation();"
+                                   title="Imprimir certificado">
+                                    <i class="fa-solid fa-certificate"></i> Certificado
+                                </a>
+                            @endif
                         @else
                             <span class="label label-default">—</span>
                         @endif

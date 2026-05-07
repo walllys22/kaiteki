@@ -529,6 +529,36 @@ class AlumnoGradoController extends Controller
         return view('alumnos.partials.comprobanteExamen', compact('examen'));
     }
 
+    public function certificadoExamen(int $id)
+    {
+        $this->custom_authorize('read_alumnos');
+
+        $userDojoId = auth()->user()->dojo_id;
+
+        $examen = AlumnoGradoExamen::with([
+            'alumnoGrado.grado',
+            'alumnoGrado.alumno.person',
+            'alumnoGrado.alumno.dojo',
+        ])
+            ->whereNull('deleted_at')
+            ->where('aprobado', 1)
+            ->when($userDojoId, function ($query, $userDojoId) {
+                return $query->whereHas('alumnoGrado.alumno', function ($alumnoQuery) use ($userDojoId) {
+                    $alumnoQuery->where('dojo_id', $userDojoId);
+                });
+            })
+            ->findOrFail($id);
+
+        $alumno = $examen->alumnoGrado->alumno;
+
+        if ((int) $alumno->dojo_id !== 3) {
+            return redirect()->route('voyager.alumnos.show', ['id' => $alumno->id])
+                ->with(['message' => 'El certificado de examen solo está configurado para el Dojo LJP Zabala.', 'alert-type' => 'warning']);
+        }
+
+        return view('alumnos.partials.certificadoExamenLjp', compact('examen'));
+    }
+
     public function destroyExamen(int $id)
     {
         $this->custom_authorize('delete_alumnos');

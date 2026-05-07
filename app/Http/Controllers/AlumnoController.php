@@ -527,7 +527,7 @@ class AlumnoController extends Controller
         }
 
         // Grados completados (historial)
-        $data = AlumnoGrado::with(['grado', 'repasos', 'examenes'])
+        $data = AlumnoGrado::with(['alumno', 'grado', 'repasos', 'examenes'])
             ->where('alumno_id', $alumno_id)
             ->where('status', '1')
             ->when($search, function ($query, $search) {
