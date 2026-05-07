@@ -85,7 +85,7 @@ class GradoController extends Controller
 
         $grado->update($data);
 
-        return redirect()->route('voyager.grados.show', $grado->id)
+        return redirect()->route('voyager.grados.index')
             ->with(['message' => 'Grado actualizado correctamente.', 'alert-type' => 'success']);
     }
 

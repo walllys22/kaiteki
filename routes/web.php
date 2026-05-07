@@ -111,8 +111,8 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
 
     Route::get('grados', [GradoController::class, 'index'])->name('voyager.grados.index');
     Route::get('grados/ajax/list', [GradoController::class, 'list']);
-    Route::get('grados/{id}/edit', [GradoController::class, 'edit'])->name('voyager.grados.edit');
-    Route::put('grados/{id}/update', [GradoController::class, 'update'])->name('voyager.grados.update');
+    // Route::get('grados/{id}/edit', [GradoController::class, 'edit'])->name('voyager.grados.edit');
+    // Route::put('grados/{id}/update', [GradoController::class, 'update'])->name('voyager.grados.update');
     Route::get('grados/{id}', [GradoController::class, 'show'])->name('voyager.grados.show');
     Route::post('grados/aranceles/store', [GradoController::class, 'storeArancel'])->name('grados.aranceles.store');
     Route::put('grados/aranceles/{id}/precio', [GradoController::class, 'updateArancelPrecio'])->name('grados.aranceles.precio.update');
