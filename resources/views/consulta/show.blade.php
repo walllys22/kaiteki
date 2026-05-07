@@ -2,6 +2,103 @@
 
 @section('page_title', 'Consulta Alumno')
 
+@section('css')
+    <style>
+        .consulta-read .panel { margin-bottom: 22px; }
+        .consulta-read .panel-heading h4 { font-size: 16px; line-height: 1.35; }
+        .consulta-read .readonly-alert {
+            border: 0;
+            border-left: 4px solid #3498db;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 16px;
+            padding: 10px 14px;
+        }
+        .alumno-summary-panel .panel-body { padding: 18px 20px; }
+        .alumno-photo-card { margin-bottom: 12px; }
+        .alumno-photo-title,
+        .alumno-label {
+            color: #7a8a9a;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .03em;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        .alumno-photo-frame {
+            align-items: center;
+            background: linear-gradient(180deg, #f9fbfd 0%, #f3f6f9 100%);
+            border: 1px solid #e6edf3;
+            border-radius: 8px;
+            display: flex;
+            height: 170px;
+            justify-content: center;
+            overflow: hidden;
+            width: 100%;
+        }
+        .alumno-photo-img {
+            display: block;
+            height: 100%;
+            object-fit: cover;
+            width: 100%;
+        }
+        .alumno-photo-fallback {
+            align-items: center;
+            color: #9aa7b4;
+            display: flex;
+            font-size: 58px;
+            height: 100%;
+            justify-content: center;
+            width: 100%;
+        }
+        .alumno-info-header {
+            align-items: flex-start;
+            border-bottom: 1px solid #edf2f7;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            padding-bottom: 11px;
+        }
+        .alumno-name {
+            color: #1f2d3d;
+            font-size: 22px;
+            font-weight: 700;
+            line-height: 1.25;
+            margin: 3px 0 0;
+        }
+        .alumno-status-label {
+            font-size: 12px;
+            padding: 6px 10px;
+        }
+        .alumno-data-card {
+            background-color: #fbfcfe;
+            border: 1px solid #edf2f7;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            min-height: 68px;
+            padding: 11px 13px;
+        }
+        .alumno-value {
+            color: #253443;
+            font-size: 14px;
+            line-height: 1.45;
+            overflow-wrap: anywhere;
+        }
+        .consulta-read .table { color: #253443; }
+        .consulta-read .table th {
+            background: #fbfcfe;
+            color: #6d7f91;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+        @media (max-width: 991px) {
+            .alumno-photo-frame { height: 220px; max-width: 260px; }
+            .alumno-info-header { display: block; }
+            .alumno-status-wrap { margin-top: 10px; }
+        }
+    </style>
+@stop
+
 @section('page_header')
     <div class="container-fluid">
         <div class="row">
@@ -35,7 +132,7 @@
     }
 @endphp
 
-<div class="page-content read container-fluid">
+<div class="page-content read container-fluid consulta-read">
 
     {{-- ── Encabezado del alumno ── --}}
     <div class="row">
@@ -43,7 +140,7 @@
             <div class="panel panel-bordered alumno-summary-panel">
                 <div class="panel-body">
 
-                    <div class="alert alert-info" style="font-size:12px; margin-bottom:12px;">
+                    <div class="alert alert-info readonly-alert">
                         <i class="fa-solid fa-circle-info"></i>
                         Vista de solo lectura — información del alumno en <strong>{{ optional($dojoData)->nombre ?? 'otro dojo' }}</strong>.
                     </div>
