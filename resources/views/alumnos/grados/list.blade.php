@@ -12,6 +12,9 @@
         $gradoLabel = trim(($g->tipo ?? '') . ' ' . ($g->numero ?? '') . ' ' . ($g->nombre ?? ''));
         $repasos  = $activeGrado->repasos->sortByDesc('fecha');
         $examenes = $activeGrado->examenes->sortByDesc('fecha');
+        $totalRepasos = $repasos->sum(fn($repaso) => (float) ($repaso->monto ?? 0));
+        $totalPagadoRepasos = $repasos->sum(fn($repaso) => (float) ($repaso->monto_pagado ?? 0));
+        $saldoRepasos = max(0, $totalRepasos - $totalPagadoRepasos);
         $porcentajePuntas = $progress['puntasRequeridas'] > 0
             ? min(100, round($progress['puntasObtenidas'] / $progress['puntasRequeridas'] * 100))
             : 100;
@@ -104,9 +107,15 @@
                             <small class="text-muted">({{ $repasos->count() }} total · {{ $repasos->where('aprobado', 1)->count() }} aprobados)</small>
                         </h5>
                         @if(!$activeGrado->isCompletado() && !$progress['cumplePuntas'])
-                        <button class="btn btn-primary btn-xs" data-toggle="modal" data-target="#modal-add-repaso">
-                            <i class="voyager-plus"></i> Agregar Repaso
-                        </button>
+                            @if($arancelRepaso)
+                                <button class="btn btn-primary btn-xs" data-toggle="modal" data-target="#modal-add-repaso">
+                                    <i class="voyager-plus"></i> Agregar Repaso
+                                </button>
+                            @else
+                                <button type="button" class="btn btn-default btn-xs" disabled title="Debe registrar un arancel de Repaso para este grado y dojo.">
+                                    <i class="voyager-plus"></i> Agregar Repaso
+                                </button>
+                            @endif
                         @elseif($progress['cumplePuntas'] && !$activeGrado->isCompletado())
                         <span class="label label-success" style="font-size:11px; padding:4px 8px;">
                             <i class="fa-solid fa-lock"></i> Puntas completas — debe rendir examen
@@ -114,13 +123,31 @@
                         @endif
                     </div>
 
+                    @if(!$arancelRepaso && !$activeGrado->isCompletado() && !$progress['cumplePuntas'])
+                        <div class="alert alert-warning" style="font-size:12px; padding:8px 10px; margin-bottom:8px;">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            Para agregar repasos debe registrar primero un arancel activo de tipo <strong>Repaso</strong>
+                            para este grado y dojo.
+                        </div>
+                    @endif
+
                     @if($repasos->count())
+                    <div class="alert alert-info" style="font-size:12px; padding:8px 10px; margin-bottom:8px;">
+                        <i class="fa-solid fa-money-bill"></i>
+                        Monto total: <strong>Bs {{ number_format($totalRepasos, 2, '.', ',') }}</strong>
+                        &nbsp;·&nbsp; Pagado: <strong>Bs {{ number_format($totalPagadoRepasos, 2, '.', ',') }}</strong>
+                        &nbsp;·&nbsp; Saldo: <strong>Bs {{ number_format($saldoRepasos, 2, '.', ',') }}</strong>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-condensed table-bordered" style="font-size:13px;">
                             <thead>
                                 <tr>
                                     <th style="width:110px;">Fecha</th>
                                     <th style="width:110px; text-align:center;">Resultado</th>
+                                    <th style="width:95px; text-align:right;">Monto</th>
+                                    <th style="width:95px; text-align:right;">Pagado</th>
+                                    <th style="width:95px; text-align:right;">Saldo</th>
+                                    <th style="width:95px; text-align:center;">Pago</th>
                                     <th>Observación</th>
                                     @if(!$activeGrado->isCompletado())
                                     <th style="width:60px; text-align:center;">Acc.</th>
@@ -136,6 +163,20 @@
                                             <span class="label label-success"><i class="fa-solid fa-star"></i> Punta</span>
                                         @else
                                             <span class="label label-default">No aprobado</span>
+                                        @endif
+                                    </td>
+                                    <td style="text-align:right;">Bs {{ number_format((float) ($repaso->monto ?? 0), 2, '.', ',') }}</td>
+                                    <td style="text-align:right;">Bs {{ number_format((float) ($repaso->monto_pagado ?? 0), 2, '.', ',') }}</td>
+                                    <td style="text-align:right;">
+                                        Bs {{ number_format(max(0, (float) ($repaso->monto ?? 0) - (float) ($repaso->monto_pagado ?? 0)), 2, '.', ',') }}
+                                    </td>
+                                    <td style="text-align:center;">
+                                        @if((float) ($repaso->monto ?? 0) <= 0)
+                                            <span class="label label-default">Sin monto</span>
+                                        @elseif((float) ($repaso->monto_pagado ?? 0) >= (float) ($repaso->monto ?? 0))
+                                            <span class="label label-success">Pagado</span>
+                                        @else
+                                            <span class="label label-warning">Pendiente</span>
                                         @endif
                                     </td>
                                     <td>{{ $repaso->observacion ?: '—' }}</td>
@@ -287,6 +328,29 @@
                                 <select name="aprobado" class="form-control" required>
                                     <option value="1">✅ Aprobado (cuenta como punta)</option>
                                     <option value="0">❌ No aprobado</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-md-6">
+                                <label>Precio del repaso <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-addon">Bs</span>
+                                    <input type="number"
+                                           name="monto"
+                                           class="form-control"
+                                           min="0"
+                                           max="99999999.99"
+                                           step="0.01"
+                                           value="{{ old('monto', optional($arancelRepaso)->precio) }}"
+                                           required>
+                                </div>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>Estado de pago <span class="text-danger">*</span></label>
+                                <select name="estado_pago" class="form-control" required>
+                                    <option value="pendiente" {{ old('estado_pago', 'pendiente') === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
+                                    <option value="pagado" {{ old('estado_pago') === 'pagado' ? 'selected' : '' }}>Pagado</option>
                                 </select>
                             </div>
                         </div>

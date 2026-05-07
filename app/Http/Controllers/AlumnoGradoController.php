@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AlumnoGrado;
 use App\Models\AlumnoGradoRepaso;
 use App\Models\AlumnoGradoExamen;
+use App\Models\Arancele;
 use App\Models\AsistenciaAlumno;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -149,10 +150,12 @@ class AlumnoGradoController extends Controller
             'alumno_grado_id' => 'required|exists:alumno_grados,id',
             'fecha'           => 'required|date',
             'aprobado'        => 'required|in:0,1',
+            'monto'           => 'required|numeric|min:0|max:99999999.99',
+            'estado_pago'     => 'required|in:pendiente,pagado',
             'observacion'     => 'nullable|string|max:500',
         ]);
 
-        $alumnoGrado = AlumnoGrado::with(['grado', 'repasos', 'examenes'])->findOrFail($request->alumno_grado_id);
+        $alumnoGrado = AlumnoGrado::with(['alumno', 'grado', 'repasos', 'examenes'])->findOrFail($request->alumno_grado_id);
 
         if ($alumnoGrado->isCompletado()) {
             return redirect()->back()
@@ -200,11 +203,38 @@ class AlumnoGradoController extends Controller
                 ->with(['message' => "La fecha del repaso debe ser posterior al último examen ({$fechaFormateada}).", 'alert-type' => 'error']);
         }
 
+        $dojoId = optional($alumnoGrado->alumno)->dojo_id;
+
+        if (!$dojoId) {
+            return redirect()->back()
+                ->withInput()
+                ->with(['message' => 'El alumno no tiene un dojo asignado para calcular el arancel del repaso.', 'alert-type' => 'error']);
+        }
+
+        $arancelRepaso = Arancele::query()
+            ->where('grado_id', $alumnoGrado->grado_id)
+            ->where('dojo_id', $dojoId)
+            ->where('tipo', 'Repaso')
+            ->where('status', 1)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (!$arancelRepaso) {
+            return redirect()->back()
+                ->withInput()
+                ->with(['message' => 'Debe registrar un arancel activo de tipo Repaso para este grado y dojo antes de agregar la punta.', 'alert-type' => 'error']);
+        }
+
         try {
+            $monto = (float) $request->monto;
+
             AlumnoGradoRepaso::create([
                 'alumno_grado_id' => $request->alumno_grado_id,
+                'arancel_id'      => $arancelRepaso->id,
                 'fecha'           => $request->fecha,
                 'aprobado'        => $request->aprobado,
+                'monto'           => $monto,
+                'monto_pagado'    => $request->estado_pago === 'pagado' ? $monto : 0,
                 'observacion'     => $request->observacion,
             ]);
 

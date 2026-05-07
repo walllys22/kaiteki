@@ -45,7 +45,51 @@ class GradoController extends Controller
         return view('grados.list', compact('data'));
     }
 
-    public function show($id)
+    public function edit(int $id)
+    {
+        $this->custom_authorize('edit_grados');
+
+        $grado = Grado::whereNull('deleted_at')->findOrFail($id);
+
+        return view('grados.edit-add', compact('grado'));
+    }
+
+    public function update(Request $request, int $id)
+    {
+        $this->custom_authorize('edit_grados');
+
+        $request->validate([
+            'tipo'    => 'nullable|string|max:255',
+            'numero'  => 'nullable|string|max:255',
+            'nombre'  => 'nullable|string|max:255',
+            'puntas'  => 'required|integer|min:0',
+            'dias'    => 'required|integer|min:0',
+            'image'   => 'nullable|image|mimes:jpeg,jpg,png,bmp,webp|max:3072',
+        ]);
+
+        $grado = Grado::whereNull('deleted_at')->findOrFail($id);
+
+        $data = [
+            'tipo'   => $request->tipo,
+            'numero' => $request->numero,
+            'nombre' => $request->nombre,
+            'puntas' => $request->puntas,
+            'dias'   => $request->dias,
+            'status' => $request->has('status') ? 1 : 0,
+        ];
+
+        if ($request->hasFile('image')) {
+            $storageController = new StorageController();
+            $data['image'] = $storageController->store_image($request->file('image'), 'grados');
+        }
+
+        $grado->update($data);
+
+        return redirect()->route('voyager.grados.show', $grado->id)
+            ->with(['message' => 'Grado actualizado correctamente.', 'alert-type' => 'success']);
+    }
+
+    public function show(int $id)
     {
         $this->custom_authorize('read_grados');
 
@@ -133,7 +177,7 @@ class GradoController extends Controller
             ->with(['message' => 'Arancel registrado correctamente.', 'alert-type' => 'success']);
     }
 
-    public function destroyArancel($id)
+    public function destroyArancel(int $id)
     {
         $this->custom_authorize('read_grados');
 
@@ -153,7 +197,7 @@ class GradoController extends Controller
             ->with(['message' => 'Arancel eliminado correctamente.', 'alert-type' => 'success']);
     }
 
-    public function updateArancelPrecio(Request $request, $id)
+    public function updateArancelPrecio(Request $request, int $id)
     {
         $this->custom_authorize('read_grados');
 

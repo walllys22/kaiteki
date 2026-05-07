@@ -9,6 +9,7 @@ use App\Models\AlumnoEnfermedad;
 use App\Models\AlumnoGrado;
 use App\Models\AlumnoGradoExamen;
 use App\Models\AlumnoHorario;
+use App\Models\Arancele;
 use App\Models\AsistenciaAlumno;
 use App\Models\Person;
 use App\Models\Dojo;
@@ -491,7 +492,7 @@ class AlumnoController extends Controller
         $paginate = request('paginate') ?? 10;
 
         // Grado activo (en progreso): el más reciente con status != '1'
-        $activeGrado = AlumnoGrado::with(['grado', 'repasos', 'examenes'])
+        $activeGrado = AlumnoGrado::with(['alumno', 'grado', 'repasos', 'examenes'])
             ->where('alumno_id', $alumno_id)
             ->where(function ($q) {
                 $q->whereNull('status')->orWhere('status', '0');
@@ -503,6 +504,17 @@ class AlumnoController extends Controller
         $progress = null;
         if ($activeGrado) {
             $progress = AlumnoGradoController::calcularProgreso($activeGrado);
+        }
+
+        $arancelRepaso = null;
+        if ($activeGrado && $activeGrado->alumno && $activeGrado->alumno->dojo_id) {
+            $arancelRepaso = Arancele::query()
+                ->where('grado_id', $activeGrado->grado_id)
+                ->where('dojo_id', $activeGrado->alumno->dojo_id)
+                ->where('tipo', 'Repaso')
+                ->where('status', 1)
+                ->whereNull('deleted_at')
+                ->first();
         }
 
         // Grados completados (historial)
@@ -554,7 +566,7 @@ class AlumnoController extends Controller
             ->get();
 
         return view('alumnos.grados.list', compact(
-            'data', 'alumno_id', 'activeGrado', 'progress', 'puedeAgregarGrado', 'grados', 'minFechaGrado'
+            'data', 'alumno_id', 'activeGrado', 'progress', 'puedeAgregarGrado', 'grados', 'minFechaGrado', 'arancelRepaso'
         ));
     }
 

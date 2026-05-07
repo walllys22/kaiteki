@@ -17,6 +17,21 @@
                     @endphp
                     <tr>
                         <td style="vertical-align: middle;">
+                            @if($item->image)
+                                @php $imgSrc = asset('storage/' . str_replace('.avif', '', $item->image) . '-cropped.webp'); @endphp
+                                <img src="{{ $imgSrc }}" alt="{{ $gradoLabel }}" class="image-expandable"
+                                     style="width:50px; height:50px; border-radius:6px; object-fit:cover;"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
+                                <span style="display:none; width:50px; height:50px; border-radius:6px; background:#f0f4f8;
+                                             align-items:center; justify-content:center; color:#aaa; font-size:20px;">
+                                    <i class="fa-solid fa-image"></i>
+                                </span>
+                            @else
+                                <span style="display:inline-flex; width:50px; height:50px; border-radius:6px; background:#f0f4f8;
+                                             align-items:center; justify-content:center; color:#ccc; font-size:20px;">
+                                    <i class="fa-solid fa-image"></i>
+                                </span>
+                            @endif
                             <strong>{{ $gradoLabel ?: 'Sin nombre' }}</strong>
                         </td>
                         <td style="text-align: center; vertical-align: middle;">
