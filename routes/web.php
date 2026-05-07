@@ -96,6 +96,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     // Rutas Alumno Grados
     Route::post('alumnos/grado/store', [AlumnoGradoController::class, 'storeGrado'])->name('alumno.grado.store');
     Route::post('alumnos/grado/repaso/store', [AlumnoGradoController::class, 'storeRepaso'])->name('alumno.grado.repaso.store');
+    Route::get('alumnos/grado/repaso/{id}/comprobante', [AlumnoGradoController::class, 'comprobanteRepaso'])->name('alumno.grado.repaso.comprobante');
     Route::delete('alumnos/grado/repaso/{id}/delete', [AlumnoGradoController::class, 'destroyRepaso'])->name('alumno.grado.repaso.destroy');
     Route::post('alumnos/grado/examen/store', [AlumnoGradoController::class, 'storeExamen'])->name('alumno.grado.examen.store');
     Route::delete('alumnos/grado/examen/{id}/delete', [AlumnoGradoController::class, 'destroyExamen'])->name('alumno.grado.examen.destroy');

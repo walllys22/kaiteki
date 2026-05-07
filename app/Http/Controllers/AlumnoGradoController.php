@@ -228,7 +228,7 @@ class AlumnoGradoController extends Controller
         try {
             $monto = (float) $request->monto;
 
-            AlumnoGradoRepaso::create([
+            $repaso = AlumnoGradoRepaso::create([
                 'alumno_grado_id' => $request->alumno_grado_id,
                 'arancel_id'      => $arancelRepaso->id,
                 'fecha'           => $request->fecha,
@@ -240,12 +240,48 @@ class AlumnoGradoController extends Controller
 
             $msg = $request->aprobado == 1 ? 'Repaso registrado como punta aprobada.' : 'Repaso registrado (no aprobado).';
 
+            if ($request->estado_pago === 'pagado') {
+                return redirect()->route('alumno.grado.repaso.comprobante', ['id' => $repaso->id])
+                    ->with(['message' => $msg, 'alert-type' => 'success']);
+            }
+
             return redirect()->route('voyager.alumnos.show', ['id' => $alumnoGrado->alumno_id])
-                ->with(['message' => $msg, 'alert-type' => 'success']);
+                ->with(['message' => $msg . ' El pago quedó pendiente.', 'alert-type' => 'success']);
         } catch (\Throwable $th) {
             return redirect()->back()
                 ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
         }
+    }
+
+    public function comprobanteRepaso(int $id)
+    {
+        $this->custom_authorize('read_alumnos');
+
+        $userDojoId = auth()->user()->dojo_id;
+
+        $repaso = AlumnoGradoRepaso::with([
+            'arancel',
+            'alumnoGrado.grado',
+            'alumnoGrado.alumno.person',
+            'alumnoGrado.alumno.dojo',
+        ])
+            ->whereNull('deleted_at')
+            ->when($userDojoId, function ($query, $userDojoId) {
+                return $query->whereHas('alumnoGrado.alumno', function ($alumnoQuery) use ($userDojoId) {
+                    $alumnoQuery->where('dojo_id', $userDojoId);
+                });
+            })
+            ->findOrFail($id);
+
+        $monto = (float) ($repaso->monto ?? 0);
+        $pagado = (float) ($repaso->monto_pagado ?? 0);
+
+        if ($monto <= 0 || $pagado < $monto) {
+            return redirect()->route('voyager.alumnos.show', ['id' => $repaso->alumnoGrado->alumno_id])
+                ->with(['message' => 'El comprobante solo se puede imprimir cuando la punta está pagada.', 'alert-type' => 'warning']);
+        }
+
+        return view('alumnos.partials.comprobantePunta', compact('repaso'));
     }
 
     public function destroyRepaso(int $id)

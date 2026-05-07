@@ -149,9 +149,7 @@
                                     <th style="width:95px; text-align:right;">Saldo</th>
                                     <th style="width:95px; text-align:center;">Pago</th>
                                     <th>Observación</th>
-                                    @if(!$activeGrado->isCompletado())
-                                    <th style="width:60px; text-align:center;">Acc.</th>
-                                    @endif
+                                    <th style="width:85px; text-align:center;">Acc.</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -180,15 +178,24 @@
                                         @endif
                                     </td>
                                     <td>{{ $repaso->observacion ?: '—' }}</td>
-                                    @if(!$activeGrado->isCompletado())
                                     <td style="text-align:center;">
+                                        @if((float) ($repaso->monto ?? 0) > 0 && (float) ($repaso->monto_pagado ?? 0) >= (float) ($repaso->monto ?? 0))
+                                            <a href="{{ route('alumno.grado.repaso.comprobante', $repaso->id) }}"
+                                               target="_blank"
+                                               class="btn btn-info btn-xs"
+                                               title="Imprimir comprobante">
+                                                <i class="fa-solid fa-print"></i>
+                                            </a>
+                                        @endif
+                                        @if(!$activeGrado->isCompletado())
                                         <a href="#" onclick="deleteItem('{{ route('alumno.grado.repaso.destroy', $repaso->id) }}')"
                                            data-toggle="modal" data-target="#modal-delete"
-                                           class="btn btn-danger btn-xs">
+                                           class="btn btn-danger btn-xs"
+                                           title="Eliminar repaso">
                                             <i class="voyager-trash"></i>
                                         </a>
+                                        @endif
                                     </td>
-                                    @endif
                                 </tr>
                                 @endforeach
                             </tbody>
