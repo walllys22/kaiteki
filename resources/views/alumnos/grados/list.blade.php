@@ -230,11 +230,25 @@
                             @endif
                         </h5>
                         @if($progress['puedeExamen'] && !$activeGrado->isCompletado())
-                        <button class="btn btn-warning btn-xs" data-toggle="modal" data-target="#modal-add-examen">
-                            <i class="voyager-plus"></i> Registrar Examen
-                        </button>
+                            @if($arancelExamen)
+                                <button class="btn btn-warning btn-xs" data-toggle="modal" data-target="#modal-add-examen">
+                                    <i class="voyager-plus"></i> Registrar Examen
+                                </button>
+                            @else
+                                <button type="button" class="btn btn-default btn-xs" disabled title="Debe registrar un arancel de Examen para este grado y dojo.">
+                                    <i class="voyager-plus"></i> Registrar Examen
+                                </button>
+                            @endif
                         @endif
                     </div>
+
+                    @if($progress['puedeExamen'] && !$activeGrado->isCompletado() && !$arancelExamen)
+                        <div class="alert alert-warning" style="font-size:12px; padding:8px 10px; margin-bottom:8px;">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            Para registrar el examen final debe registrar primero un arancel activo de tipo <strong>Examen</strong>
+                            para este grado y dojo.
+                        </div>
+                    @endif
 
                     @if(!$progress['puedeExamen'] && !$examenes->count())
                         <p class="text-muted" style="font-size:13px;">
@@ -248,10 +262,12 @@
                                 <tr>
                                     <th style="width:110px;">Fecha</th>
                                     <th style="width:120px; text-align:center;">Resultado</th>
+                                    <th style="width:95px; text-align:right;">Monto</th>
+                                    <th style="width:95px; text-align:right;">Pagado</th>
+                                    <th style="width:95px; text-align:right;">Saldo</th>
+                                    <th style="width:95px; text-align:center;">Pago</th>
                                     <th>Observación</th>
-                                    @if(!$activeGrado->isCompletado())
-                                    <th style="width:60px; text-align:center;">Acc.</th>
-                                    @endif
+                                    <th style="width:85px; text-align:center;">Acc.</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -265,16 +281,48 @@
                                             <span class="label label-danger"><i class="fa-solid fa-xmark"></i> Aplazado</span>
                                         @endif
                                     </td>
-                                    <td>{{ $examen->observacion ?: '—' }}</td>
-                                    @if(!$activeGrado->isCompletado())
-                                    <td style="text-align:center;">
-                                        <a href="#" onclick="deleteItem('{{ route('alumno.grado.examen.destroy', $examen->id) }}')"
-                                           data-toggle="modal" data-target="#modal-delete"
-                                           class="btn btn-danger btn-xs">
-                                            <i class="voyager-trash"></i>
-                                        </a>
+                                    <td style="text-align:right;">Bs {{ number_format((float) ($examen->monto ?? 0), 2, '.', ',') }}</td>
+                                    <td style="text-align:right;">Bs {{ number_format((float) ($examen->monto_pagado ?? 0), 2, '.', ',') }}</td>
+                                    <td style="text-align:right;">
+                                        Bs {{ number_format(max(0, (float) ($examen->monto ?? 0) - (float) ($examen->monto_pagado ?? 0)), 2, '.', ',') }}
                                     </td>
-                                    @endif
+                                    <td style="text-align:center;">
+                                        @if((float) ($examen->monto ?? 0) <= 0)
+                                            <span class="label label-default">Sin monto</span>
+                                        @elseif((float) ($examen->monto_pagado ?? 0) >= (float) ($examen->monto ?? 0))
+                                            <span class="label label-success">Pagado</span>
+                                        @else
+                                            <span class="label label-warning">Pendiente</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $examen->observacion ?: '—' }}</td>
+                                    <td style="text-align:center;">
+                                        @if((float) ($examen->monto ?? 0) > 0 && (float) ($examen->monto_pagado ?? 0) >= (float) ($examen->monto ?? 0))
+                                            <a href="{{ route('alumno.grado.examen.comprobante', $examen->id) }}"
+                                               target="_blank"
+                                               class="btn btn-info btn-xs"
+                                               title="Imprimir comprobante">
+                                                <i class="fa-solid fa-print"></i>
+                                            </a>
+                                        @else
+                                            <button type="button"
+                                                    class="btn btn-success btn-xs btn-pagar-examen"
+                                                    title="Registrar pago"
+                                                    data-toggle="modal"
+                                                    data-target="#modal-pagar-examen"
+                                                    data-url="{{ route('alumno.grado.examen.pagar', $examen->id) }}"
+                                                    data-monto="{{ number_format((float) ($examen->monto ?? 0), 2, '.', '') }}">
+                                                <i class="fa-solid fa-money-bill"></i>
+                                            </button>
+                                        @endif
+                                        @if(!$activeGrado->isCompletado())
+                                            <a href="#" onclick="deleteItem('{{ route('alumno.grado.examen.destroy', $examen->id) }}')"
+                                               data-toggle="modal" data-target="#modal-delete"
+                                               class="btn btn-danger btn-xs">
+                                                <i class="voyager-trash"></i>
+                                            </a>
+                                        @endif
+                                    </td>
                                 </tr>
                                 @endforeach
                             </tbody>
@@ -437,6 +485,29 @@
                                 <textarea name="observacion" class="form-control" rows="2" placeholder="Notas sobre el examen..."></textarea>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="form-group col-md-6">
+                                <label>Precio del examen <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-addon">Bs</span>
+                                    <input type="number"
+                                           name="monto"
+                                           class="form-control"
+                                           min="0"
+                                           max="99999999.99"
+                                           step="0.01"
+                                           value="{{ old('monto', optional($arancelExamen)->precio) }}"
+                                           required>
+                                </div>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label>Estado de pago <span class="text-danger">*</span></label>
+                                <select name="estado_pago" class="form-control" required>
+                                    <option value="pendiente" {{ old('estado_pago', 'pendiente') === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
+                                    <option value="pagado" {{ old('estado_pago') === 'pagado' ? 'selected' : '' }}>Pagado</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
@@ -472,6 +543,42 @@
                             <input type="number"
                                    name="monto"
                                    id="pagar-repaso-monto"
+                                   class="form-control"
+                                   min="0.01"
+                                   max="99999999.99"
+                                   step="0.01"
+                                   required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success btn-submit">Guardar Pago</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Modal: Registrar pago de examen pendiente --}}
+<div class="modal fade" tabindex="-1" id="modal-pagar-examen" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="form-pagar-examen" action="#" method="POST" class="form-edit-add">
+                @csrf
+                @method('PUT')
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                    <h4 class="modal-title"><i class="fa-solid fa-money-bill"></i> Registrar Pago de Examen</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Monto pagado <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-addon">Bs</span>
+                            <input type="number"
+                                   name="monto"
+                                   id="pagar-examen-monto"
                                    class="form-control"
                                    min="0.01"
                                    max="99999999.99"
@@ -637,7 +744,10 @@
                                                 <tr>
                                                     <th style="width:100px;">Fecha</th>
                                                     <th style="text-align:center;">Resultado</th>
+                                                    <th style="width:85px; text-align:right;">Monto</th>
+                                                    <th style="width:80px; text-align:center;">Pago</th>
                                                     <th>Observación</th>
+                                                    <th style="width:70px; text-align:center;">Acc.</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -651,7 +761,35 @@
                                                             <span class="label label-danger"><i class="fa-solid fa-xmark"></i> Aplazado</span>
                                                         @endif
                                                     </td>
+                                                    <td style="text-align:right;">Bs {{ number_format((float) ($e->monto ?? 0), 2, '.', ',') }}</td>
+                                                    <td style="text-align:center;">
+                                                        @if((float) ($e->monto ?? 0) > 0 && (float) ($e->monto_pagado ?? 0) >= (float) ($e->monto ?? 0))
+                                                            <span class="label label-success">Pagado</span>
+                                                        @else
+                                                            <span class="label label-warning">Pendiente</span>
+                                                        @endif
+                                                    </td>
                                                     <td>{{ $e->observacion ?: '—' }}</td>
+                                                    <td style="text-align:center;">
+                                                        @if((float) ($e->monto ?? 0) > 0 && (float) ($e->monto_pagado ?? 0) >= (float) ($e->monto ?? 0))
+                                                            <a href="{{ route('alumno.grado.examen.comprobante', $e->id) }}"
+                                                               target="_blank"
+                                                               class="btn btn-info btn-xs"
+                                                               title="Imprimir comprobante">
+                                                                <i class="fa-solid fa-print"></i>
+                                                            </a>
+                                                        @else
+                                                            <button type="button"
+                                                                    class="btn btn-success btn-xs btn-pagar-examen"
+                                                                    title="Registrar pago"
+                                                                    data-toggle="modal"
+                                                                    data-target="#modal-pagar-examen"
+                                                                    data-url="{{ route('alumno.grado.examen.pagar', $e->id) }}"
+                                                                    data-monto="{{ number_format((float) ($e->monto ?? 0), 2, '.', '') }}">
+                                                                <i class="fa-solid fa-money-bill"></i>
+                                                            </button>
+                                                        @endif
+                                                    </td>
                                                 </tr>
                                                 @endforeach
                                             </tbody>
@@ -720,6 +858,12 @@
         var button = $(event.relatedTarget);
         $('#form-pagar-repaso').attr('action', button.data('url'));
         $('#pagar-repaso-monto').val(button.data('monto') || '');
+    });
+
+    $('#modal-pagar-examen').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        $('#form-pagar-examen').attr('action', button.data('url'));
+        $('#pagar-examen-monto').val(button.data('monto') || '');
     });
 })();
 </script>

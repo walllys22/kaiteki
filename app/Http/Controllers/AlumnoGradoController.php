@@ -353,10 +353,12 @@ class AlumnoGradoController extends Controller
             'alumno_grado_id' => 'required|exists:alumno_grados,id',
             'fecha'           => 'required|date',
             'aprobado'        => 'required|in:0,1',
+            'monto'           => 'required|numeric|min:0|max:99999999.99',
+            'estado_pago'     => 'required|in:pendiente,pagado',
             'observacion'     => 'nullable|string|max:500',
         ]);
 
-        $alumnoGrado = AlumnoGrado::with(['grado', 'repasos', 'examenes'])->findOrFail($request->alumno_grado_id);
+        $alumnoGrado = AlumnoGrado::with(['alumno', 'grado', 'repasos', 'examenes'])->findOrFail($request->alumno_grado_id);
 
         if ($alumnoGrado->isCompletado()) {
             return redirect()->back()
@@ -396,11 +398,38 @@ class AlumnoGradoController extends Controller
                 ->with(['message' => "La fecha del examen debe ser posterior al {$referencia}.", 'alert-type' => 'error']);
         }
 
+        $dojoId = optional($alumnoGrado->alumno)->dojo_id;
+
+        if (!$dojoId) {
+            return redirect()->back()
+                ->withInput()
+                ->with(['message' => 'El alumno no tiene un dojo asignado para calcular el arancel del examen.', 'alert-type' => 'error']);
+        }
+
+        $arancelExamen = Arancele::query()
+            ->where('grado_id', $alumnoGrado->grado_id)
+            ->where('dojo_id', $dojoId)
+            ->where('tipo', 'Examen')
+            ->where('status', 1)
+            ->whereNull('deleted_at')
+            ->first();
+
+        if (!$arancelExamen) {
+            return redirect()->back()
+                ->withInput()
+                ->with(['message' => 'Debe registrar un arancel activo de tipo Examen para este grado y dojo antes de registrar el examen final.', 'alert-type' => 'error']);
+        }
+
         try {
+            $monto = (float) $request->monto;
+
             AlumnoGradoExamen::create([
                 'alumno_grado_id' => $request->alumno_grado_id,
+                'arancel_id'      => $arancelExamen->id,
                 'fecha'           => $request->fecha,
                 'aprobado'        => $request->aprobado,
+                'monto'           => $monto,
+                'monto_pagado'    => $request->estado_pago === 'pagado' ? $monto : 0,
                 'observacion'     => $request->observacion,
             ]);
 
@@ -416,11 +445,79 @@ class AlumnoGradoController extends Controller
             }
 
             return redirect()->route('voyager.alumnos.show', ['id' => $alumnoGrado->alumno_id])
-                ->with(['message' => $msg, 'alert-type' => $type]);
+                ->with([
+                    'message' => $request->estado_pago === 'pagado' ? $msg . ' Pago registrado.' : $msg . ' El pago quedó pendiente.',
+                    'alert-type' => $type,
+                ]);
         } catch (\Throwable $th) {
             return redirect()->back()
                 ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
         }
+    }
+
+    public function pagarExamen(Request $request, int $id)
+    {
+        $this->custom_authorize('edit_alumnos');
+
+        $request->validate([
+            'monto' => 'required|numeric|min:0.01|max:99999999.99',
+        ]);
+
+        $userDojoId = auth()->user()->dojo_id;
+
+        $examen = AlumnoGradoExamen::with(['alumnoGrado.alumno'])
+            ->whereNull('deleted_at')
+            ->when($userDojoId, function ($query, $userDojoId) {
+                return $query->whereHas('alumnoGrado.alumno', function ($alumnoQuery) use ($userDojoId) {
+                    $alumnoQuery->where('dojo_id', $userDojoId);
+                });
+            })
+            ->findOrFail($id);
+
+        $monto = (float) $request->monto;
+
+        try {
+            $examen->monto = $monto;
+            $examen->monto_pagado = $monto;
+            $examen->save();
+
+            return redirect()->route('voyager.alumnos.show', ['id' => $examen->alumnoGrado->alumno_id])
+                ->with(['message' => 'Pago del examen registrado correctamente.', 'alert-type' => 'success']);
+        } catch (\Throwable $th) {
+            return redirect()->back()
+                ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
+        }
+    }
+
+    public function comprobanteExamen(int $id)
+    {
+        $this->custom_authorize('read_alumnos');
+
+        $userDojoId = auth()->user()->dojo_id;
+
+        $examen = AlumnoGradoExamen::with([
+            'arancel',
+            'alumnoGrado.grado',
+            'alumnoGrado.alumno.person',
+            'alumnoGrado.alumno.dojo',
+        ])
+            ->whereNull('deleted_at')
+            ->when($userDojoId, function ($query, $userDojoId) {
+                return $query->whereHas('alumnoGrado.alumno', function ($alumnoQuery) use ($userDojoId) {
+                    $alumnoQuery->where('dojo_id', $userDojoId);
+                });
+            })
+            ->findOrFail($id);
+
+        $monto = (float) ($examen->monto ?? 0);
+        $pagado = (float) ($examen->monto_pagado ?? 0);
+
+        if ($monto <= 0 || $pagado < $monto) {
+            return redirect()->route('voyager.alumnos.show', ['id' => $examen->alumnoGrado->alumno_id])
+                ->with(['message' => 'El comprobante solo se puede imprimir cuando el examen está pagado.', 'alert-type' => 'warning']);
+        }
+
+        return view('alumnos.partials.comprobanteExamen', compact('examen'));
     }
 
     public function destroyExamen(int $id)

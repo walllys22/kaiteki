@@ -111,6 +111,14 @@
                                     </div>
                                     <div class="col-md-3">
                                         <div class="alumno-data-card">
+                                            <div class="alumno-label">Edad</div>
+                                            <div class="alumno-value">
+                                                {{ optional($person)->birth_date ? \Carbon\Carbon::parse($person->birth_date)->age . ' año(s)' : 'No registrada' }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="alumno-data-card">
                                             <div class="alumno-label">Teléfono</div>
                                             <div class="alumno-value">
                                                 @if (optional($person)->phone)
@@ -127,6 +135,9 @@
                                             <div class="alumno-value">{{ optional($person)->email ?: 'No registrado' }}</div>
                                         </div>
                                     </div>
+                                </div>
+
+                                <div class="row">
                                     <div class="col-md-3">
                                         <div class="alumno-data-card">
                                             <div class="alumno-label">Dirección</div>

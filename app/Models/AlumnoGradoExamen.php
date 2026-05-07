@@ -15,8 +15,11 @@ class AlumnoGradoExamen extends Model
 
     protected $fillable = [
         'alumno_grado_id',
+        'arancel_id',
         'fecha',
         'aprobado',
+        'monto',
+        'monto_pagado',
         'observacion',
         'registerUser_id',
         'registerRole',
@@ -29,5 +32,10 @@ class AlumnoGradoExamen extends Model
     public function alumnoGrado()
     {
         return $this->belongsTo(AlumnoGrado::class, 'alumno_grado_id');
+    }
+
+    public function arancel()
+    {
+        return $this->belongsTo(Arancele::class, 'arancel_id');
     }
 }

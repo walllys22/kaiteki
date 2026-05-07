@@ -113,6 +113,10 @@ con `person_id` y `dojo_id` vinculados.
 - Un repaso pendiente puede pagarse despues desde la tabla de repasos.
   Al pagar, se puede ajustar el monto y el sistema guarda `monto_pagado = monto`.
 - La accion de pago posterior esta disponible tanto en el grado activo como en el historial de grados completados.
+- El examen final tambien usa arancel activo de tipo `Examen` del mismo dojo y grado.
+- Cada examen guarda `arancel_id`, `monto`, `monto_pagado` y puede quedar `Pagado` o `Pendiente`.
+- Un examen pendiente puede pagarse despues desde el grado activo o desde el historial.
+- El comprobante de examen solo se puede imprimir cuando el examen esta pagado.
 - La tabla de repasos muestra monto, pagado, saldo y estado de pago.
 - El comprobante de punta solo se puede imprimir cuando el repaso esta pagado.
 
@@ -246,7 +250,7 @@ php artisan view:clear
 
 - `App\Models\AlumnoGrado` — relacion alumno-grado. Tiene `repasos()`, `examenes()` (ambos con `whereNull('deleted_at')`), e `isCompletado()`.
 - `App\Models\AlumnoGradoRepaso` — cada sesion de practica. Campo `aprobado` (0/1). Un repaso aprobado cuenta como una punta. Guarda `arancel_id`, `monto` y `monto_pagado`.
-- `App\Models\AlumnoGradoExamen` — cada intento de examen final. Campo `aprobado` (0/1).
+- `App\Models\AlumnoGradoExamen` — cada intento de examen final. Campo `aprobado` (0/1). Guarda `arancel_id`, `monto` y `monto_pagado`.
 - `App\Models\Arancele` — precio base por grado, dojo y tipo (`Repaso`, `Examen`).
 
 Todos usan `HasFactory`, `RegistersUserEvents`, `SoftDeletes`.
@@ -258,6 +262,8 @@ Todos usan `HasFactory`, `RegistersUserEvents`, `SoftDeletes`.
   Luego se amplio con migracion `2026_05_06_000000_add_arancel_amounts_to_alumno_grado_repasos_table.php`
   para agregar `arancel_id`, `monto`, `monto_pagado`.
 - `alumno_grado_examens` — creada en migracion `2026_04_24_100001`.
+  Luego se amplio con migracion `2026_05_06_000001_add_arancel_amounts_to_alumno_grado_examens_table.php`
+  para agregar `arancel_id`, `monto`, `monto_pagado`.
 - `aranceles` — creada en migracion `2026_05_05_000003_create_aranceles_table.php`.
 
 ### Reglas de negocio (todas validadas en servidor)
@@ -277,6 +283,11 @@ Todos usan `HasFactory`, `RegistersUserEvents`, `SoftDeletes`.
 13. Si queda `Pendiente`, el comprobante no se muestra y la ruta de comprobante bloquea la impresion.
 14. Un repaso pendiente puede pagarse posteriormente ajustando el monto; al confirmar, queda pagado y vuelve al detalle del alumno.
 15. El pago posterior tambien se permite desde el historial si el grado ya fue completado.
+16. Para registrar examen final debe existir arancel activo tipo `Examen` para el grado y dojo del alumno.
+17. El precio del examen viene precargado desde el arancel, pero puede ajustarse al momento de registrar.
+18. El examen final tambien puede quedar `Pagado` o `Pendiente`.
+19. Un examen pendiente puede pagarse posteriormente ajustando el monto.
+20. Si el examen esta pagado, se habilita comprobante imprimible.
 
 ### Detalle de implementacion
 
@@ -296,6 +307,18 @@ Todos usan `HasFactory`, `RegistersUserEvents`, `SoftDeletes`.
 
 - **Pago posterior de repaso pendiente**: `pagarRepaso()` recibe un `monto`, valida que sea mayor a cero, actualiza `monto` y `monto_pagado` con ese valor, y vuelve al detalle del alumno. Esta accion se muestra en el grado activo y en el historial de grados completados.
 
+- **Arancel de examen final**: `storeExamen()` carga el `AlumnoGrado` con `alumno`, `grado`, `repasos`, `examenes`; toma el `dojo_id` desde `alumno.dojo_id`; busca `Arancele` con `grado_id`, `dojo_id`, `tipo='Examen'`, `status=1` y `deleted_at=null`.
+
+- **Monto historico del examen final**: aunque el precio base viene de `Arancele.precio`, el formulario permite ajustar `monto`. Ese valor se copia a `alumno_grado_examens.monto`.
+
+- **Estado de pago del examen final**: el formulario envia `estado_pago`.
+  - `pagado` guarda `monto_pagado = monto`.
+  - `pendiente` guarda `monto_pagado = 0`.
+
+- **Pago posterior de examen pendiente**: `pagarExamen()` recibe un `monto`, valida que sea mayor a cero, actualiza `monto` y `monto_pagado` con ese valor, y vuelve al detalle del alumno. Esta accion se muestra en el grado activo y en el historial.
+
+- **Comprobante de examen**: `comprobanteExamen()` verifica que `monto > 0` y `monto_pagado >= monto`. Si no se cumple, redirige al detalle del alumno con aviso. Si esta pagado, renderiza `resources/views/alumnos/partials/comprobanteExamen.blade.php`.
+
 - **Comprobante de punta**: `storeRepaso()` siempre vuelve al detalle del alumno. Si el repaso esta pagado, el comprobante queda disponible desde el boton de impresion en la tabla.
 
 - **Bloqueo de comprobante pendiente**: `comprobanteRepaso()` verifica que `monto > 0` y `monto_pagado >= monto`. Si no se cumple, redirige al detalle del alumno con aviso.
@@ -309,6 +332,8 @@ GET    admin/alumnos/grado/repaso/{id}/comprobante  alumno.grado.repaso.comproba
 PUT    admin/alumnos/grado/repaso/{id}/pagar   alumno.grado.repaso.pagar
 DELETE admin/alumnos/grado/repaso/{id}/delete  alumno.grado.repaso.destroy
 POST   admin/alumnos/grado/examen/store        alumno.grado.examen.store
+GET    admin/alumnos/grado/examen/{id}/comprobante  alumno.grado.examen.comprobante
+PUT    admin/alumnos/grado/examen/{id}/pagar   alumno.grado.examen.pagar
 DELETE admin/alumnos/grado/examen/{id}/delete  alumno.grado.examen.destroy
 ```
 
@@ -334,6 +359,28 @@ Reglas:
 - Si se intenta abrir el comprobante pendiente por URL, el controlador bloquea y redirige.
 - El comprobante se abre en una vista imprimible con `window.print()`.
 
+### Comprobante de Examen
+
+Vista: `resources/views/alumnos/partials/comprobanteExamen.blade.php`
+
+El comprobante muestra:
+
+- datos del dojo: nombre, direccion, telefono, email, logo
+- datos del alumno: nombre, documento, telefono
+- datos del grado: tipo, numero, nombre
+- datos del examen: fecha, resultado, observacion
+- monto cobrado
+- numero de comprobante basado en `examen.id`
+- botones de cancelar e imprimir
+
+Reglas:
+
+- Solo aparece boton de imprimir comprobante en la tabla si el examen esta pagado.
+- Un examen esta pagado cuando `monto > 0` y `monto_pagado >= monto`.
+- Si esta pendiente, no se muestra la accion de imprimir y aparece la accion de registrar pago.
+- Si se intenta abrir el comprobante pendiente por URL, el controlador bloquea y redirige.
+- El comprobante se abre en una vista imprimible blanco y negro con `window.print()`.
+
 ### Comunicacion AJAX entre partial y vista principal
 
 `alumnos/grados/list.blade.php` se carga via AJAX dentro de `read.blade.php`. Para comunicar estado, el partial incluye inputs ocultos que el JS de `read.blade.php` lee despues de cargar el HTML:
@@ -350,6 +397,10 @@ Ademas, este partial:
 - muestra boton para registrar pago cuando el repaso esta pendiente
 - muestra aviso si falta arancel activo de tipo `Repaso`
 - deshabilita el boton "Agregar Repaso" si falta arancel activo
+- muestra aviso si falta arancel activo de tipo `Examen`
+- deshabilita el boton "Registrar Examen" si falta arancel activo
+- permite registrar pago posterior de examenes pendientes
+- muestra el boton de comprobante solo para examenes pagados
 
 ### Select2 dentro de modales Bootstrap
 
@@ -364,7 +415,11 @@ Los select con clase `select2` dentro de modales deben reinicializarse con `drop
 - `AlumnoGrado.status` = `'0'`/null en progreso, `'1'` completado
 - `Arancele` define precios por grado, dojo y tipo
 - Para registrar repaso/punta debe existir arancel activo tipo `Repaso`
+- Para registrar examen final debe existir arancel activo tipo `Examen`
 - Cada repaso guarda `monto` y `monto_pagado`
+- Cada examen guarda `monto` y `monto_pagado`
 - Los repasos pendientes se pueden pagar despues y habilitan comprobante al quedar pagados
+- Los examenes pendientes se pueden pagar despues
+- Los examenes pagados tienen comprobante imprimible
 - Comprobante de punta solo se imprime si esta pagado
 - `.codex` = documento central del proyecto
