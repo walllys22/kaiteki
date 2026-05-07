@@ -23,7 +23,7 @@
 
     $gradoImage = null;
     if (optional($grado)->image) {
-        $gradoImage = asset('storage/' . str_replace('.avif', '', $grado->image) . '-cropped.webp');
+        $gradoImage = asset('storage/' .$grado->image);
     }
 @endphp
 
