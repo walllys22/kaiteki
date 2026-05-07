@@ -169,7 +169,7 @@
 
     <div class="certificate">
         <img src="{{ $photo }}" class="student-photo" alt="Foto alumno" onerror="this.style.display='none';">
-        <div class="reg">Reg: {{ optional($alumno)->id }}</div>
+        <div class="reg">Reg: {{ optional($alumnoGrado)->id }}</div>
 
         <div class="certificate-text">
             <span class="line" style="font-size: 28px">
