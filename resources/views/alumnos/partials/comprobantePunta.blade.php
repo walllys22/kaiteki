@@ -9,7 +9,6 @@
     $pagado = (float) ($repaso->monto_pagado ?? 0);
     $saldo = max(0, $monto - $pagado);
     $estadoPago = $monto <= 0 ? 'Sin monto' : ($pagado >= $monto ? 'Pagado' : 'Pendiente');
-    $estadoClase = $estadoPago === 'Pagado' ? 'paid' : ($estadoPago === 'Pendiente' ? 'pending' : 'muted');
     $logo = optional($dojo)->logo ? asset('storage/' . $dojo->logo) : asset('images/default.jpg');
 @endphp
 
@@ -22,8 +21,8 @@
     <style>
         * { box-sizing: border-box; }
         body {
-            background: #e9edf2;
-            color: #1f2933;
+            background: #fff;
+            color: #000;
             font-family: Arial, Helvetica, sans-serif;
             font-size: 13px;
             margin: 0;
@@ -36,9 +35,10 @@
         }
         .actions button,
         .actions a {
-            border: 0;
-            border-radius: 4px;
-            color: #fff;
+            background: #fff;
+            border: 1px solid #000;
+            border-radius: 0;
+            color: #000;
             cursor: pointer;
             display: inline-block;
             font-size: 13px;
@@ -46,11 +46,14 @@
             padding: 8px 13px;
             text-decoration: none;
         }
-        .btn-print { background: #0b8fdb; }
-        .btn-back { background: #6b7280; }
+        .actions button:hover,
+        .actions a:hover {
+            background: #000;
+            color: #fff;
+        }
         .sheet {
             background: #fff;
-            border: 1px solid #d9e1ea;
+            border: 2px solid #000;
             margin: 0 auto;
             min-height: 480px;
             padding: 28px 32px;
@@ -58,7 +61,7 @@
         }
         .header {
             align-items: center;
-            border-bottom: 2px solid #0b8fdb;
+            border-bottom: 2px solid #000;
             display: flex;
             justify-content: space-between;
             padding-bottom: 16px;
@@ -69,8 +72,9 @@
             gap: 14px;
         }
         .logo {
-            border: 1px solid #d9e1ea;
-            border-radius: 6px;
+            border: 1px solid #000;
+            border-radius: 0;
+            filter: grayscale(100%);
             height: 72px;
             object-fit: cover;
             width: 72px;
@@ -79,29 +83,30 @@
             font-size: 18px;
             font-weight: 700;
             margin: 0 0 4px;
+            text-transform: uppercase;
         }
         .dojo-meta {
-            color: #637083;
+            color: #000;
             line-height: 1.45;
             margin: 0;
         }
         .receipt-title { text-align: right; }
         .receipt-title h1 {
-            color: #0b5f99;
+            color: #000;
             font-size: 22px;
             margin: 0 0 6px;
             text-transform: uppercase;
         }
         .receipt-number {
-            color: #637083;
+            color: #000;
             font-size: 12px;
         }
         .section {
             margin-top: 20px;
         }
         .section-title {
-            border-bottom: 1px solid #e5ebf2;
-            color: #0b5f99;
+            border-bottom: 1px solid #000;
+            color: #000;
             font-size: 14px;
             font-weight: 700;
             margin-bottom: 10px;
@@ -114,13 +119,13 @@
             grid-template-columns: repeat(2, 1fr);
         }
         .field {
-            border: 1px solid #edf1f5;
-            border-radius: 5px;
+            border: 1px solid #000;
+            border-radius: 0;
             padding: 9px 10px;
         }
         .field.full { grid-column: 1 / -1; }
         .label {
-            color: #7b8794;
+            color: #000;
             display: block;
             font-size: 11px;
             font-weight: 700;
@@ -128,20 +133,20 @@
             text-transform: uppercase;
         }
         .value {
-            color: #1f2933;
+            color: #000;
             font-size: 14px;
             font-weight: 600;
             line-height: 1.35;
         }
         .amounts {
-            border: 1px solid #d9e1ea;
-            border-radius: 6px;
+            border: 1px solid #000;
+            border-radius: 0;
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             overflow: hidden;
         }
         .amount-box {
-            border-right: 1px solid #d9e1ea;
+            border-right: 1px solid #000;
             padding: 12px;
             text-align: center;
         }
@@ -152,24 +157,34 @@
             margin-top: 5px;
         }
         .status {
-            border-radius: 20px;
-            color: #fff;
+            border: 1px solid #000;
+            border-radius: 0;
+            color: #000;
             display: inline-block;
             font-weight: 700;
             margin-top: 6px;
             padding: 5px 12px;
+            text-transform: uppercase;
         }
-        .status.paid { background: #10a66a; }
-        .status.pending { background: #f59e0b; }
-        .status.muted { background: #6b7280; }
         .footer {
-            border-top: 1px solid #e5ebf2;
-            color: #637083;
+            border-top: 1px solid #000;
+            color: #000;
             display: flex;
             font-size: 12px;
             justify-content: space-between;
             margin-top: 26px;
             padding-top: 12px;
+        }
+        .signature-row {
+            display: grid;
+            gap: 40px;
+            grid-template-columns: repeat(2, 1fr);
+            margin-top: 48px;
+        }
+        .signature {
+            border-top: 1px solid #000;
+            padding-top: 7px;
+            text-align: center;
         }
         @media print {
             body { background: #fff; padding: 0; }
@@ -253,13 +268,16 @@
         </div>
 
         <div class="section">
-            <div class="section-title">Control de Pago</div>
-            <div class="amounts">
-                <div class="amount-box">
-                    <span class="label">Monto</span>
-                    <strong>Bs {{ number_format($monto, 2, '.', ',') }}</strong>
-                </div>
+            <div class="field">
+                <span class="label">Monto</span>
+                <span class="value">Bs {{ number_format($monto, 2, '.', ',') }}</span>
             </div>
+        </div>
+        <br><br><br>
+
+        <div class="signature-row">
+            <div class="signature">Firma del responsable</div>
+            <div class="signature">Firma del alumno / tutor</div>
         </div>
 
         <div class="footer">
