@@ -30,6 +30,7 @@
         $gradoLabel = trim(($grado->tipo ?? '') . ' ' . ($grado->numero ?? '') . ' ' . ($grado->nombre ?? ''));
         $selectedDojo = $userDojoId ? $dojos->first() : null;
         $canManageAranceles = auth()->user()->hasPermission('read_grados');
+        $usaRepasos = $grado->usaRepasos();
     @endphp
 
     <div class="page-content read container-fluid">
@@ -44,7 +45,7 @@
                             </div>
                             <div class="col-sm-2">
                                 <span class="grado-kicker">Puntas</span>
-                                <div class="grado-stat">{{ $grado->puntas }}</div>
+                                <div class="grado-stat">{{ $usaRepasos ? $grado->puntas : 'No aplica' }}</div>
                             </div>
                             <div class="col-sm-2">
                                 <span class="grado-kicker">Dias</span>
@@ -103,9 +104,14 @@
                                 <div class="form-group">
                                     <label>Tipo <span class="text-danger">*</span></label>
                                     <select name="tipo" class="form-control" required>
-                                        <option value="Repaso" {{ old('tipo') === 'Repaso' ? 'selected' : '' }}>Repaso</option>
+                                        @if($usaRepasos)
+                                            <option value="Repaso" {{ old('tipo') === 'Repaso' ? 'selected' : '' }}>Repaso</option>
+                                        @endif
                                         <option value="Examen" {{ old('tipo') === 'Examen' ? 'selected' : '' }}>Examen</option>
                                     </select>
+                                    @if(!$usaRepasos)
+                                        <small class="text-muted">Los grados Dan solo requieren arancel de Examen.</small>
+                                    @endif
                                 </div>
 
                                 <div class="form-group">

@@ -509,13 +509,15 @@ class AlumnoController extends Controller
         $arancelRepaso = null;
         $arancelExamen = null;
         if ($activeGrado && $activeGrado->alumno && $activeGrado->alumno->dojo_id) {
-            $arancelRepaso = Arancele::query()
-                ->where('grado_id', $activeGrado->grado_id)
-                ->where('dojo_id', $activeGrado->alumno->dojo_id)
-                ->where('tipo', 'Repaso')
-                ->where('status', 1)
-                ->whereNull('deleted_at')
-                ->first();
+            if ($activeGrado->grado && $activeGrado->grado->usaRepasos()) {
+                $arancelRepaso = Arancele::query()
+                    ->where('grado_id', $activeGrado->grado_id)
+                    ->where('dojo_id', $activeGrado->alumno->dojo_id)
+                    ->where('tipo', 'Repaso')
+                    ->where('status', 1)
+                    ->whereNull('deleted_at')
+                    ->first();
+            }
 
             $arancelExamen = Arancele::query()
                 ->where('grado_id', $activeGrado->grado_id)

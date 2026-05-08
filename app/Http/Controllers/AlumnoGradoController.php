@@ -23,12 +23,13 @@ class AlumnoGradoController extends Controller
     public static function calcularProgreso(AlumnoGrado $alumnoGrado): array
     {
         $grado = $alumnoGrado->grado;
-        $puntasRequeridas = $grado ? (int) $grado->puntas : 0;
+        $usaRepasos = $grado ? $grado->usaRepasos() : true;
+        $puntasRequeridas = $usaRepasos && $grado ? (int) $grado->puntas : 0;
         $diasRequeridos   = $grado ? (int) $grado->dias   : 0;
 
         $repasos         = $alumnoGrado->repasos;
         $examenes        = $alumnoGrado->examenes;
-        $puntasObtenidas = $repasos->where('aprobado', 1)->count();
+        $puntasObtenidas = $usaRepasos ? $repasos->where('aprobado', 1)->count() : 0;
         $diasTranscurridos = AsistenciaAlumno::where('alumno_id', $alumnoGrado->alumno_id)
             ->where('estado', 'asistencia')
             ->whereHas('asistencia', fn($q) => $q->whereNull('deleted_at')
@@ -50,7 +51,8 @@ class AlumnoGradoController extends Controller
             'cumpleDias',
             'puedeExamen',
             'examenAprobado',
-            'isComplete'
+            'isComplete',
+            'usaRepasos'
         );
     }
 
@@ -160,6 +162,11 @@ class AlumnoGradoController extends Controller
         if ($alumnoGrado->isCompletado()) {
             return redirect()->back()
                 ->with(['message' => 'No se puede agregar un repaso a un grado ya completado.', 'alert-type' => 'error']);
+        }
+
+        if ($alumnoGrado->grado && !$alumnoGrado->grado->usaRepasos()) {
+            return redirect()->back()
+                ->with(['message' => 'Los grados tipo Dan no registran puntas ni repasos; solo examen final.', 'alert-type' => 'error']);
         }
 
         // Bloquear si ya se alcanzó la cantidad de puntas aprobadas requeridas

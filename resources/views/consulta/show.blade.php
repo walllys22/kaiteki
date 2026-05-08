@@ -258,6 +258,7 @@
                     @php
                         $g = $activeGrado->grado;
                         $gradoLabel = trim(($g->tipo ?? '') . ' ' . ($g->numero ?? '') . ' ' . ($g->nombre ?? ''));
+                        $usaRepasos = $g->usaRepasos();
                         $porcentajePuntas = $progress['puntasRequeridas'] > 0
                             ? min(100, round($progress['puntasObtenidas'] / $progress['puntasRequeridas'] * 100))
                             : 100;
@@ -279,10 +280,11 @@
                                 </span>
                             @else
                                 <span class="label label-default" style="margin-top:6px; display:inline-block;">
-                                    <i class="fa-solid fa-spinner"></i> Acumulando puntas
+                                    <i class="fa-solid fa-spinner"></i> {{ $usaRepasos ? 'Acumulando puntas' : 'Pendiente de examen' }}
                                 </span>
                             @endif
                         </div>
+                        @if($usaRepasos)
                         <div class="col-md-4">
                             <div style="background:#fafcfe; border:1px solid #edf2f7; border-radius:6px; padding:10px 12px;">
                                 <div style="font-size:13px; color:#555; margin-bottom:6px;">
@@ -303,7 +305,8 @@
                                 @endif
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        @endif
+                        <div class="{{ $usaRepasos ? 'col-md-4' : 'col-md-8' }}">
                             <div style="background:#fafcfe; border:1px solid #edf2f7; border-radius:6px; padding:10px 12px;">
                                 <div style="font-size:13px; color:#555; margin-bottom:6px;">
                                     <i class="fa-solid fa-graduation-cap" style="color:#e74c3c;"></i>
@@ -350,15 +353,20 @@
                                 @foreach($gradosCompletados as $ag)
                                 @php
                                     $gLabel     = trim(($ag->grado->tipo ?? '') . ' ' . ($ag->grado->numero ?? '') . ' ' . ($ag->grado->nombre ?? ''));
-                                    $puntasObt  = $ag->repasos->where('aprobado', 1)->count();
-                                    $puntasReq  = $ag->grado ? (int) $ag->grado->puntas : 0;
+                                    $agUsaRepasos = $ag->grado ? $ag->grado->usaRepasos() : true;
+                                    $puntasObt  = $agUsaRepasos ? $ag->repasos->where('aprobado', 1)->count() : 0;
+                                    $puntasReq  = $agUsaRepasos && $ag->grado ? (int) $ag->grado->puntas : 0;
                                     $examenApro = $ag->examenes->where('aprobado', 1)->first();
                                 @endphp
                                 <tr>
                                     <td><strong>{{ $gLabel ?: 'Grado no disponible' }}</strong></td>
                                     <td>{{ $ag->fecha ? \Carbon\Carbon::parse($ag->fecha)->format('d/m/Y') : '—' }}</td>
                                     <td style="text-align:center;">
-                                        <span class="label label-success">{{ $puntasObt }}/{{ $puntasReq }}</span>
+                                        @if($agUsaRepasos)
+                                            <span class="label label-success">{{ $puntasObt }}/{{ $puntasReq }}</span>
+                                        @else
+                                            <span class="label label-default">No aplica</span>
+                                        @endif
                                     </td>
                                     <td style="text-align:center;">
                                         @if($examenApro)

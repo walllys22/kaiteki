@@ -144,6 +144,16 @@ class GradoController extends Controller
                 ->with(['message' => 'Debe seleccionar un dojo para registrar el arancel.', 'alert-type' => 'error']);
         }
 
+        $grado = Grado::query()
+            ->whereNull('deleted_at')
+            ->findOrFail($request->grado_id);
+
+        if ($grado->isDan() && $request->tipo === 'Repaso') {
+            return redirect()->back()
+                ->withInput()
+                ->with(['message' => 'Los grados tipo Dan no usan arancel de Repaso; registre solo arancel de Examen.', 'alert-type' => 'error']);
+        }
+
         Dojo::query()
             ->whereNull('deleted_at')
             ->where('status', 1)

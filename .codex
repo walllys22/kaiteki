@@ -447,6 +447,9 @@ Todos usan `HasFactory`, `RegistersUserEvents`, `SoftDeletes`.
 18. El examen final tambien puede quedar `Pagado` o `Pendiente`.
 19. Un examen pendiente puede pagarse posteriormente ajustando el monto.
 20. Si el examen esta pagado, se habilita comprobante imprimible.
+21. Los grados tipo `Dan` no usan puntas ni repasos; pasan directo a examen final.
+22. Para grados tipo `Dan`, solo debe configurarse arancel de tipo `Examen`.
+23. Para grados tipo `Kyu`, se mantiene el flujo normal de puntas/repasos y examen final.
 
 ### Detalle de implementacion
 
@@ -457,6 +460,12 @@ Todos usan `HasFactory`, `RegistersUserEvents`, `SoftDeletes`.
 - **Grado inicial al registrar alumno**: Al crear un alumno desde el modal de registro, el `AlumnoGrado` inicial se crea con `status='0'` para que el alumno deba completar el ciclo normal de puntas + examen.
 
 - **Arancel de repaso**: `storeRepaso()` carga el `AlumnoGrado` con `alumno`, `grado`, `repasos`, `examenes`; toma el `dojo_id` desde `alumno.dojo_id`; busca `Arancele` con `grado_id`, `dojo_id`, `tipo='Repaso'`, `status=1` y `deleted_at=null`.
+
+- **Grados Dan**: `Grado::isDan()` identifica grados con `tipo='Dan'`.
+  `Grado::usaRepasos()` devuelve `false` para Dan. En esos casos `calcularProgreso()`
+  considera las puntas como no aplicables, habilita el examen final sin exigir repasos
+  y la interfaz oculta la seccion de Repasos. El backend tambien bloquea `storeRepaso()`
+  para Dan.
 
 - **Monto historico del repaso**: aunque el precio base viene de `Arancele.precio`, el formulario permite ajustar `monto`. Ese valor se copia a `alumno_grado_repasos.monto` para mantener historico independiente de futuros cambios de arancel.
 

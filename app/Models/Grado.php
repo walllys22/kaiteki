@@ -39,4 +39,14 @@ class Grado extends Model
     {
         return $this->hasMany(Arancele::class, 'grado_id');
     }
+
+    public function isDan(): bool
+    {
+        return strtolower(trim((string) $this->tipo)) === 'dan';
+    }
+
+    public function usaRepasos(): bool
+    {
+        return !$this->isDan();
+    }
 }

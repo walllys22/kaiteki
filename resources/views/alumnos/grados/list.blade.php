@@ -10,6 +10,7 @@
     @php
         $g = $activeGrado->grado;
         $gradoLabel = trim(($g->tipo ?? '') . ' ' . ($g->numero ?? '') . ' ' . ($g->nombre ?? ''));
+        $usaRepasos = $g->usaRepasos();
         $repasos  = $activeGrado->repasos->sortByDesc('fecha');
         $examenes = $activeGrado->examenes->sortByDesc('fecha');
         $totalRepasos = $repasos->sum(fn($repaso) => (float) ($repaso->monto ?? 0));
@@ -42,7 +43,7 @@
                     </span>
                 @else
                     <span class="label label-default" style="font-size:12px; padding:5px 10px;">
-                        <i class="fa-solid fa-spinner"></i> Acumulando puntas
+                        <i class="fa-solid fa-spinner"></i> {{ $usaRepasos ? 'Acumulando puntas' : 'Pendiente de examen final' }}
                     </span>
                 @endif
             </div>
@@ -51,6 +52,7 @@
         <div class="panel-body">
             {{-- ── Indicadores de Progreso ── --}}
             <div class="row" style="margin-bottom:15px;">
+                @if($usaRepasos)
                 <div class="col-md-6">
                     <div class="grado-progress-card">
                         <div class="grado-progress-label">
@@ -72,7 +74,8 @@
                         @endif
                     </div>
                 </div>
-                <div class="col-md-6">
+                @endif
+                <div class="{{ $usaRepasos ? 'col-md-6' : 'col-md-12' }}">
                     <div class="grado-progress-card">
                         <div class="grado-progress-label">
                             <i class="fa-solid fa-calendar-days" style="color:#3498db;"></i>
@@ -99,6 +102,7 @@
             </div>
 
             {{-- ── Repasos ── --}}
+            @if($usaRepasos)
             <div class="row" style="margin-bottom:5px;">
                 <div class="col-xs-12">
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
@@ -216,6 +220,7 @@
                     @endif
                 </div>
             </div>
+            @endif
 
             {{-- ── Examen Final (visible cuando se cumplen puntas y días) ── --}}
             @if($progress['puedeExamen'] || $examenes->count())
@@ -364,6 +369,7 @@
         $refExamenLabel = max($candidatosExamen);
     @endphp
 
+    @if($usaRepasos)
     <div class="modal fade" tabindex="-1" id="modal-add-repaso" role="dialog">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -442,6 +448,7 @@
             </div>
         </div>
     </div>
+    @endif
 
     {{-- Modal: Registrar Examen Final --}}
     @if($progress['puedeExamen'])
@@ -458,7 +465,9 @@
                     <div class="modal-body">
                         <div class="alert alert-info" style="font-size:13px;">
                             Grado: <strong>{{ $gradoLabel }}</strong> —
-                            Puntas: <strong>{{ $progress['puntasObtenidas'] }}/{{ $progress['puntasRequeridas'] }}</strong> —
+                            @if($usaRepasos)
+                                Puntas: <strong>{{ $progress['puntasObtenidas'] }}/{{ $progress['puntasRequeridas'] }}</strong> —
+                            @endif
                             Días: <strong>{{ $progress['diasTranscurridos'] }}/{{ $progress['diasRequeridos'] }}</strong>
                         </div>
                         <div class="row">
@@ -630,8 +639,9 @@
                     $gradoLabel   = trim(($grado->tipo ?? '') . ' ' . ($grado->numero ?? '') . ' ' . ($grado->nombre ?? ''));
                     $hRepasos     = $item->repasos->sortByDesc('fecha');
                     $hExamenes    = $item->examenes->sortByDesc('fecha');
-                    $hPuntasObt   = $hRepasos->where('aprobado', 1)->count();
-                    $hPuntasReq   = $grado ? (int) $grado->puntas : 0;
+                    $hUsaRepasos  = $grado ? $grado->usaRepasos() : true;
+                    $hPuntasObt   = $hUsaRepasos ? $hRepasos->where('aprobado', 1)->count() : 0;
+                    $hPuntasReq   = $hUsaRepasos && $grado ? (int) $grado->puntas : 0;
                     $hExamenFinal = $hExamenes->where('aprobado', 1)->first();
                     $hExamAprobado = $hExamenFinal !== null;
                 @endphp
@@ -646,7 +656,14 @@
                     <td style="vertical-align:middle;">
                         <strong>{{ $gradoLabel ?: 'Grado no disponible' }}</strong>
                         @if ($grado)
-                            <br><small class="text-muted">{{ $grado->tipo ?? '' }} · req. {{ $hPuntasReq }} puntas</small>
+                            <br><small class="text-muted">
+                                {{ $grado->tipo ?? '' }}
+                                @if($hUsaRepasos)
+                                    · req. {{ $hPuntasReq }} puntas
+                                @else
+                                    · solo examen final
+                                @endif
+                            </small>
                         @endif
                     </td>
                     <td style="vertical-align:middle;">
@@ -654,7 +671,11 @@
                     </td>
                     <td style="vertical-align:middle;">{{ $item->observacion ?: '—' }}</td>
                     <td style="text-align:center; vertical-align:middle;">
-                        <span class="label label-success">{{ $hPuntasObt }}/{{ $hPuntasReq }}</span>
+                        @if($hUsaRepasos)
+                            <span class="label label-success">{{ $hPuntasObt }}/{{ $hPuntasReq }}</span>
+                        @else
+                            <span class="label label-default">No aplica</span>
+                        @endif
                     </td>
                     <td style="text-align:center; vertical-align:middle;">
                         @if($hExamAprobado)
@@ -684,6 +705,7 @@
                             <div class="row">
 
                                 {{-- Repasos --}}
+                                @if($hUsaRepasos)
                                 <div class="col-md-8">
                                     <p style="font-weight:600; margin-bottom:6px; font-size:13px;">
                                         <i class="fa-solid fa-repeat" style="color:#8e44ad;"></i>
@@ -750,9 +772,10 @@
                                         <p class="text-muted" style="font-size:12px;">Sin repasos registrados.</p>
                                     @endif
                                 </div>
+                                @endif
 
                                 {{-- Exámenes --}}
-                                <div class="col-md-4">
+                                <div class="{{ $hUsaRepasos ? 'col-md-4' : 'col-md-12' }}">
                                     <p style="font-weight:600; margin-bottom:6px; font-size:13px;">
                                         <i class="fa-solid fa-graduation-cap" style="color:#e74c3c;"></i>
                                         Examen Final
