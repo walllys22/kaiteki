@@ -317,6 +317,32 @@ La vista maneja ambos modos con `$editing = isset($horario)`.
 - Si no existe el arancel, el boton "Agregar Repaso" aparece deshabilitado y se muestra aviso.
 - El backend tambien bloquea el guardado si no existe arancel, aunque se intente enviar el formulario manualmente.
 
+#### Control economico de grados
+
+El objetivo de aranceles, montos y pagos es llevar control economico por alumno, grado y dojo:
+
+- cuanto corresponde cobrar segun el arancel activo
+- cuanto se cobro realmente
+- cuanto queda pendiente
+- que alumno debe
+- cuanto suma la deuda o mora
+- que pagos ya tienen comprobante
+
+Reglas actuales:
+
+- `Arancele.precio` es el precio base configurable por grado, dojo y tipo.
+- Al registrar un repaso o examen, el precio base se copia al registro como `monto`.
+- `monto` queda como historico del cobro esperado para ese repaso o examen.
+- `monto_pagado` registra cuanto se pago.
+- Si `monto_pagado >= monto`, el registro queda pagado.
+- Si `monto_pagado < monto`, el registro queda pendiente y representa deuda/mora.
+- Los comprobantes solo se habilitan cuando el registro esta pagado.
+- Para grados `Kyu`, el control puede generar deuda por repasos y por examen.
+- Para grados `Dan`, el control solo genera deuda por examen final.
+
+Cualquier integracion futura de caja, reportes, cuentas por cobrar, mora o historial economico
+debe respetar esta base y documentarse en `.codex`.
+
 ### Problemas corregidos durante el proceso
 
 - Error por columna `status` duplicada en migracion de `alumnos`.
