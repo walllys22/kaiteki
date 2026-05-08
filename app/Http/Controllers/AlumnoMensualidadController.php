@@ -62,8 +62,19 @@ class AlumnoMensualidadController extends Controller
         $resumen = [
             'total' => $mensualidadesResumen->sum(fn($item) => $item->total()),
             'pagado' => $mensualidadesResumen->sum('monto_pagado'),
+            'mora' => $mensualidadesResumen->sum('mora'),
+            'descuento' => $mensualidadesResumen->sum('descuento'),
+            'beca' => $mensualidadesResumen->sum('beca'),
+            'pendientes' => $mensualidadesResumen->filter(fn($item) => $item->estadoPago() === 'Pendiente')->count(),
+            'parciales' => $mensualidadesResumen->filter(fn($item) => $item->estadoPago() === 'Parcial')->count(),
+            'pagadas' => $mensualidadesResumen->filter(fn($item) => in_array($item->estadoPago(), ['Pagado', 'Exonerado']))->count(),
+            'total_meses' => $mensualidadesResumen->count(),
         ];
         $resumen['saldo'] = max(0, $resumen['total'] - $resumen['pagado']);
+        $resumen['deuda_mensualidad'] = $mensualidadesResumen->sum(function ($item) {
+            return max(0, (float) $item->monto - (float) $item->descuento - (float) $item->beca - (float) $item->monto_pagado);
+        });
+        $resumen['mora_pendiente'] = max(0, $resumen['saldo'] - $resumen['deuda_mensualidad']);
 
         $data = $mensualidadesQuery
             ->orderByDesc('periodo')

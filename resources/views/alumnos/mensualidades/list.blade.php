@@ -2,6 +2,11 @@
     $total = (float) ($resumen['total'] ?? 0);
     $pagado = (float) ($resumen['pagado'] ?? 0);
     $saldo = (float) ($resumen['saldo'] ?? 0);
+    $moraTotal = (float) ($resumen['mora'] ?? 0);
+    $moraPendiente = (float) ($resumen['mora_pendiente'] ?? 0);
+    $deudaMensualidad = (float) ($resumen['deuda_mensualidad'] ?? 0);
+    $descuentoTotal = (float) ($resumen['descuento'] ?? 0);
+    $becaTotal = (float) ($resumen['beca'] ?? 0);
     $planActivo = $plan && (int) $plan->status === 1;
 @endphp
 
@@ -38,11 +43,86 @@
     </div>
 </div>
 
-<div class="alert alert-success" style="font-size:12px; padding:8px 10px; margin-bottom:12px;">
-    Total a cobrar: <strong>Bs {{ number_format($total, 2, '.', ',') }}</strong>
-    &nbsp;·&nbsp; Cobrado: <strong>Bs {{ number_format($pagado, 2, '.', ',') }}</strong>
-    &nbsp;·&nbsp; Saldo/Mora: <strong>Bs {{ number_format($saldo, 2, '.', ',') }}</strong>
+<div class="row" style="margin-bottom:12px;">
+    <div class="col-md-3 col-sm-6">
+        <div class="mensualidad-summary-card deuda">
+            <div class="summary-label">Deuda total</div>
+            <div class="summary-value">Bs {{ number_format($saldo, 2, '.', ',') }}</div>
+            <div class="summary-help">Mensualidades pendientes + mora.</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="mensualidad-summary-card mora">
+            <div class="summary-label">Mora acumulada</div>
+            <div class="summary-value">Bs {{ number_format($moraTotal, 2, '.', ',') }}</div>
+            <div class="summary-help">Monto agregado como mora.</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="mensualidad-summary-card cobrado">
+            <div class="summary-label">Cobrado</div>
+            <div class="summary-value">Bs {{ number_format($pagado, 2, '.', ',') }}</div>
+            <div class="summary-help">Pagos registrados del alumno.</div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="mensualidad-summary-card total">
+            <div class="summary-label">Total a cobrar</div>
+            <div class="summary-value">Bs {{ number_format($total, 2, '.', ',') }}</div>
+            <div class="summary-help">Mensualidad - descuentos + mora.</div>
+        </div>
+    </div>
 </div>
+
+<div class="alert {{ $saldo > 0 ? 'alert-warning' : 'alert-success' }}" style="font-size:12px; padding:9px 12px; margin-bottom:12px;">
+    <strong>Estado económico:</strong>
+    @if($saldo > 0)
+        el alumno debe <strong>Bs {{ number_format($saldo, 2, '.', ',') }}</strong>.
+        De ese total, <strong>Bs {{ number_format($moraPendiente, 2, '.', ',') }}</strong> corresponde a mora pendiente
+        y <strong>Bs {{ number_format($deudaMensualidad, 2, '.', ',') }}</strong> a mensualidades pendientes.
+    @else
+        el alumno no tiene deuda pendiente por mensualidades.
+    @endif
+    <br>
+    Meses: <strong>{{ $resumen['total_meses'] ?? 0 }}</strong> generados,
+    <strong>{{ $resumen['pendientes'] ?? 0 }}</strong> pendientes,
+    <strong>{{ $resumen['parciales'] ?? 0 }}</strong> parciales,
+    <strong>{{ $resumen['pagadas'] ?? 0 }}</strong> pagados/exonerados.
+    Descuentos acumulados: <strong>Bs {{ number_format($descuentoTotal, 2, '.', ',') }}</strong>.
+    Becas acumuladas: <strong>Bs {{ number_format($becaTotal, 2, '.', ',') }}</strong>.
+</div>
+
+<style>
+    .mensualidad-summary-card {
+        border: 1px solid #e5edf4;
+        border-left: 4px solid #95a5a6;
+        border-radius: 6px;
+        margin-bottom: 8px;
+        min-height: 92px;
+        padding: 10px 12px;
+    }
+    .mensualidad-summary-card.deuda { border-left-color: #e74c3c; }
+    .mensualidad-summary-card.mora { border-left-color: #f39c12; }
+    .mensualidad-summary-card.cobrado { border-left-color: #27ae60; }
+    .mensualidad-summary-card.total { border-left-color: #3498db; }
+    .summary-label {
+        color: #6b7c8f;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .summary-value {
+        color: #263645;
+        font-size: 20px;
+        font-weight: 800;
+        margin-top: 3px;
+    }
+    .summary-help {
+        color: #7f8c8d;
+        font-size: 11px;
+        margin-top: 3px;
+    }
+</style>
 
 <div class="table-responsive">
     <table class="table table-bordered table-hover" style="font-size:13px;">

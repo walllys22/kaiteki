@@ -390,6 +390,9 @@ Reglas:
   `monto - descuento - beca + mora`, nunca menor a cero.
 - El saldo se calcula como:
   `total - monto_pagado`, nunca menor a cero.
+- La pestaña `Mensualidades` muestra resumen economico del alumno:
+  deuda total, mora acumulada, mora pendiente estimada, cobrado, total a cobrar,
+  cantidad de meses pendientes/parciales/pagados, descuentos y becas acumuladas.
 - Los pagos pueden ser parciales y se registran en `alumno_mensualidad_pagos`.
 - Cada pago suma a `alumno_mensualidades.monto_pagado`.
 - Cada pago de mensualidad, parcial o completo, tiene comprobante imprimible.
