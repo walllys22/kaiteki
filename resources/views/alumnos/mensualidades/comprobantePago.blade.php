@@ -24,11 +24,9 @@
         'Nro: ' . str_pad($pago->id, 6, '0', STR_PAD_LEFT),
         'Alumno: ' . (optional($person)->first_name ?: 'N/A'),
         'Documento: ' . (optional($person)->documentType ?: 'CI') . ' ' . (optional($person)->ci ?: 'N/A'),
-        'Dojo: ' . (optional($dojo)->nombre ?: 'Sin dojo'),
         'Mensualidad: ' . $periodo,
         'Pago: Bs ' . number_format((float) $pago->monto, 2, '.', ','),
         'Fecha pago: ' . \Carbon\Carbon::parse($pago->fecha)->format('d/m/Y'),
-        'Cobrado por: ' . $cobrador,
     ]);
 @endphp
 <!DOCTYPE html>

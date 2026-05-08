@@ -400,8 +400,7 @@ Reglas:
 - El comprobante de pago completo muestra detalle de mensualidad, descuento, beca, mora
   y pago total.
 - El comprobante de mensualidad incluye QR. El QR no apunta a URL; contiene texto con
-  numero de comprobante, alumno, documento, dojo, mensualidad, monto pagado, fecha de pago
-  y usuario cobrador.
+  numero de comprobante, alumno, documento, mensualidad, monto pagado y fecha de pago.
 - El comprobante de mensualidad muestra el logo del dojo (`dojos.logo`) y el usuario
   que registro el cobro (`alumno_mensualidad_pagos.registerUser_id`).
 - No se puede pagar una mensualidad nueva si existe una mensualidad anterior con saldo.
