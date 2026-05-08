@@ -19,7 +19,17 @@
             ->sum(fn($item) => (float) $item->monto)
         : (float) $pago->monto;
     $esPagoCompleto = $total > 0 && $pagadoHastaEstePago >= $total;
-    $qrUrl = \Illuminate\Support\Facades\URL::signedRoute('alumno.mensualidades.pago.comprobante.public', ['id' => $pago->id]);
+    $qrText = implode("\n", [
+        'COMPROBANTE DE MENSUALIDAD',
+        'Nro: ' . str_pad($pago->id, 6, '0', STR_PAD_LEFT),
+        'Alumno: ' . (optional($person)->first_name ?: 'N/A'),
+        'Documento: ' . (optional($person)->documentType ?: 'CI') . ' ' . (optional($person)->ci ?: 'N/A'),
+        'Dojo: ' . (optional($dojo)->nombre ?: 'Sin dojo'),
+        'Mensualidad: ' . $periodo,
+        'Pago: Bs ' . number_format((float) $pago->monto, 2, '.', ','),
+        'Fecha pago: ' . \Carbon\Carbon::parse($pago->fecha)->format('d/m/Y'),
+        'Cobrado por: ' . $cobrador,
+    ]);
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -233,13 +243,13 @@
         <div class="footer">
             <div class="footer-note">
                 Comprobante generado por Kaiteki.<br>
-                Escanee el QR para verificar el detalle.
+                Escanee el QR para ver alumno, mes y monto.
             </div>
             <div class="qr-footer">
                 <div class="qr-box">
                     <div id="qr-comprobante"></div>
                 </div>
-                <div class="qr-hint">Ver detalle</div>
+                <div class="qr-hint">Datos del pago</div>
             </div>
         </div>
     </div>
@@ -254,7 +264,7 @@
         window.addEventListener('load', function() {
             if (window.QRCode) {
                 new QRCode(document.getElementById('qr-comprobante'), {
-                    text: @json($qrUrl),
+                    text: @json($qrText),
                     width: 148,
                     height: 148,
                     correctLevel: QRCode.CorrectLevel.M
