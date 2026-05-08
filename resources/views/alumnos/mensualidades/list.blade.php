@@ -8,6 +8,8 @@
     $descuentoTotal = (float) ($resumen['descuento'] ?? 0);
     $becaTotal = (float) ($resumen['beca'] ?? 0);
     $planActivo = $plan && (int) $plan->status === 1;
+    $ultimaInicio = $ultimaMensualidad ? \Carbon\Carbon::parse($ultimaMensualidad->periodo)->startOfDay() : null;
+    $ultimaFin = $ultimaInicio ? $ultimaInicio->copy()->addMonthNoOverflow()->subDay() : null;
 @endphp
 
 <div class="row" style="margin-bottom:12px;">
@@ -39,6 +41,11 @@
             <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#modal-mensualidad-plan">
                 <i class="voyager-settings"></i> Configurar Mensualidad
             </button>
+            @if($planActivo)
+                <button class="btn btn-warning btn-sm" data-toggle="modal" data-target="#modal-pausar-mensualidad">
+                    <i class="fa-solid fa-pause"></i> Pausar Mensualidad
+                </button>
+            @endif
         @endif
     </div>
 </div>
@@ -291,6 +298,7 @@
                     </div>
                     <p class="text-muted" style="font-size:12px; margin:0;">
                         Al guardar, el sistema genera automáticamente las mensualidades desde esa fecha, manteniendo el mismo día cada mes.
+                        Si hubo un corte anterior, los meses ya generados conservan su monto y la nueva configuración continúa desde la nueva fecha.
                     </p>
                 </div>
                 <div class="modal-footer">
@@ -301,6 +309,84 @@
         </div>
     </div>
 </form>
+
+@if($planActivo)
+<form id="form-pausar-mensualidad" action="{{ route('alumno.mensualidades.plan.pausar', $plan->id) }}" method="POST" class="form-edit-add">
+    @csrf
+    @method('PUT')
+    <div class="modal fade" tabindex="-1" id="modal-pausar-mensualidad" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                    <h4 class="modal-title"><i class="fa-solid fa-pause"></i> Pausar Mensualidad</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning" style="font-size:12px;">
+                        Al pausar, no se generarán nuevas mensualidades. Los meses ya generados conservarán sus saldos, pagos y mora.
+                        @if($ultimaMensualidad)
+                            <br>
+                            Último período generado:
+                            <strong>{{ $ultimaInicio->format('d/m/Y') }}</strong>
+                            al <strong>{{ $ultimaFin->format('d/m/Y') }}</strong>.
+                        @endif
+                    </div>
+                    <div class="form-group">
+                        <label>Tipo de corte <span class="text-danger">*</span></label>
+                        <select name="tipo_corte" id="tipo-corte-mensualidad" class="form-control" required>
+                            <option value="mes_completo">Mes completo</option>
+                            @if($ultimaMensualidad)
+                            <option value="fecha">Cortar en una fecha específica</option>
+                            @endif
+                        </select>
+                        <small class="text-muted">
+                            Si elige fecha específica, se recalcula proporcionalmente el último mes generado.
+                        </small>
+                    </div>
+                    @if($ultimaMensualidad)
+                    <div class="form-group" id="grupo-fecha-corte-mensualidad" style="display:none;">
+                        <label>Fecha de corte <span class="text-danger">*</span></label>
+                        <input type="date"
+                               name="fecha_corte"
+                               class="form-control"
+                               min="{{ $ultimaInicio->format('Y-m-d') }}"
+                               max="{{ $ultimaFin->format('Y-m-d') }}"
+                               value="{{ date('Y-m-d') >= $ultimaInicio->format('Y-m-d') && date('Y-m-d') <= $ultimaFin->format('Y-m-d') ? date('Y-m-d') : $ultimaFin->format('Y-m-d') }}">
+                        <small class="text-muted">
+                            Debe estar dentro del último período generado.
+                        </small>
+                    </div>
+                    @endif
+                    <div class="form-group">
+                        <label>Motivo / observación</label>
+                        <textarea name="observacion" class="form-control" rows="2" placeholder="Ej. pausa temporal, cambio de plan, viaje..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning btn-submit">Pausar Mensualidad</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+@endif
+
+<script>
+    (function() {
+        var $tipo = $('#tipo-corte-mensualidad');
+        var $grupoFecha = $('#grupo-fecha-corte-mensualidad');
+
+        function toggleFechaCorte() {
+            var usaFecha = $tipo.val() === 'fecha';
+            $grupoFecha.toggle(usaFecha);
+            $grupoFecha.find('input[name="fecha_corte"]').prop('required', usaFecha);
+        }
+
+        $tipo.off('change.mensualidad').on('change.mensualidad', toggleFechaCorte);
+        toggleFechaCorte();
+    })();
+</script>
 
 <form id="form-pagar-mensualidad" action="#" method="POST" class="form-edit-add">
     @csrf

@@ -9,6 +9,7 @@ use App\Models\AlumnoMensualidadPlan;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class AlumnoMensualidadController extends Controller
 {
@@ -80,7 +81,21 @@ class AlumnoMensualidadController extends Controller
             ->orderByDesc('periodo')
             ->paginate($paginate);
 
-        return view('alumnos.mensualidades.list', compact('alumno', 'plan', 'data', 'resumen', 'periodosPendientes'));
+        $ultimaMensualidad = AlumnoMensualidad::query()
+            ->where('alumno_id', $alumno->id)
+            ->whereNull('deleted_at')
+            ->orderByDesc('periodo')
+            ->orderByDesc('id')
+            ->first();
+
+        return view('alumnos.mensualidades.list', compact(
+            'alumno',
+            'plan',
+            'data',
+            'resumen',
+            'periodosPendientes',
+            'ultimaMensualidad'
+        ));
     }
 
     public function storePlan(Request $request)
@@ -190,6 +205,82 @@ class AlumnoMensualidadController extends Controller
             return redirect()->back()
                 ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
         }
+    }
+
+    public function pausarPlan(Request $request, int $id)
+    {
+        $this->custom_authorize('edit_alumnos');
+
+        $request->validate([
+            'tipo_corte' => 'required|in:mes_completo,fecha',
+            'fecha_corte' => 'nullable|required_if:tipo_corte,fecha|date',
+            'observacion' => 'nullable|string|max:500',
+        ]);
+
+        $userDojoId = auth()->user()->dojo_id;
+
+        $plan = AlumnoMensualidadPlan::with('alumno')
+            ->whereNull('deleted_at')
+            ->where('status', 1)
+            ->when($userDojoId, function ($query, $userDojoId) {
+                return $query->where('dojo_id', $userDojoId);
+            })
+            ->findOrFail($id);
+
+        try {
+            DB::transaction(function () use ($request, $plan) {
+                $ultimaMensualidad = AlumnoMensualidad::query()
+                    ->where('alumno_id', $plan->alumno_id)
+                    ->whereNull('deleted_at')
+                    ->orderByDesc('periodo')
+                    ->orderByDesc('id')
+                    ->first();
+
+                if ($request->tipo_corte === 'fecha' && $ultimaMensualidad) {
+                    $inicioPeriodo = Carbon::parse($ultimaMensualidad->periodo)->startOfDay();
+                    $finPeriodo = $inicioPeriodo->copy()->addMonthNoOverflow()->subDay()->startOfDay();
+                    $fechaCorte = Carbon::parse($request->fecha_corte)->startOfDay();
+
+                    if ($fechaCorte->lt($inicioPeriodo) || $fechaCorte->gt($finPeriodo)) {
+                        throw ValidationException::withMessages([
+                            'fecha_corte' => 'La fecha de corte debe estar dentro del último mes generado (' .
+                                $inicioPeriodo->format('d/m/Y') . ' al ' . $finPeriodo->format('d/m/Y') . ').',
+                        ]);
+                    }
+
+                    $diasPeriodo = $inicioPeriodo->diffInDays($finPeriodo) + 1;
+                    $diasCobrados = $inicioPeriodo->diffInDays($fechaCorte) + 1;
+                    $factor = $diasPeriodo > 0 ? $diasCobrados / $diasPeriodo : 1;
+
+                    $montoOriginal = (float) $ultimaMensualidad->monto;
+                    $descuentoOriginal = (float) $ultimaMensualidad->descuento;
+                    $becaOriginal = (float) $ultimaMensualidad->beca;
+
+                    $ultimaMensualidad->monto = round($montoOriginal * $factor, 2);
+                    $ultimaMensualidad->descuento = round($descuentoOriginal * $factor, 2);
+                    $ultimaMensualidad->beca = round($becaOriginal * $factor, 2);
+                    $ultimaMensualidad->status = $this->resolverStatus($ultimaMensualidad);
+                    $ultimaMensualidad->observacion = trim(
+                        ($ultimaMensualidad->observacion ? $ultimaMensualidad->observacion . "\n" : '') .
+                        'Corte proporcional al ' . $fechaCorte->format('d/m/Y') .
+                        " ({$diasCobrados}/{$diasPeriodo} dias). " .
+                        'Monto original Bs ' . number_format($montoOriginal, 2, '.', ',') . '.'
+                    );
+                    $ultimaMensualidad->save();
+                }
+
+                $plan->status = 0;
+                if ($request->observacion) {
+                    $plan->observacion = trim(($plan->observacion ? $plan->observacion . "\n" : '') . 'Pausa: ' . $request->observacion);
+                }
+                $plan->save();
+            });
+        } catch (ValidationException $exception) {
+            throw $exception;
+        }
+
+        return redirect()->route('voyager.alumnos.show', ['id' => $plan->alumno_id])
+            ->with(['message' => 'Mensualidad pausada correctamente. No se generarán nuevos meses hasta configurar una nueva mensualidad.', 'alert-type' => 'success']);
     }
 
     public function mora(Request $request, int $id)

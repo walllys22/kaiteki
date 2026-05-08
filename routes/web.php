@@ -75,6 +75,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     Route::get('alumnos/{id}/asistencias/list', [AlumnoController::class, 'asistenciaList']);
     Route::get('alumnos/{id}/mensualidades/list', [AlumnoMensualidadController::class, 'list'])->name('alumno.mensualidades.list');
     Route::post('alumnos/mensualidades/plan/store', [AlumnoMensualidadController::class, 'storePlan'])->name('alumno.mensualidades.plan.store');
+    Route::put('alumnos/mensualidades/plan/{id}/pausar', [AlumnoMensualidadController::class, 'pausarPlan'])->name('alumno.mensualidades.plan.pausar');
     Route::put('alumnos/mensualidades/{id}/pagar', [AlumnoMensualidadController::class, 'pagar'])->name('alumno.mensualidades.pagar');
     Route::put('alumnos/mensualidades/{id}/mora', [AlumnoMensualidadController::class, 'mora'])->name('alumno.mensualidades.mora');
     Route::get('alumnos/mensualidades/pagos/{id}/comprobante', [AlumnoMensualidadController::class, 'comprobantePago'])->name('alumno.mensualidades.pago.comprobante');
