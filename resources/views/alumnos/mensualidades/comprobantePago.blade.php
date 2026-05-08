@@ -84,10 +84,10 @@
         .qr-box canvas,
         .qr-box img {
             display: block;
-            height: 148px !important;
+            height: 124px !important;
             image-rendering: crisp-edges;
             image-rendering: pixelated;
-            width: 148px !important;
+            width: 124px !important;
         }
         .qr-hint {
             font-size: 9px;
@@ -110,7 +110,7 @@
         }
         .qr-footer {
             text-align: center;
-            width: 160px;
+            width: 136px;
         }
         .section-title {
             border-bottom: 1px solid #999;
@@ -265,8 +265,8 @@
             if (window.QRCode) {
                 new QRCode(document.getElementById('qr-comprobante'), {
                     text: @json($qrText),
-                    width: 148,
-                    height: 148,
+                    width: 124,
+                    height: 124,
                     correctLevel: QRCode.CorrectLevel.M
                 });
             }
