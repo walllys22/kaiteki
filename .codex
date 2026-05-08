@@ -393,6 +393,13 @@ Reglas:
 - Los pagos pueden ser parciales y se registran en `alumno_mensualidad_pagos`.
 - Cada pago suma a `alumno_mensualidades.monto_pagado`.
 - Cada pago de mensualidad, parcial o completo, tiene comprobante imprimible.
+- El comprobante de pago parcial solo muestra el monto pagado.
+- El comprobante de pago completo muestra detalle de mensualidad, descuento, beca, mora
+  y pago total.
+- El comprobante de mensualidad incluye QR. El QR apunta a una ruta publica firmada
+  para ver el comprobante detallado desde otro dispositivo sin abrir una ruta libre.
+- El comprobante de mensualidad muestra el logo del dojo (`dojos.logo`) y el usuario
+  que registro el cobro (`alumno_mensualidad_pagos.registerUser_id`).
 - No se puede pagar una mensualidad nueva si existe una mensualidad anterior con saldo.
 - El pago debe seguir orden cronologico: primero se pagan las deudas mas antiguas.
 - La mora se agrega manualmente a una mensualidad especifica.
@@ -409,6 +416,7 @@ POST admin/alumnos/mensualidades/plan/store       alumno.mensualidades.plan.stor
 PUT  admin/alumnos/mensualidades/{id}/pagar       alumno.mensualidades.pagar
 PUT  admin/alumnos/mensualidades/{id}/mora        alumno.mensualidades.mora
 GET  admin/alumnos/mensualidades/pagos/{id}/comprobante  alumno.mensualidades.pago.comprobante
+GET  comprobantes/mensualidades/pagos/{id}  alumno.mensualidades.pago.comprobante.public
 ```
 
 Vista:

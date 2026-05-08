@@ -41,6 +41,9 @@ Route::get('/', function () {
 });
 
 Route::get('/info/{id?}', [ErrorController::class , 'error'])->name('errors');
+Route::get('/comprobantes/mensualidades/pagos/{id}', [AlumnoMensualidadController::class, 'comprobantePagoPublic'])
+    ->middleware('signed')
+    ->name('alumno.mensualidades.pago.comprobante.public');
 // Route::get('/development', [ErrorController::class , 'error503'])->name('development');
 
 Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], function () {

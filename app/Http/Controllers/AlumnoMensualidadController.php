@@ -14,7 +14,7 @@ class AlumnoMensualidadController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware('auth')->except('comprobantePagoPublic');
     }
 
     public function list(int $alumnoId)
@@ -216,13 +216,30 @@ class AlumnoMensualidadController extends Controller
 
         $pago = AlumnoMensualidadPago::with([
             'mensualidad.plan',
+            'mensualidad.pagos',
             'alumno.person',
             'alumno.dojo',
+            'registerUser',
         ])
             ->whereNull('deleted_at')
             ->when($userDojoId, function ($query, $userDojoId) {
                 return $query->where('dojo_id', $userDojoId);
             })
+            ->findOrFail($id);
+
+        return view('alumnos.mensualidades.comprobantePago', compact('pago'));
+    }
+
+    public function comprobantePagoPublic(int $id)
+    {
+        $pago = AlumnoMensualidadPago::with([
+            'mensualidad.plan',
+            'mensualidad.pagos',
+            'alumno.person',
+            'alumno.dojo',
+            'registerUser',
+        ])
+            ->whereNull('deleted_at')
             ->findOrFail($id);
 
         return view('alumnos.mensualidades.comprobantePago', compact('pago'));

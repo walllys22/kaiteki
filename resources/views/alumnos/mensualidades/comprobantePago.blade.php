@@ -5,8 +5,21 @@
     $dojo = optional($alumno)->dojo;
     $periodo = optional($mensualidad)->periodo ? \Carbon\Carbon::parse($mensualidad->periodo)->format('d/m/Y') : 'N/A';
     $total = $mensualidad ? $mensualidad->total() : 0;
-    $pagado = $mensualidad ? (float) $mensualidad->monto_pagado : (float) $pago->monto;
-    $saldo = $mensualidad ? $mensualidad->saldo() : 0;
+    $logo = optional($dojo)->logo ? asset('storage/' . $dojo->logo) : asset('images/default.jpg');
+    $cobrador = optional($pago->registerUser)->name ?: 'Sistema';
+    $pagadoHastaEstePago = $mensualidad
+        ? $mensualidad->pagos
+            ->filter(function ($item) use ($pago) {
+                if ($item->fecha < $pago->fecha) {
+                    return true;
+                }
+
+                return $item->fecha === $pago->fecha && $item->id <= $pago->id;
+            })
+            ->sum(fn($item) => (float) $item->monto)
+        : (float) $pago->monto;
+    $esPagoCompleto = $total > 0 && $pagadoHastaEstePago >= $total;
+    $qrUrl = \Illuminate\Support\Facades\URL::signedRoute('alumno.mensualidades.pago.comprobante.public', ['id' => $pago->id]);
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -36,9 +49,34 @@
             margin-bottom: 14px;
             padding-bottom: 12px;
         }
+        .brand {
+            align-items: center;
+            display: flex;
+            gap: 12px;
+        }
+        .dojo-logo {
+            border: 1px solid #111;
+            filter: grayscale(100%);
+            height: 72px;
+            object-fit: cover;
+            width: 72px;
+        }
         .title { font-size: 18px; font-weight: 700; margin: 0 0 5px; }
         .subtitle { font-size: 12px; margin: 0; }
         .receipt-no { font-size: 13px; font-weight: 700; text-align: right; }
+        .qr-box {
+            border: 1px solid #111;
+            display: inline-block;
+            margin-top: 10px;
+            padding: 6px;
+        }
+        .qr-hint {
+            font-size: 9px;
+            font-weight: 400;
+            margin-top: 4px;
+            max-width: 130px;
+            word-break: break-word;
+        }
         .section-title {
             border-bottom: 1px solid #999;
             font-size: 12px;
@@ -78,17 +116,24 @@
 <body>
     <div class="receipt">
         <div class="header">
-            <div>
-                <h1 class="title">{{ optional($dojo)->nombre ?: 'Dojo' }}</h1>
-                <p class="subtitle">{{ optional($dojo)->direccion ?: '' }}</p>
-                <p class="subtitle">
-                    {{ optional($dojo)->telefono ?: '' }}
-                    @if(optional($dojo)->email) · {{ $dojo->email }} @endif
-                </p>
+            <div class="brand">
+                <img src="{{ $logo }}" class="dojo-logo" alt="Logo del dojo" onerror="this.style.display='none';">
+                <div>
+                    <h1 class="title">{{ optional($dojo)->nombre ?: 'Dojo' }}</h1>
+                    <p class="subtitle">{{ optional($dojo)->address ?: '' }}</p>
+                    <p class="subtitle">
+                        {{ optional($dojo)->phone ?: '' }}
+                        @if(optional($dojo)->email) · {{ $dojo->email }} @endif
+                    </p>
+                </div>
             </div>
             <div class="receipt-no">
                 COMPROBANTE DE MENSUALIDAD<br>
                 Nro. {{ str_pad($pago->id, 6, '0', STR_PAD_LEFT) }}
+                <div class="qr-box">
+                    <div id="qr-comprobante"></div>
+                </div>
+                <div class="qr-hint">Escanee para ver el comprobante detallado.</div>
             </div>
         </div>
 
@@ -110,9 +155,13 @@
                 <div class="label">Fecha de pago</div>
                 <div class="value">{{ \Carbon\Carbon::parse($pago->fecha)->format('d/m/Y') }}</div>
             </div>
+            <div>
+                <div class="label">Cobrado por</div>
+                <div class="value">{{ $cobrador }}</div>
+            </div>
         </div>
 
-        <div class="section-title">Detalle de mensualidad</div>
+        <div class="section-title">{{ $esPagoCompleto ? 'Detalle de mensualidad' : 'Pago parcial' }}</div>
         <table>
             <thead>
                 <tr>
@@ -121,6 +170,7 @@
                 </tr>
             </thead>
             <tbody>
+                @if($esPagoCompleto)
                 <tr>
                     <td>Mensualidad con fecha {{ $periodo }}</td>
                     <td class="right">Bs {{ number_format((float) optional($mensualidad)->monto, 2, '.', ',') }}</td>
@@ -142,17 +192,15 @@
                     <th class="right">Bs {{ number_format($total, 2, '.', ',') }}</th>
                 </tr>
                 <tr>
+                    <th>Pago total</th>
+                    <th class="right">Bs {{ number_format($total, 2, '.', ',') }}</th>
+                </tr>
+                @else
+                <tr>
                     <th>Pago recibido</th>
                     <th class="right">Bs {{ number_format((float) $pago->monto, 2, '.', ',') }}</th>
                 </tr>
-                <tr>
-                    <td>Total pagado acumulado</td>
-                    <td class="right">Bs {{ number_format($pagado, 2, '.', ',') }}</td>
-                </tr>
-                <tr>
-                    <td>Saldo pendiente</td>
-                    <td class="right">Bs {{ number_format($saldo, 2, '.', ',') }}</td>
-                </tr>
+                @endif
             </tbody>
         </table>
 
@@ -167,9 +215,21 @@
         <button class="btn" onclick="window.close()">Cerrar</button>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
         window.addEventListener('load', function() {
-            window.print();
+            if (window.QRCode) {
+                new QRCode(document.getElementById('qr-comprobante'), {
+                    text: @json($qrUrl),
+                    width: 118,
+                    height: 118,
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            }
+
+            setTimeout(function() {
+                window.print();
+            }, 350);
         });
     </script>
 </body>

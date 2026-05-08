@@ -39,4 +39,9 @@ class AlumnoMensualidadPago extends Model
     {
         return $this->belongsTo(Alumno::class, 'alumno_id');
     }
+
+    public function registerUser()
+    {
+        return $this->belongsTo(User::class, 'registerUser_id');
+    }
 }
