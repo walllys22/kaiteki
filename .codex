@@ -6,9 +6,88 @@ Este archivo centraliza decisiones tecnicas, reglas de negocio y notas operativa
 
 - La documentacion de multisucursal fue migrada desde `MULTISUCURSAL_NOTAS.md` a este archivo.
 - `MULTISUCURSAL_NOTAS.md` puede mantenerse temporalmente como referencia, pero `.codex` pasa a ser la fuente principal.
+- `CLAUDE.md` fue revisado como referencia historica/operativa; las reglas utiles para Codex deben quedar centralizadas aqui.
 - Se integro Consulta Inter-Dojo como vista de solo lectura entre sucursales.
 - Se integro control economico basico para puntas/repasos usando aranceles por dojo y grado.
 - Se integro comprobante imprimible de punta pagada.
+
+## Regla de documentacion para Codex
+
+- `.codex` es la fuente principal de decisiones tecnicas, reglas de negocio y notas operativas.
+- Todo cambio funcional o regla nueva que se integre al proyecto debe documentarse en `.codex`.
+- `CLAUDE.md` puede usarse como referencia, pero no debe ser la fuente principal de nuevas integraciones.
+- Si una regla existe en `CLAUDE.md` y no existe aqui, debe migrarse o resumirse en `.codex` antes de considerarla documentada.
+
+## Proyecto
+
+Kaiteki es un sistema de administracion para dojo de karate construido con Laravel 10 y Voyager.
+Administra alumnos, personas, horarios, torneos, grados, asistencias y datos aislados por sucursal/dojo.
+
+## Arquitectura general
+
+### Voyager
+
+Todas las rutas administrativas viven bajo `/admin`.
+
+El proyecto usa controladores propios para reemplazar o extender BREAD de Voyager. Para que esto funcione,
+las rutas propias usan nombres esperados por Voyager, por ejemplo `voyager.alumnos.index`.
+Las rutas personalizadas se registran despues de `Voyager::routes()` para que tengan prioridad en conflictos
+de nombre.
+
+Los controladores Voyager personalizados viven principalmente en:
+
+- `app/Http/Controllers/Voyager/`
+
+### Middleware administrativo
+
+Las rutas bajo `/admin` pasan por middleware personalizados:
+
+- `loggin`: registra cada request HTTP en el canal `requests`, incluyendo metodo, estado, usuario, dispositivo e input.
+- `system`: si `system.development` esta activo, redirige usuarios no admin a una pagina 503.
+
+### Autorizacion
+
+Los controladores usan permisos Voyager mediante:
+
+```php
+$this->custom_authorize('browse_alumnos');
+```
+
+`custom_authorize()` esta definido en `app/Http/Controllers/Controller.php` y valida
+`Auth::user()->hasPermission($permission)`.
+
+### Patron de listados AJAX
+
+La mayoria de listados usa dos acciones:
+
+- `index()`: devuelve la vista principal/shell.
+- `list()`: devuelve un partial paginado llamado por AJAX desde `GET /admin/{resource}/ajax/list`.
+
+Este patron debe mantenerse en modulos nuevos que sigan la experiencia actual de Voyager personalizada.
+
+### Registro rapido de personas
+
+`AjaxController@personStore` y `AjaxController@personList` alimentan el modal compartido:
+
+- `resources/views/partials/modal-registerPerson.blade.php`
+
+Este modal permite crear o seleccionar personas desde otros formularios sin abandonar la pantalla actual.
+
+## Estructura de vistas
+
+- `resources/views/administrations/people/`: modulo de personas.
+- `resources/views/alumnos/`: alumnos, detalle, tutores, grados y enfermedades.
+- `resources/views/consulta/`: consulta inter-dojo de solo lectura.
+- `resources/views/torneos/`: torneos.
+- `resources/views/horarios/`: horarios.
+- `resources/views/partials/`: modales y componentes reutilizables.
+- `resources/views/vendor/voyager/`: plantillas Voyager sobrescritas.
+- `resources/views/layouts-print/`: plantillas de impresion carta, oficio y horizontal.
+
+La vista `resources/views/alumnos/read.blade.php` es el centro operativo del alumno:
+tutores, enfermedades, grados, puntas/repasos y examenes se gestionan desde ese detalle.
+La edicion directa de alumnos desde listado esta deshabilitada; desde el listado se permite creacion
+y cambio de estado.
 
 ## Multisucursal
 
@@ -178,6 +257,52 @@ con `person_id` y `dojo_id` vinculados.
   para mostrar foto, datos del alumno, grado en progreso, historial y salud de forma compacta.
 - El detalle de consulta no muestra acciones operativas ni botones de edicion.
 
+#### Asistencias
+
+`AsistenciaController` reemplaza BREAD de Voyager para asistencias.
+
+Reglas:
+
+- Si el usuario tiene `dojo_id`, siempre ve y crea asistencias para su propio dojo.
+- Si el usuario no tiene `dojo_id`, se considera global/admin y puede seleccionar dojo.
+- La edicion de estado por alumno se realiza desde la vista detalle con formulario `PUT`,
+  sin AJAX.
+- Usuarios sin permiso `edit_asistencias` ven solo etiquetas de estado.
+
+Rutas:
+
+```text
+GET    admin/asistencias                    voyager.asistencias.index
+GET    admin/asistencias/ajax/list          listado AJAX parcial
+GET    admin/asistencias/create             voyager.asistencias.create
+GET    admin/asistencias/alumnos            asistencias.load_alumnos
+POST   admin/asistencias/store              voyager.asistencias.store
+GET    admin/asistencias/{id}               voyager.asistencias.show
+PUT    admin/asistencias/{id}/update        asistencias.update
+DELETE admin/asistencias/{id}/delete        voyager.asistencias.destroy
+```
+
+`asistencias.load_alumnos` carga alumnos por horario, fecha y dojo.
+
+#### Horarios
+
+`HorarioController` reemplaza BREAD de Voyager para crear, editar, listar y ver horarios.
+
+Reglas:
+
+- Usuario de sucursal: el dojo se asigna automaticamente desde `auth()->user()->dojo_id`
+  y se muestra como campo fijo.
+- Admin global: puede seleccionar dojo con Select2.
+- En creacion, `status` se guarda siempre como activo (`1`).
+- El toggle de estado solo se muestra al editar.
+- `tipo` usa opciones fijas: `Mañana`, `Tarde`, `Noche`.
+
+Vista principal para crear/editar:
+
+- `resources/views/horarios/edit-add.blade.php`
+
+La vista maneja ambos modos con `$editing = isset($horario)`.
+
 #### Aranceles
 
 - Los aranceles se administran desde el detalle de grados:
@@ -225,6 +350,24 @@ Todavia puede faltar, si se quiere multisucursal completa en todo el sistema:
 
 ## Comandos utiles
 
+### Primera instalacion
+
+```powershell
+composer install
+cp .env.example .env
+php artisan example:install
+sudo chmod -R 775 storage bootstrap/cache
+```
+
+`php artisan example:install` genera key, ejecuta `migrate:fresh --seed` y crea el enlace de storage.
+
+### Desarrollo diario
+
+```powershell
+php artisan serve
+npm run dev
+```
+
 ### Instalacion completa
 
 ```powershell
@@ -243,6 +386,22 @@ php artisan migrate:fresh --seed
 php artisan optimize:clear
 php artisan view:clear
 ```
+
+### Tests
+
+```powershell
+php artisan test
+php artisan test --filter=NombreDelTest
+./vendor/bin/phpunit tests/Unit/ExampleTest.php
+```
+
+### Formato
+
+```powershell
+./vendor/bin/pint
+```
+
+El proyecto usa Laravel Pint con estilo PSR-12.
 
 ## Sistema de progresion de grados (AlumnoGrado)
 
