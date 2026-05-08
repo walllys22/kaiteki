@@ -393,12 +393,16 @@ Reglas:
   usando los dias cobrados desde el inicio del periodo hasta la fecha de corte.
 - El recorte proporcional ajusta `monto`, `descuento` y `beca` de la ultima mensualidad.
   La mora y los pagos registrados se conservan.
+- Se puede eliminar solo la mensualidad generada mas reciente.
+- No se puede eliminar una mensualidad si ya tiene pagos registrados.
 - Si se registra una nueva mensualidad despues de un corte, puede tener monto y fecha
   distintos. La nueva configuracion genera cobros solo desde esa nueva fecha en adelante.
 - Los meses ya generados antes del corte conservan su monto, descuento, beca, mora,
   pagos y saldo historico; no se recalculan con la nueva mensualidad.
 - Cada mensualidad generada conserva historicamente:
   `monto`, `descuento`, `beca`, `mora`, `monto_pagado`.
+- La lista de mensualidades muestra el periodo completo de cada cobro:
+  fecha de inicio y fecha de fin del mes generado.
 - El total a cobrar se calcula como:
   `monto - descuento - beca + mora`, nunca menor a cero.
 - El saldo se calcula como:
@@ -432,6 +436,7 @@ POST admin/alumnos/mensualidades/plan/store       alumno.mensualidades.plan.stor
 PUT  admin/alumnos/mensualidades/plan/{id}/pausar alumno.mensualidades.plan.pausar
 PUT  admin/alumnos/mensualidades/{id}/pagar       alumno.mensualidades.pagar
 PUT  admin/alumnos/mensualidades/{id}/mora        alumno.mensualidades.mora
+DELETE admin/alumnos/mensualidades/{id}/delete    alumno.mensualidades.destroy
 GET  admin/alumnos/mensualidades/pagos/{id}/comprobante  alumno.mensualidades.pago.comprobante
 GET  comprobantes/mensualidades/pagos/{id}  alumno.mensualidades.pago.comprobante.public
 ```

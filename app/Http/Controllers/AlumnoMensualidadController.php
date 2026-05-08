@@ -332,6 +332,41 @@ class AlumnoMensualidadController extends Controller
         return view('alumnos.mensualidades.comprobantePago', compact('pago'));
     }
 
+    public function destroy(int $id)
+    {
+        $this->custom_authorize('delete_alumnos');
+
+        $mensualidad = $this->findMensualidad($id);
+
+        $ultimaMensualidadId = AlumnoMensualidad::query()
+            ->where('alumno_id', $mensualidad->alumno_id)
+            ->whereNull('deleted_at')
+            ->orderByDesc('periodo')
+            ->orderByDesc('id')
+            ->value('id');
+
+        if ((int) $ultimaMensualidadId !== (int) $mensualidad->id) {
+            return redirect()->back()
+                ->with(['message' => 'Solo se puede eliminar la mensualidad generada más reciente.', 'alert-type' => 'error']);
+        }
+
+        if ($mensualidad->pagos()->whereNull('deleted_at')->exists()) {
+            return redirect()->back()
+                ->with(['message' => 'No se puede eliminar una mensualidad que ya tiene pagos registrados.', 'alert-type' => 'error']);
+        }
+
+        try {
+            $alumnoId = $mensualidad->alumno_id;
+            $mensualidad->delete();
+
+            return redirect()->route('voyager.alumnos.show', ['id' => $alumnoId])
+                ->with(['message' => 'Mensualidad eliminada correctamente.', 'alert-type' => 'success']);
+        } catch (\Throwable $th) {
+            return redirect()->back()
+                ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
+        }
+    }
+
     public function comprobantePagoPublic(int $id)
     {
         $pago = AlumnoMensualidadPago::with([

@@ -135,7 +135,7 @@
     <table class="table table-bordered table-hover" style="font-size:13px;">
         <thead>
             <tr>
-                <th style="width:105px;">Fecha</th>
+                <th style="width:170px;">Período</th>
                 <th style="width:95px; text-align:right;">Monto</th>
                 <th style="width:95px; text-align:right;">Desc.</th>
                 <th style="width:95px; text-align:right;">Beca</th>
@@ -152,6 +152,9 @@
             @forelse($data as $item)
                 @php
                     $estado = $item->estadoPago();
+                    $esUltimaMensualidad = $ultimaMensualidad && (int) $ultimaMensualidad->id === (int) $item->id;
+                    $periodoInicio = \Carbon\Carbon::parse($item->periodo)->startOfDay();
+                    $periodoFin = $periodoInicio->copy()->addMonthNoOverflow()->subDay();
                     $tieneMensualidadAnteriorPendiente = collect($periodosPendientes ?? [])
                         ->contains(fn($periodo) => $periodo < $item->periodo);
                     $puedePagarMensualidad = !$tieneMensualidadAnteriorPendiente;
@@ -163,7 +166,11 @@
                     };
                 @endphp
                 <tr>
-                    <td>{{ \Carbon\Carbon::parse($item->periodo)->format('d/m/Y') }}</td>
+                    <td>
+                        <strong>{{ $periodoInicio->format('d/m/Y') }}</strong>
+                        <br>
+                        <small class="text-muted">al {{ $periodoFin->format('d/m/Y') }}</small>
+                    </td>
                     <td style="text-align:right;">Bs {{ number_format((float) $item->monto, 2, '.', ',') }}</td>
                     <td style="text-align:right;">Bs {{ number_format((float) $item->descuento, 2, '.', ',') }}</td>
                     <td style="text-align:right;">Bs {{ number_format((float) $item->beca, 2, '.', ',') }}</td>
@@ -222,6 +229,14 @@
                                     data-url="{{ route('alumno.mensualidades.mora', $item->id) }}">
                                 <i class="fa-solid fa-triangle-exclamation"></i>
                             </button>
+                            @if($esUltimaMensualidad && $item->pagos->isEmpty())
+                                <a href="#" onclick="deleteItem('{{ route('alumno.mensualidades.destroy', $item->id) }}')"
+                                   data-toggle="modal" data-target="#modal-delete"
+                                   class="btn btn-danger btn-xs"
+                                   title="Eliminar mensualidad más reciente">
+                                    <i class="voyager-trash"></i>
+                                </a>
+                            @endif
                         @else
                             <span class="text-muted">—</span>
                         @endif
