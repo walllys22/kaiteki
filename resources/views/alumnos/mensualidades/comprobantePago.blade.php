@@ -71,11 +71,19 @@
             display: inline-block;
             padding: 4px;
         }
+        .qr-box canvas,
+        .qr-box img {
+            display: block;
+            height: 148px !important;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+            width: 148px !important;
+        }
         .qr-hint {
             font-size: 9px;
             font-weight: 400;
             margin-top: 4px;
-            max-width: 92px;
+            max-width: 158px;
             word-break: break-word;
         }
         .footer {
@@ -92,7 +100,7 @@
         }
         .qr-footer {
             text-align: center;
-            width: 96px;
+            width: 160px;
         }
         .section-title {
             border-bottom: 1px solid #999;
@@ -247,8 +255,8 @@
             if (window.QRCode) {
                 new QRCode(document.getElementById('qr-comprobante'), {
                     text: @json($qrUrl),
-                    width: 82,
-                    height: 82,
+                    width: 148,
+                    height: 148,
                     correctLevel: QRCode.CorrectLevel.M
                 });
             }
