@@ -64,18 +64,35 @@
         .title { font-size: 18px; font-weight: 700; margin: 0 0 5px; }
         .subtitle { font-size: 12px; margin: 0; }
         .receipt-no { font-size: 13px; font-weight: 700; text-align: right; }
+        .receipt-no .qr-box,
+        .receipt-no .qr-hint { display: none; }
         .qr-box {
             border: 1px solid #111;
             display: inline-block;
-            margin-top: 10px;
-            padding: 6px;
+            padding: 4px;
         }
         .qr-hint {
             font-size: 9px;
             font-weight: 400;
             margin-top: 4px;
-            max-width: 130px;
+            max-width: 92px;
             word-break: break-word;
+        }
+        .footer {
+            align-items: flex-end;
+            border-top: 1px solid #999;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 16px;
+            padding-top: 10px;
+        }
+        .footer-note {
+            color: #444;
+            font-size: 11px;
+        }
+        .qr-footer {
+            text-align: center;
+            width: 96px;
         }
         .section-title {
             border-bottom: 1px solid #999;
@@ -130,10 +147,6 @@
             <div class="receipt-no">
                 COMPROBANTE DE MENSUALIDAD<br>
                 Nro. {{ str_pad($pago->id, 6, '0', STR_PAD_LEFT) }}
-                <div class="qr-box">
-                    <div id="qr-comprobante"></div>
-                </div>
-                <div class="qr-hint">Escanee para ver el comprobante detallado.</div>
             </div>
         </div>
 
@@ -208,6 +221,19 @@
             <div class="section-title">Observación</div>
             <p>{{ $pago->observacion }}</p>
         @endif
+
+        <div class="footer">
+            <div class="footer-note">
+                Comprobante generado por Kaiteki.<br>
+                Escanee el QR para verificar el detalle.
+            </div>
+            <div class="qr-footer">
+                <div class="qr-box">
+                    <div id="qr-comprobante"></div>
+                </div>
+                <div class="qr-hint">Ver detalle</div>
+            </div>
+        </div>
     </div>
 
     <div class="actions">
@@ -221,8 +247,8 @@
             if (window.QRCode) {
                 new QRCode(document.getElementById('qr-comprobante'), {
                     text: @json($qrUrl),
-                    width: 118,
-                    height: 118,
+                    width: 82,
+                    height: 82,
                     correctLevel: QRCode.CorrectLevel.M
                 });
             }
