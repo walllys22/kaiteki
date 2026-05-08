@@ -343,6 +343,79 @@ Reglas actuales:
 Cualquier integracion futura de caja, reportes, cuentas por cobrar, mora o historial economico
 debe respetar esta base y documentarse en `.codex`.
 
+#### Mensualidades de alumnos
+
+La mensualidad es un control economico independiente de grados.
+No depende de `Kyu`, `Dan`, repasos/puntas ni examenes. Pertenece directamente al alumno.
+
+Objetivo:
+
+- saber cuanto se debe cobrar cada mes a cada alumno
+- permitir mensualidades distintas por alumno y por dojo
+- generar automaticamente los meses pendientes
+- controlar cuanto se cobro
+- controlar saldo pendiente
+- permitir pagos parciales
+- permitir descuentos y becas
+- permitir agregar mora
+- cortar la generacion de nuevos meses cuando el alumno queda inactivo
+
+Modelos:
+
+- `App\Models\AlumnoMensualidadPlan`: configuracion activa de mensualidad del alumno.
+- `App\Models\AlumnoMensualidad`: registro mensual generado para el alumno.
+- `App\Models\AlumnoMensualidadPago`: historial de pagos realizados sobre una mensualidad.
+
+Tablas:
+
+- `alumno_mensualidad_planes`
+- `alumno_mensualidades`
+- `alumno_mensualidad_pagos`
+
+Reglas:
+
+- La configuracion se hace desde el detalle del alumno, pestaña `Mensualidades`.
+- El usuario define la fecha exacta de inicio (`fecha_inicio`) con dia, mes y anio.
+- Al abrir la lista de mensualidades, si el alumno esta activo y tiene plan activo,
+  se generan automaticamente los cobros mensuales faltantes desde `fecha_inicio`
+  hasta la fecha actual.
+- La generacion conserva el mismo dia de cobro cada mes usando `addMonthNoOverflow()`.
+- Si el alumno esta inactivo (`alumnos.status != 1`), no se generan nuevos meses.
+- Al cambiar un alumno a inactivo, el plan activo de mensualidad se desactiva para cortar
+  la generacion. Si se reactiva al alumno, debe configurarse nuevamente la mensualidad
+  desde el mes que corresponda para evitar cobros retroactivos no deseados.
+- Cada mensualidad generada conserva historicamente:
+  `monto`, `descuento`, `beca`, `mora`, `monto_pagado`.
+- El total a cobrar se calcula como:
+  `monto - descuento - beca + mora`, nunca menor a cero.
+- El saldo se calcula como:
+  `total - monto_pagado`, nunca menor a cero.
+- Los pagos pueden ser parciales y se registran en `alumno_mensualidad_pagos`.
+- Cada pago suma a `alumno_mensualidades.monto_pagado`.
+- Cada pago de mensualidad, parcial o completo, tiene comprobante imprimible.
+- No se puede pagar una mensualidad nueva si existe una mensualidad anterior con saldo.
+- El pago debe seguir orden cronologico: primero se pagan las deudas mas antiguas.
+- La mora se agrega manualmente a una mensualidad especifica.
+- Estados derivados:
+  `Pendiente`, `Parcial`, `Pagado`, `Exonerado`, `Anulado`.
+- `Exonerado` aplica cuando el total de la mensualidad queda en cero por descuentos/beca.
+- La mensualidad no reemplaza los aranceles de grados; ambos controles economicos son separados.
+
+Rutas:
+
+```text
+GET  admin/alumnos/{id}/mensualidades/list        alumno.mensualidades.list
+POST admin/alumnos/mensualidades/plan/store       alumno.mensualidades.plan.store
+PUT  admin/alumnos/mensualidades/{id}/pagar       alumno.mensualidades.pagar
+PUT  admin/alumnos/mensualidades/{id}/mora        alumno.mensualidades.mora
+GET  admin/alumnos/mensualidades/pagos/{id}/comprobante  alumno.mensualidades.pago.comprobante
+```
+
+Vista:
+
+- `resources/views/alumnos/mensualidades/list.blade.php`
+- `resources/views/alumnos/mensualidades/comprobantePago.blade.php`
+
 ### Problemas corregidos durante el proceso
 
 - Error por columna `status` duplicada en migracion de `alumnos`.
@@ -616,4 +689,7 @@ Los select con clase `select2` dentro de modales deben reinicializarse con `drop
 - Los examenes pendientes se pueden pagar despues
 - Los examenes pagados tienen comprobante imprimible
 - Comprobante de punta solo se imprime si esta pagado
+- Las mensualidades son independientes de grados y pertenecen al alumno
+- Las mensualidades se generan automaticamente desde la fecha de inicio hasta la fecha actual si el alumno esta activo
+- Las mensualidades permiten pagos parciales, descuento, beca y mora
 - `.codex` = documento central del proyecto

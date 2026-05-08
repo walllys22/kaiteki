@@ -57,6 +57,16 @@ class Alumno extends Model
         return $this->hasOne(AlumnoGrado::class, 'alumno_id')->latestOfMany();
     }
 
+    public function mensualidadPlan()
+    {
+        return $this->hasOne(AlumnoMensualidadPlan::class, 'alumno_id')->where('status', 1);
+    }
+
+    public function mensualidades()
+    {
+        return $this->hasMany(AlumnoMensualidad::class, 'alumno_id');
+    }
+
     public function register()
     {
         return $this->belongsTo(User::class, 'registerUser_id');

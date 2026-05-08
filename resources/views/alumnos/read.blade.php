@@ -185,6 +185,11 @@
                                 </a>
                             </li>
                             <li role="presentation">
+                                <a href="#tab-mensualidades" aria-controls="tab-mensualidades" role="tab" data-toggle="tab">
+                                    <i class="fa-solid fa-money-bill"></i> Mensualidades
+                                </a>
+                            </li>
+                            <li role="presentation">
                                 <a href="#tab-enfermedades" aria-controls="tab-enfermedades" role="tab" data-toggle="tab">
                                     <i class="fa-solid fa-briefcase-medical"></i> Enfermedades
                                 </a>
@@ -269,6 +274,27 @@
                                 </div>
                                 <div id="div-asistencia-list">
                                     <p class="text-center">Cargando asistencias...</p>
+                                </div>
+                            </div>
+
+                            <div role="tabpanel" class="tab-pane" id="tab-mensualidades">
+                                <div class="row alumno-tab-toolbar">
+                                    <div class="col-sm-9">
+                                        <div class="dataTables_length">
+                                            <label>Mostrar <select id="select-paginate-mensualidad" class="form-control input-sm">
+                                                <option value="10">10</option>
+                                                <option value="25">25</option>
+                                                <option value="50">50</option>
+                                                <option value="100">100</option>
+                                            </select> registros</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-3" style="margin-bottom: 10px;">
+                                        <input type="text" id="input-search-mensualidad" placeholder="🔍 Buscar..." class="form-control">
+                                    </div>
+                                </div>
+                                <div id="div-mensualidades-list">
+                                    <p class="text-center">Cargando mensualidades...</p>
                                 </div>
                             </div>
 
@@ -589,11 +615,13 @@
         var countPageEnfer = 10;
         var countPageHorario = 10;
         var countPageAsistencia = 10;
+        var countPageMensualidad = 10;
         var timeoutGrado = null;
         var timeoutTutor = null;
         var timeoutEnfer = null;
         var timeoutHorario = null;
         var timeoutAsistencia = null;
+        var timeoutMensualidad = null;
 
         $(document).ready(function() {
             $('#modal-add-tutor, #modal-add-enfermedad, #modal-add-grado, #modal-add-horario').on('shown.bs.modal', function() {
@@ -608,6 +636,7 @@
             enfermedadList();
             horarioList();
             asistenciaList();
+            mensualidadList();
 
             $('#input-search-grado').on('keyup', function(e) {
                 if (e.keyCode == 13) {
@@ -688,6 +717,38 @@
             $('#select-paginate-asistencia').change(function() {
                 countPageAsistencia = $(this).val();
                 asistenciaList();
+            });
+
+            $('#input-search-mensualidad').on('keyup', function(e) {
+                if (e.keyCode == 13) { clearTimeout(timeoutMensualidad); mensualidadList(); }
+            }).on('input', function() {
+                clearTimeout(timeoutMensualidad);
+                timeoutMensualidad = setTimeout(function() { mensualidadList(); }, 1000);
+            });
+
+            $('#select-paginate-mensualidad').change(function() {
+                countPageMensualidad = $(this).val();
+                mensualidadList();
+            });
+
+            $(document).on('click', '#div-mensualidades-list .pagination a', function(e) {
+                e.preventDefault();
+                let link = $(this).attr('href');
+                if (link) {
+                    let page = new URL(link).searchParams.get('page') || 1;
+                    mensualidadList(page);
+                }
+            });
+
+            $(document).on('show.bs.modal', '#modal-pagar-mensualidad', function(event) {
+                var button = $(event.relatedTarget);
+                $('#form-pagar-mensualidad').attr('action', button.data('url'));
+                $('#mensualidad-pago-monto').val(button.data('saldo') || '');
+            });
+
+            $(document).on('show.bs.modal', '#modal-mora-mensualidad', function(event) {
+                var button = $(event.relatedTarget);
+                $('#form-mora-mensualidad').attr('action', button.data('url'));
             });
 
             $(document).on('click', '#div-asistencia-list .pagination a', function(e) {
@@ -835,6 +896,26 @@
                 error: function() {
                     $('#div-asistencia-list').html('<p class="text-center">No se pudieron cargar las asistencias.</p>');
                     $('#div-asistencia-list').loading('toggle');
+                }
+            });
+        }
+
+        function mensualidadList(page = 1) {
+            $('#div-mensualidades-list').loading({ message: 'Cargando...' });
+            let id = "{{ $alumno->id }}";
+            let search = $('#input-search-mensualidad').val() ? $('#input-search-mensualidad').val() : '';
+            let url = "{{ url('admin/alumnos') }}/" + id + "/mensualidades/list";
+
+            $.ajax({
+                url: `${url}?search=${search}&paginate=${countPageMensualidad}&page=${page}`,
+                type: 'get',
+                success: function(result) {
+                    $('#div-mensualidades-list').html(result);
+                    $('#div-mensualidades-list').loading('toggle');
+                },
+                error: function() {
+                    $('#div-mensualidades-list').html('<p class="text-center">No se pudieron cargar las mensualidades.</p>');
+                    $('#div-mensualidades-list').loading('toggle');
                 }
             });
         }

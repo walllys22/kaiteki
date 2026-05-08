@@ -9,6 +9,7 @@ use App\Models\AlumnoEnfermedad;
 use App\Models\AlumnoGrado;
 use App\Models\AlumnoGradoExamen;
 use App\Models\AlumnoHorario;
+use App\Models\AlumnoMensualidadPlan;
 use App\Models\Arancele;
 use App\Models\AsistenciaAlumno;
 use App\Models\Person;
@@ -289,6 +290,14 @@ class AlumnoController extends Controller
         $alumno->save();
 
         $msg = $alumno->status == 1 ? 'Activo' : 'Inactivo';
+
+        if ($alumno->status != 1) {
+            AlumnoMensualidadPlan::query()
+                ->where('alumno_id', $alumno->id)
+                ->where('status', 1)
+                ->whereNull('deleted_at')
+                ->update(['status' => 0]);
+        }
 
         return back()->with(['message' => "El estado del alumno se cambió a $msg.", 'alert-type' => 'success']);
     }
