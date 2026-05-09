@@ -14,6 +14,9 @@
             : $ultimaInicio->copy()->addMonthNoOverflow()->subDay())
         : null;
     $mensualidadVigente = !$planActivo && $ultimaFin && now()->startOfDay()->lte($ultimaFin);
+    $planPausable = $planActivo
+        ? $plan
+        : (($mensualidadVigente && $ultimaMensualidad && $ultimaMensualidad->plan) ? $ultimaMensualidad->plan : null);
     $minFechaNuevaMensualidad = $ultimaFin ? $ultimaFin->copy()->addDay()->format('Y-m-d') : null;
     $maxFechaNuevaMensualidad = date('Y-m-d');
     $fechaInicioSugerida = $minFechaNuevaMensualidad && date('Y-m-d') < $minFechaNuevaMensualidad
@@ -38,6 +41,12 @@
                     <span class="label label-warning" style="margin-left:6px;">Alumno inactivo: no genera nuevos meses</span>
                 @endif
             </div>
+        @elseif($mensualidadVigente)
+            <div class="alert alert-info" style="font-size:12px; padding:8px 10px; margin-bottom:8px;">
+                <i class="fa-solid fa-calendar-day"></i>
+                Mensualidad vigente hasta <strong>{{ $ultimaFin->format('d/m/Y') }}</strong>.
+                Puede pausarse o finalizarse con corte por fecha específica.
+            </div>
         @else
             <div class="alert alert-warning" style="font-size:12px; padding:8px 10px; margin-bottom:8px;">
                 <i class="fa-solid fa-triangle-exclamation"></i>
@@ -53,9 +62,15 @@
                 </button>
             @else
                 @if($mensualidadVigente)
-                    <button class="btn btn-default btn-sm" disabled title="La última mensualidad sigue vigente hasta {{ $ultimaFin->format('d/m/Y') }}.">
-                        <i class="fa-solid fa-lock"></i> Mensualidad vigente
-                    </button>
+                    @if($planPausable)
+                        <button class="btn btn-warning btn-sm" data-toggle="modal" data-target="#modal-pausar-mensualidad" title="La última mensualidad sigue vigente hasta {{ $ultimaFin->format('d/m/Y') }}.">
+                            <i class="fa-solid fa-pause"></i> Pausar / finalizar
+                        </button>
+                    @else
+                        <button class="btn btn-default btn-sm" disabled title="La última mensualidad sigue vigente hasta {{ $ultimaFin->format('d/m/Y') }}.">
+                            <i class="fa-solid fa-lock"></i> Mensualidad vigente
+                        </button>
+                    @endif
                 @else
                     <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#modal-mensualidad-plan">
                         <i class="voyager-settings"></i> Configurar Mensualidad
@@ -489,8 +504,8 @@
     </div>
 </form>
 
-@if($planActivo)
-<form id="form-pausar-mensualidad" action="{{ route('alumno.mensualidades.plan.pausar', $plan->id) }}" method="POST" class="form-edit-add">
+@if($planPausable)
+<form id="form-pausar-mensualidad" action="{{ route('alumno.mensualidades.plan.pausar', $planPausable->id) }}" method="POST" class="form-edit-add">
     @csrf
     @method('PUT')
     <div class="modal fade" tabindex="-1" id="modal-pausar-mensualidad" role="dialog">
@@ -498,11 +513,11 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-                    <h4 class="modal-title"><i class="fa-solid fa-pause"></i> Pausar Mensualidad</h4>
+                    <h4 class="modal-title"><i class="fa-solid fa-pause"></i> Pausar / finalizar Mensualidad</h4>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-warning" style="font-size:12px;">
-                        Al pausar, no se generarán nuevas mensualidades. Los meses ya generados conservarán sus saldos, pagos y mora.
+                        Al pausar o finalizar, no se generarán nuevas mensualidades. Los meses ya generados conservarán sus saldos, pagos y mora.
                         @if($ultimaMensualidad)
                             <br>
                             Último período generado:
@@ -561,7 +576,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-warning btn-submit">Pausar Mensualidad</button>
+                    <button type="submit" class="btn btn-warning btn-submit">Pausar / finalizar</button>
                 </div>
             </div>
         </div>

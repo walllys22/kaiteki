@@ -436,6 +436,9 @@ Reglas:
 - Si la fecha actual todavia esta dentro del ultimo periodo generado, esa mensualidad se
   considera vigente y no se puede configurar otra, aunque el plan ya este pausado. La
   interfaz muestra `Mensualidad vigente` bloqueado y el backend tambien rechaza `storePlan()`.
+- Cuando una mensualidad esta vigente, puede pausarse o finalizarse aunque el plan ya no
+  este activo, siempre que exista el plan asociado a esa mensualidad. El modal permite
+  cortar por fecha especifica dentro del rango `periodo` - `fecha_fin` del mes vigente.
 - Los meses ya generados antes del corte conservan su monto, descuento, mora,
   pagos y saldo historico; no se recalculan con la nueva mensualidad.
 - Cada mensualidad generada conserva historicamente:

@@ -80,7 +80,7 @@ class AlumnoMensualidadController extends Controller
             ->orderByDesc('periodo')
             ->paginate($paginate);
 
-        $ultimaMensualidad = AlumnoMensualidad::query()
+        $ultimaMensualidad = AlumnoMensualidad::with('plan')
             ->where('alumno_id', $alumno->id)
             ->whereNull('deleted_at')
             ->orderByDesc('periodo')
@@ -284,16 +284,33 @@ class AlumnoMensualidadController extends Controller
 
         $plan = AlumnoMensualidadPlan::with('alumno')
             ->whereNull('deleted_at')
-            ->where('status', 1)
             ->when($userDojoId, function ($query, $userDojoId) {
                 return $query->where('dojo_id', $userDojoId);
             })
             ->findOrFail($id);
 
+        $mensualidadVigente = AlumnoMensualidad::query()
+            ->where('alumno_id', $plan->alumno_id)
+            ->where('alumno_mensualidad_plan_id', $plan->id)
+            ->whereNull('deleted_at')
+            ->get()
+            ->first(function ($mensualidad) {
+                $inicio = Carbon::parse($mensualidad->periodo)->startOfDay();
+                $fin = $this->finPeriodoMensualidad($mensualidad);
+
+                return now()->startOfDay()->betweenIncluded($inicio, $fin);
+            });
+
+        if ((int) $plan->status !== 1 && !$mensualidadVigente) {
+            return redirect()->back()
+                ->with(['message' => 'Esta mensualidad ya no está vigente para pausar o finalizar.', 'alert-type' => 'error']);
+        }
+
         try {
             DB::transaction(function () use ($request, $plan) {
                 $ultimaMensualidad = AlumnoMensualidad::query()
                     ->where('alumno_id', $plan->alumno_id)
+                    ->where('alumno_mensualidad_plan_id', $plan->id)
                     ->whereNull('deleted_at')
                     ->orderByDesc('periodo')
                     ->orderByDesc('id')
@@ -332,6 +349,9 @@ class AlumnoMensualidadController extends Controller
                 }
 
                 $plan->status = 0;
+                if ($request->tipo_corte === 'fecha' && isset($fechaCorte)) {
+                    $plan->fecha_fin = $fechaCorte->toDateString();
+                }
                 if ($request->observacion) {
                     $plan->observacion = trim(($plan->observacion ? $plan->observacion . "\n" : '') . 'Pausa: ' . $request->observacion);
                 }
