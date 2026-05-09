@@ -15,6 +15,8 @@ return new class extends Migration
             $table->decimal('monto_mensual', 10, 2)->default(0);
             $table->decimal('descuento', 10, 2)->default(0);
             $table->date('fecha_inicio');
+            $table->date('fecha_fin')->nullable();
+            $table->string('tipo_generacion', 30)->default('automatica');
             $table->text('observacion')->nullable();
             $table->smallInteger('status')->default(1);
 

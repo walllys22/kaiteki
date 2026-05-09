@@ -378,6 +378,20 @@ Reglas:
 - El usuario define la fecha exacta de inicio (`fecha_inicio`) con dia, mes y anio.
 - La fecha de inicio (`fecha_inicio`) no puede ser adelantada; debe ser hoy o una fecha
   anterior. La interfaz usa `max` con la fecha actual y el backend tambien lo valida.
+- Al configurar la mensualidad, el usuario elige el tipo de generacion:
+  `automatica` o `fecha_fin`.
+- La generacion `automatica` mantiene el comportamiento mensual normal y genera cobros
+  desde `fecha_inicio` hasta la fecha actual.
+- La generacion con `fecha_fin` exige una fecha final mayor o igual a `fecha_inicio`;
+  puede ser una fecha futura, genera un rango cerrado completo y desactiva el plan
+  despues de crear esos cobros.
+- El campo `fecha_fin` solo se habilita cuando el tipo de generacion es `fecha_fin`.
+  En generacion `automatica` queda deshabilitado y el backend rechaza cualquier envio
+  manipulado que incluya `fecha_fin`.
+- En generacion con `fecha_fin`, cada tramo mensual se calcula por dias. Los meses completos
+  cobran el monto mensual completo y el tramo final se prorratea si no cubre el mes entero.
+- El modal de configuracion muestra antes de guardar la cantidad de tramos, dias cobrados,
+  monto calculado, descuento calculado, total a generar y el detalle de cada tramo.
 - Al abrir la lista de mensualidades, si el alumno esta activo y tiene plan activo,
   se generan automaticamente los cobros mensuales faltantes desde `fecha_inicio`
   hasta la fecha actual.

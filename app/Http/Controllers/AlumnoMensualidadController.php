@@ -106,11 +106,22 @@ class AlumnoMensualidadController extends Controller
             'monto_mensual' => 'required|numeric|min:0|max:99999999.99',
             'descuento' => 'nullable|numeric|min:0|max:99999999.99',
             'fecha_inicio' => 'required|date',
+            'tipo_generacion' => 'required|in:automatica,fecha_fin',
+            'fecha_fin' => 'nullable|required_if:tipo_generacion,fecha_fin|date',
             'observacion' => 'nullable|string|max:500',
         ]);
 
         $alumno = $this->findAlumno((int) $request->alumno_id);
         $fechaInicio = Carbon::parse($request->fecha_inicio)->startOfDay();
+        $fechaFinPlan = $request->tipo_generacion === 'fecha_fin'
+            ? Carbon::parse($request->fecha_fin)->startOfDay()
+            : null;
+
+        if ($request->tipo_generacion !== 'fecha_fin' && $request->filled('fecha_fin')) {
+            return redirect()->back()
+                ->withInput()
+                ->with(['message' => 'La fecha fin solo se puede usar cuando el tipo de generación es "Con fecha fin".', 'alert-type' => 'error']);
+        }
 
         if ($fechaInicio->gt(now()->startOfDay())) {
             return redirect()->back()
@@ -119,6 +130,14 @@ class AlumnoMensualidadController extends Controller
                     'message' => 'La mensualidad no puede iniciar con una fecha adelantada. Debe iniciar hoy o en una fecha anterior.',
                     'alert-type' => 'error',
                 ]);
+        }
+
+        if ($fechaFinPlan) {
+            if ($fechaFinPlan->lt($fechaInicio)) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with(['message' => 'La fecha fin no puede ser menor a la fecha de inicio.', 'alert-type' => 'error']);
+            }
         }
 
         $planActivo = AlumnoMensualidadPlan::query()
@@ -170,13 +189,15 @@ class AlumnoMensualidadController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($request, $alumno, $fechaInicio) {
+            DB::transaction(function () use ($request, $alumno, $fechaInicio, $fechaFinPlan) {
                 $plan = AlumnoMensualidadPlan::create([
                     'alumno_id' => $alumno->id,
                     'dojo_id' => $alumno->dojo_id,
                     'monto_mensual' => (float) $request->monto_mensual,
                     'descuento' => (float) ($request->descuento ?? 0),
                     'fecha_inicio' => $fechaInicio->toDateString(),
+                    'fecha_fin' => $fechaFinPlan ? $fechaFinPlan->toDateString() : null,
+                    'tipo_generacion' => $request->tipo_generacion,
                     'observacion' => $request->observacion,
                     'status' => 1,
                 ]);
@@ -433,7 +454,25 @@ class AlumnoMensualidadController extends Controller
         $periodo = Carbon::parse($plan->fecha_inicio)->startOfDay();
         $periodoFinal = now()->startOfDay();
 
+        if ($plan->tipo_generacion === 'fecha_fin' && $plan->fecha_fin) {
+            $periodoFinal = Carbon::parse($plan->fecha_fin)->startOfDay();
+        }
+
         while ($periodo <= $periodoFinal) {
+            $finMes = $periodo->copy()->addMonthNoOverflow()->subDay()->startOfDay();
+            $fechaFinMensualidad = $finMes;
+
+            if ($plan->tipo_generacion === 'fecha_fin' && $plan->fecha_fin) {
+                $finPlan = Carbon::parse($plan->fecha_fin)->startOfDay();
+                $fechaFinMensualidad = $finPlan->lt($finMes) ? $finPlan : $finMes;
+            }
+
+            $diasMes = $periodo->diffInDays($finMes) + 1;
+            $diasCobrados = $periodo->diffInDays($fechaFinMensualidad) + 1;
+            $factor = $diasMes > 0 ? $diasCobrados / $diasMes : 1;
+            $monto = round((float) $plan->monto_mensual * $factor, 2);
+            $descuento = round((float) $plan->descuento * $factor, 2);
+
             $exists = AlumnoMensualidad::query()
                 ->where('alumno_id', $alumno->id)
                 ->whereDate('periodo', $periodo->toDateString())
@@ -445,9 +484,9 @@ class AlumnoMensualidadController extends Controller
                     'dojo_id' => $alumno->dojo_id,
                     'alumno_mensualidad_plan_id' => $plan->id,
                     'periodo' => $periodo->toDateString(),
-                    'fecha_fin' => $periodo->copy()->addMonthNoOverflow()->subDay()->toDateString(),
-                    'monto' => (float) $plan->monto_mensual,
-                    'descuento' => (float) $plan->descuento,
+                    'fecha_fin' => $fechaFinMensualidad->toDateString(),
+                    'monto' => $monto,
+                    'descuento' => $descuento,
                     'mora' => 0,
                     'monto_pagado' => 0,
                     'observacion' => $plan->observacion,
@@ -458,6 +497,11 @@ class AlumnoMensualidadController extends Controller
             }
 
             $periodo->addMonthNoOverflow();
+        }
+
+        if ($plan->tipo_generacion === 'fecha_fin' && $plan->fecha_fin) {
+            $plan->status = 0;
+            $plan->save();
         }
     }
 

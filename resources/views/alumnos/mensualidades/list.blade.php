@@ -28,6 +28,9 @@
                 <i class="fa-solid fa-calendar-check"></i>
                 Mensualidad activa desde <strong>{{ \Carbon\Carbon::parse($plan->fecha_inicio)->format('d/m/Y') }}</strong>:
                 Bs <strong>{{ number_format((float) $plan->monto_mensual, 2, '.', ',') }}</strong>
+                @if($plan->tipo_generacion === 'fecha_fin' && $plan->fecha_fin)
+                    · hasta <strong>{{ \Carbon\Carbon::parse($plan->fecha_fin)->format('d/m/Y') }}</strong>
+                @endif
                 @if((float) $plan->descuento > 0)
                     · descuento Bs <strong>{{ number_format((float) $plan->descuento, 2, '.', ',') }}</strong>
                 @endif
@@ -319,10 +322,23 @@
                 <div class="modal-body">
                     <input type="hidden" name="alumno_id" value="{{ $alumno->id }}">
                     <div class="row">
+                        <div class="form-group col-md-12">
+                            <label>Tipo de generación <span class="text-danger">*</span></label>
+                            <select name="tipo_generacion" id="tipo-generacion-mensualidad" class="form-control" required>
+                                <option value="automatica" {{ old('tipo_generacion', 'automatica') === 'automatica' ? 'selected' : '' }}>Automática mensual</option>
+                                <option value="fecha_fin" {{ old('tipo_generacion') === 'fecha_fin' ? 'selected' : '' }}>Con fecha fin</option>
+                            </select>
+                            <small class="text-muted">
+                                Automática genera mes por mes hasta hoy. Con fecha fin genera un rango cerrado y prorratea el último tramo si corresponde.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="row">
                         <div class="form-group col-md-6">
                             <label>Inicio de cobro <span class="text-danger">*</span></label>
                             <input type="date"
                                    name="fecha_inicio"
+                                   id="fecha-inicio-mensualidad"
                                    class="form-control"
                                    @if($minFechaNuevaMensualidad) min="{{ $minFechaNuevaMensualidad }}" @endif
                                    max="{{ $maxFechaNuevaMensualidad }}"
@@ -334,6 +350,20 @@
                                 </small>
                             @endif
                         </div>
+                        <div class="form-group col-md-6" id="grupo-fecha-fin-plan-mensualidad">
+                            <label>Fecha fin</label>
+                            <input type="date"
+                                   name="fecha_fin"
+                                   id="fecha-fin-plan-mensualidad"
+                                   class="form-control"
+                                   min="{{ old('fecha_inicio', $fechaInicioSugerida) }}"
+                                   value="{{ old('fecha_fin') }}">
+                            <small class="text-muted">
+                                Obligatoria solo cuando se usa generación con fecha fin.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="row">
                         <div class="form-group col-md-6">
                             <label>Monto mensual <span class="text-danger">*</span></label>
                             <div class="input-group">
@@ -348,9 +378,7 @@
                                        required>
                             </div>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="form-group col-md-12">
+                        <div class="form-group col-md-6">
                             <label>Descuento</label>
                             <div class="input-group">
                                 <span class="input-group-addon">Bs</span>
@@ -358,6 +386,17 @@
                                        value="{{ old('descuento', $planActivo ? $plan->descuento : 0) }}">
                             </div>
                         </div>
+                    </div>
+                    <div id="resumen-generacion-mensualidad" class="well well-sm" style="display:none; font-size:12px;">
+                        <div><strong>Rango:</strong> <span data-field="rango"></span></div>
+                        <div><strong>Tramos:</strong> <span data-field="tramos"></span></div>
+                        <div><strong>Días cobrados:</strong> <span data-field="dias"></span></div>
+                        <div><strong>Monto calculado:</strong> Bs <span data-field="monto"></span></div>
+                        <div><strong>Descuento calculado:</strong> Bs <span data-field="descuento"></span></div>
+                        <div style="background:#eef8ff; border:1px solid #9bd2f5; border-radius:4px; color:#14506f; font-size:15px; font-weight:800; margin:8px 0; padding:8px 10px;">
+                            Total a generar: Bs <span data-field="total"></span>
+                        </div>
+                        <div data-field="detalle" style="margin-top:6px;"></div>
                     </div>
                     <div class="form-group">
                         <label>Observación</label>
@@ -458,6 +497,160 @@
 @endif
 
 <script>
+    (function() {
+        var $form = $('#form-mensualidad-plan');
+        var $tipo = $('#tipo-generacion-mensualidad');
+        var $fechaInicio = $('#fecha-inicio-mensualidad');
+        var $fechaFin = $('#fecha-fin-plan-mensualidad');
+        var $grupoFechaFin = $('#grupo-fecha-fin-plan-mensualidad');
+        var $resumen = $('#resumen-generacion-mensualidad');
+        var $monto = $form.find('input[name="monto_mensual"]');
+        var $descuento = $form.find('input[name="descuento"]');
+
+        function parseDate(value) {
+            if (!value) {
+                return null;
+            }
+
+            var parts = value.split('-');
+            return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        }
+
+        function formatDate(date) {
+            var day = String(date.getDate()).padStart(2, '0');
+            var month = String(date.getMonth() + 1).padStart(2, '0');
+            return day + '/' + month + '/' + date.getFullYear();
+        }
+
+        function money(value) {
+            return Number(value || 0).toFixed(2);
+        }
+
+        function daysInMonth(year, monthIndex) {
+            return new Date(year, monthIndex + 1, 0).getDate();
+        }
+
+        function addMonthNoOverflow(date) {
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+
+            if (month > 11) {
+                month = 0;
+                year += 1;
+            }
+
+            var day = Math.min(date.getDate(), daysInMonth(year, month));
+            return new Date(year, month, day);
+        }
+
+        function diffDays(start, end) {
+            var msDia = 24 * 60 * 60 * 1000;
+            return Math.floor((end - start) / msDia) + 1;
+        }
+
+        function calcularGeneracion() {
+            if (!$form.length || !$resumen.length) {
+                return;
+            }
+
+            var inicio = parseDate($fechaInicio.val());
+            var fin = $tipo.val() === 'fecha_fin' ? parseDate($fechaFin.val()) : parseDate($fechaInicio.attr('max'));
+            var montoMensual = Number($monto.val() || 0);
+            var descuentoMensual = Number($descuento.val() || 0);
+
+            if (!inicio || !fin || fin < inicio || montoMensual < 0 || descuentoMensual < 0) {
+                $resumen.hide();
+                return;
+            }
+
+            var cursor = new Date(inicio.getTime());
+            var tramos = [];
+            var totalDias = 0;
+            var totalMonto = 0;
+            var totalDescuento = 0;
+
+            while (cursor <= fin && tramos.length < 60) {
+                var siguienteInicio = addMonthNoOverflow(cursor);
+                var finMes = new Date(siguienteInicio.getTime());
+                finMes.setDate(finMes.getDate() - 1);
+
+                var finTramo = fin < finMes ? fin : finMes;
+                var diasMes = diffDays(cursor, finMes);
+                var diasCobrados = diffDays(cursor, finTramo);
+                var factor = diasMes > 0 ? diasCobrados / diasMes : 1;
+                var montoTramo = montoMensual * factor;
+                var descuentoTramo = descuentoMensual * factor;
+
+                tramos.push({
+                    inicio: new Date(cursor.getTime()),
+                    fin: new Date(finTramo.getTime()),
+                    dias: diasCobrados,
+                    diasMes: diasMes,
+                    monto: montoTramo,
+                    descuento: descuentoTramo
+                });
+
+                totalDias += diasCobrados;
+                totalMonto += montoTramo;
+                totalDescuento += descuentoTramo;
+                cursor = siguienteInicio;
+            }
+
+            if (!tramos.length) {
+                $resumen.hide();
+                return;
+            }
+
+            var detalle = tramos.map(function(tramo) {
+                var totalTramo = Math.max(0, tramo.monto - tramo.descuento);
+                return '<div>' + formatDate(tramo.inicio) + ' al ' + formatDate(tramo.fin) +
+                    ': ' + tramo.dias + '/' + tramo.diasMes + ' dias, Bs ' + money(totalTramo) + '</div>';
+            }).join('');
+
+            $resumen.find('[data-field="rango"]').text(formatDate(inicio) + ' al ' + formatDate(fin));
+            $resumen.find('[data-field="tramos"]').text(tramos.length);
+            $resumen.find('[data-field="dias"]').text(totalDias);
+            $resumen.find('[data-field="monto"]').text(money(totalMonto));
+            $resumen.find('[data-field="descuento"]').text(money(totalDescuento));
+            $resumen.find('[data-field="total"]').text(money(Math.max(0, totalMonto - totalDescuento)));
+            $resumen.find('[data-field="detalle"]').html(detalle);
+            $resumen.show();
+        }
+
+        function toggleTipoGeneracion() {
+            var usaFechaFin = $tipo.val() === 'fecha_fin';
+            $grupoFechaFin.toggle(usaFechaFin);
+            $fechaFin.prop('required', usaFechaFin);
+            $fechaFin.prop('disabled', !usaFechaFin);
+
+            if (!usaFechaFin) {
+                $fechaFin.val('');
+            }
+
+            if ($fechaInicio.val()) {
+                $fechaFin.attr('min', $fechaInicio.val());
+            }
+
+            calcularGeneracion();
+        }
+
+        $tipo.off('change.generacionMensualidad').on('change.generacionMensualidad', toggleTipoGeneracion);
+        $fechaInicio.off('change.generacionMensualidad input.generacionMensualidad').on('change.generacionMensualidad input.generacionMensualidad', function() {
+            if ($fechaInicio.val()) {
+                $fechaFin.attr('min', $fechaInicio.val());
+            }
+            if ($fechaFin.val() && $fechaInicio.val() && parseDate($fechaFin.val()) < parseDate($fechaInicio.val())) {
+                $fechaFin.val('');
+            }
+            calcularGeneracion();
+        });
+        $fechaFin.add($monto).add($descuento)
+            .off('change.generacionMensualidad input.generacionMensualidad')
+            .on('change.generacionMensualidad input.generacionMensualidad', calcularGeneracion);
+
+        toggleTipoGeneracion();
+    })();
+
     (function() {
         var $tipo = $('#tipo-corte-mensualidad');
         var $grupoFecha = $('#grupo-fecha-corte-mensualidad');
