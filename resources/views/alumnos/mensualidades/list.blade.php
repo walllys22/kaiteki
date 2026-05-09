@@ -214,14 +214,16 @@
                                     <i class="fa-solid fa-lock"></i>
                                 </button>
                             @endif
-                            <button type="button"
-                                    class="btn btn-warning btn-xs btn-mora-mensualidad"
-                                    title="Agregar mora"
-                                    data-toggle="modal"
-                                    data-target="#modal-mora-mensualidad"
-                                    data-url="{{ route('alumno.mensualidades.mora', $item->id) }}">
-                                <i class="fa-solid fa-triangle-exclamation"></i>
-                            </button>
+                            @if($item->saldo() > 0)
+                                <button type="button"
+                                        class="btn btn-warning btn-xs btn-mora-mensualidad"
+                                        title="Agregar mora"
+                                        data-toggle="modal"
+                                        data-target="#modal-mora-mensualidad"
+                                        data-url="{{ route('alumno.mensualidades.mora', $item->id) }}">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> Agregar mora
+                                </button>
+                            @endif
                             @if($esUltimaMensualidad && $item->pagos->isEmpty())
                                 <a href="#" onclick="deleteItem('{{ route('alumno.mensualidades.destroy', $item->id) }}')"
                                    data-toggle="modal" data-target="#modal-delete"

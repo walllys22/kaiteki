@@ -422,7 +422,11 @@ Reglas:
   que registro el cobro (`alumno_mensualidad_pagos.registerUser_id`).
 - No se puede pagar una mensualidad nueva si existe una mensualidad anterior con saldo.
 - El pago debe seguir orden cronologico: primero se pagan las deudas mas antiguas.
-- La mora se agrega manualmente a una mensualidad especifica.
+- La mora se agrega manualmente a una mensualidad especifica solo mientras tenga saldo pendiente.
+- Si la mensualidad ya esta pagada o exonerada (`saldo() <= 0`), no se muestra la accion
+  de agregar mora y el backend tambien bloquea el registro.
+- En el listado de mensualidades, la accion de mora debe mostrarse como boton textual
+  `Agregar mora` cuando el registro tenga saldo pendiente.
 - Estados derivados:
   `Pendiente`, `Parcial`, `Pagado`, `Exonerado`, `Anulado`.
 - `Exonerado` aplica cuando el total de la mensualidad queda en cero por descuento.

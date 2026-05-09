@@ -294,6 +294,11 @@ class AlumnoMensualidadController extends Controller
                 ->with(['message' => 'No se puede agregar mora a una mensualidad anulada.', 'alert-type' => 'error']);
         }
 
+        if ($mensualidad->saldo() <= 0) {
+            return redirect()->back()
+                ->with(['message' => 'No se puede agregar mora a una mensualidad que ya está pagada.', 'alert-type' => 'error']);
+        }
+
         $mensualidad->mora = (float) $mensualidad->mora + (float) $request->mora;
         if ($request->observacion) {
             $mensualidad->observacion = trim(($mensualidad->observacion ? $mensualidad->observacion . "\n" : '') . $request->observacion);
