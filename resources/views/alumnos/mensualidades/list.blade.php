@@ -179,6 +179,11 @@
         line-height: 1.2;
         padding: 3px 6px;
     }
+    .mensualidad-status-stack .fa-solid,
+    .mensualidad-periodo-chip .fa-solid {
+        font-size: 9px;
+        margin-right: 3px;
+    }
     .mensualidad-periodo-chip.vigente {
         background: #e8f6ff;
         color: #2471a3;
@@ -246,6 +251,17 @@
                         'Anulado' => 'label-default',
                         default => 'label-danger',
                     };
+                    $estadoIcono = match($estado) {
+                        'Pagado', 'Exonerado' => 'fa-circle-check',
+                        'Parcial' => 'fa-circle-half-stroke',
+                        'Anulado' => 'fa-ban',
+                        default => 'fa-clock',
+                    };
+                    $periodoIcono = match($estadoPeriodo) {
+                        'Programada' => 'fa-calendar-plus',
+                        'Concluida' => 'fa-calendar-check',
+                        default => 'fa-calendar-day',
+                    };
                 @endphp
                 <tr>
                     <td>
@@ -270,9 +286,13 @@
                     <td style="text-align:center;">
                         <span class="mensualidad-status-stack">
                             <span>
-                                <span class="label {{ $label }}">{{ $estado }}</span>
+                                <span class="label {{ $label }}">
+                                    <i class="fa-solid {{ $estadoIcono }}"></i>{{ $estado }}
+                                </span>
                             </span>
-                            <span class="mensualidad-periodo-chip {{ $estadoPeriodoClase }}">{{ $estadoPeriodo }}</span>
+                            <span class="mensualidad-periodo-chip {{ $estadoPeriodoClase }}">
+                                <i class="fa-solid {{ $periodoIcono }}"></i>{{ $estadoPeriodo }}
+                            </span>
                             <span class="mensualidad-status-help">{{ $estadoPeriodoAyuda }}</span>
                         </span>
                     </td>

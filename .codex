@@ -445,7 +445,7 @@ Reglas:
 - La columna `Estado` muestra dos lecturas: estado financiero
   (`Pendiente`, `Parcial`, `Pagado`, `Exonerado`, `Anulado`) y estado del periodo
   (`Programada`, `Vigente`, `Concluida`) segun la fecha actual comparada contra
-  `periodo` y `fecha_fin`.
+  `periodo` y `fecha_fin`. Ambos estados usan iconos pequenos para lectura rapida.
 - El total a cobrar se calcula como:
   `monto - descuento + mora`, nunca menor a cero.
 - El saldo se calcula como:
