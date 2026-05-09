@@ -423,6 +423,9 @@ Reglas:
   La mora y los pagos registrados se conservan.
 - Se puede eliminar solo la mensualidad generada mas reciente.
 - No se puede eliminar una mensualidad si ya tiene pagos registrados.
+- Si se elimina la mensualidad mas reciente de un plan con `fecha_fin`, el plan debe
+  sincronizar su `fecha_fin` con la ultima mensualidad que quede generada. Si no queda
+  ninguna mensualidad de ese plan, el plan queda sin `fecha_fin` y pausado.
 - Si se registra una nueva mensualidad despues de un corte, puede tener monto y fecha
   distintos. La nueva configuracion genera cobros solo desde esa nueva fecha en adelante.
 - La fecha de inicio de una nueva mensualidad debe ser posterior al fin del ultimo mes

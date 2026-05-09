@@ -424,7 +424,33 @@ class AlumnoMensualidadController extends Controller
 
         try {
             $alumnoId = $mensualidad->alumno_id;
-            $mensualidad->delete();
+            $plan = $mensualidad->plan;
+
+            DB::transaction(function () use ($mensualidad, $plan) {
+                $mensualidad->delete();
+
+                if (!$plan || $plan->tipo_generacion !== 'fecha_fin') {
+                    return;
+                }
+
+                $ultimaMensualidadPlan = AlumnoMensualidad::query()
+                    ->where('alumno_id', $mensualidad->alumno_id)
+                    ->where('alumno_mensualidad_plan_id', $plan->id)
+                    ->whereNull('deleted_at')
+                    ->orderByDesc('periodo')
+                    ->orderByDesc('id')
+                    ->first();
+
+                if ($ultimaMensualidadPlan) {
+                    $plan->fecha_fin = $this->finPeriodoMensualidad($ultimaMensualidadPlan)->toDateString();
+                    $plan->status = Carbon::parse($plan->fecha_fin)->startOfDay()->gt(now()->startOfDay()) ? 1 : 0;
+                } else {
+                    $plan->fecha_fin = null;
+                    $plan->status = 0;
+                }
+
+                $plan->save();
+            });
 
             return redirect()->route('voyager.alumnos.show', ['id' => $alumnoId])
                 ->with(['message' => 'Mensualidad eliminada correctamente.', 'alert-type' => 'success']);
