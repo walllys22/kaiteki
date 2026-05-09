@@ -14,6 +14,7 @@ return new class extends Migration
             $table->foreignId('dojo_id')->nullable()->constrained('dojos')->nullOnDelete();
             $table->foreignId('alumno_mensualidad_plan_id')->nullable()->constrained('alumno_mensualidad_planes')->nullOnDelete();
             $table->date('periodo');
+            $table->date('fecha_fin')->nullable();
             $table->decimal('monto', 10, 2)->default(0);
             $table->decimal('descuento', 10, 2)->default(0);
             $table->decimal('mora', 10, 2)->default(0);

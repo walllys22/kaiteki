@@ -15,11 +15,17 @@ class AlumnoMensualidad extends Model
 
     protected $dates = ['deleted_at'];
 
+    protected $casts = [
+        'periodo' => 'date',
+        'fecha_fin' => 'date',
+    ];
+
     protected $fillable = [
         'alumno_id',
         'dojo_id',
         'alumno_mensualidad_plan_id',
         'periodo',
+        'fecha_fin',
         'monto',
         'descuento',
         'mora',

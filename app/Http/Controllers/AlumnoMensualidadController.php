@@ -112,6 +112,15 @@ class AlumnoMensualidadController extends Controller
         $alumno = $this->findAlumno((int) $request->alumno_id);
         $fechaInicio = Carbon::parse($request->fecha_inicio)->startOfDay();
 
+        if ($fechaInicio->gt(now()->startOfDay())) {
+            return redirect()->back()
+                ->withInput()
+                ->with([
+                    'message' => 'La mensualidad no puede iniciar con una fecha adelantada. Debe iniciar hoy o en una fecha anterior.',
+                    'alert-type' => 'error',
+                ]);
+        }
+
         $planActivo = AlumnoMensualidadPlan::query()
             ->where('alumno_id', $alumno->id)
             ->where('status', 1)
@@ -132,11 +141,17 @@ class AlumnoMensualidadController extends Controller
             ->first();
 
         if ($ultimaMensualidad) {
-            $ultimoFinPeriodo = Carbon::parse($ultimaMensualidad->periodo)
-                ->startOfDay()
-                ->addMonthNoOverflow()
-                ->subDay();
+            $ultimoFinPeriodo = $this->finPeriodoMensualidad($ultimaMensualidad);
             $minFechaInicio = $ultimoFinPeriodo->copy()->addDay();
+
+            if (now()->startOfDay()->lte($ultimoFinPeriodo)) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with([
+                        'message' => 'No se puede configurar otra mensualidad porque la última sigue vigente hasta el ' . $ultimoFinPeriodo->format('d/m/Y') . '.',
+                        'alert-type' => 'error',
+                    ]);
+            }
 
             if ($fechaInicio->lt($minFechaInicio)) {
                 return redirect()->back()
@@ -265,7 +280,7 @@ class AlumnoMensualidadController extends Controller
 
                 if ($request->tipo_corte === 'fecha' && $ultimaMensualidad) {
                     $inicioPeriodo = Carbon::parse($ultimaMensualidad->periodo)->startOfDay();
-                    $finPeriodo = $inicioPeriodo->copy()->addMonthNoOverflow()->subDay()->startOfDay();
+                    $finPeriodo = $this->finPeriodoMensualidad($ultimaMensualidad);
                     $fechaCorte = Carbon::parse($request->fecha_corte)->startOfDay();
 
                     if ($fechaCorte->lt($inicioPeriodo) || $fechaCorte->gt($finPeriodo)) {
@@ -284,6 +299,7 @@ class AlumnoMensualidadController extends Controller
 
                     $ultimaMensualidad->monto = round($montoOriginal * $factor, 2);
                     $ultimaMensualidad->descuento = round($descuentoOriginal * $factor, 2);
+                    $ultimaMensualidad->fecha_fin = $fechaCorte->toDateString();
                     $ultimaMensualidad->status = $this->resolverStatus($ultimaMensualidad);
                     $ultimaMensualidad->observacion = trim(
                         ($ultimaMensualidad->observacion ? $ultimaMensualidad->observacion . "\n" : '') .
@@ -429,6 +445,7 @@ class AlumnoMensualidadController extends Controller
                     'dojo_id' => $alumno->dojo_id,
                     'alumno_mensualidad_plan_id' => $plan->id,
                     'periodo' => $periodo->toDateString(),
+                    'fecha_fin' => $periodo->copy()->addMonthNoOverflow()->subDay()->toDateString(),
                     'monto' => (float) $plan->monto_mensual,
                     'descuento' => (float) $plan->descuento,
                     'mora' => 0,
@@ -442,6 +459,18 @@ class AlumnoMensualidadController extends Controller
 
             $periodo->addMonthNoOverflow();
         }
+    }
+
+    private function finPeriodoMensualidad(AlumnoMensualidad $mensualidad): Carbon
+    {
+        if ($mensualidad->fecha_fin) {
+            return Carbon::parse($mensualidad->fecha_fin)->startOfDay();
+        }
+
+        return Carbon::parse($mensualidad->periodo)
+            ->startOfDay()
+            ->addMonthNoOverflow()
+            ->subDay();
     }
 
     private function findAlumno(int $id): Alumno

@@ -8,8 +8,14 @@
     $descuentoTotal = (float) ($resumen['descuento'] ?? 0);
     $planActivo = $plan && (int) $plan->status === 1;
     $ultimaInicio = $ultimaMensualidad ? \Carbon\Carbon::parse($ultimaMensualidad->periodo)->startOfDay() : null;
-    $ultimaFin = $ultimaInicio ? $ultimaInicio->copy()->addMonthNoOverflow()->subDay() : null;
+    $ultimaFin = $ultimaMensualidad
+        ? ($ultimaMensualidad->fecha_fin
+            ? \Carbon\Carbon::parse($ultimaMensualidad->fecha_fin)->startOfDay()
+            : $ultimaInicio->copy()->addMonthNoOverflow()->subDay())
+        : null;
+    $mensualidadVigente = !$planActivo && $ultimaFin && now()->startOfDay()->lte($ultimaFin);
     $minFechaNuevaMensualidad = $ultimaFin ? $ultimaFin->copy()->addDay()->format('Y-m-d') : null;
+    $maxFechaNuevaMensualidad = date('Y-m-d');
     $fechaInicioSugerida = $minFechaNuevaMensualidad && date('Y-m-d') < $minFechaNuevaMensualidad
         ? $minFechaNuevaMensualidad
         : date('Y-m-d');
@@ -43,9 +49,15 @@
                     <i class="fa-solid fa-pause"></i> Pausar Mensualidad
                 </button>
             @else
-                <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#modal-mensualidad-plan">
-                    <i class="voyager-settings"></i> Configurar Mensualidad
-                </button>
+                @if($mensualidadVigente)
+                    <button class="btn btn-default btn-sm" disabled title="La última mensualidad sigue vigente hasta {{ $ultimaFin->format('d/m/Y') }}.">
+                        <i class="fa-solid fa-lock"></i> Mensualidad vigente
+                    </button>
+                @else
+                    <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#modal-mensualidad-plan">
+                        <i class="voyager-settings"></i> Configurar Mensualidad
+                    </button>
+                @endif
             @endif
         @endif
     </div>
@@ -172,7 +184,9 @@
                     $estado = $item->estadoPago();
                     $esUltimaMensualidad = $ultimaMensualidad && (int) $ultimaMensualidad->id === (int) $item->id;
                     $periodoInicio = \Carbon\Carbon::parse($item->periodo)->startOfDay();
-                    $periodoFin = $periodoInicio->copy()->addMonthNoOverflow()->subDay();
+                    $periodoFin = $item->fecha_fin
+                        ? \Carbon\Carbon::parse($item->fecha_fin)->startOfDay()
+                        : $periodoInicio->copy()->addMonthNoOverflow()->subDay();
                     $tieneMensualidadAnteriorPendiente = collect($periodosPendientes ?? [])
                         ->contains(fn($periodo) => $periodo < $item->periodo);
                     $puedePagarMensualidad = !$tieneMensualidadAnteriorPendiente;
@@ -311,6 +325,7 @@
                                    name="fecha_inicio"
                                    class="form-control"
                                    @if($minFechaNuevaMensualidad) min="{{ $minFechaNuevaMensualidad }}" @endif
+                                   max="{{ $maxFechaNuevaMensualidad }}"
                                    value="{{ old('fecha_inicio', $planActivo ? \Carbon\Carbon::parse($plan->fecha_inicio)->format('Y-m-d') : $fechaInicioSugerida) }}"
                                    required>
                             @if($minFechaNuevaMensualidad)

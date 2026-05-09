@@ -376,10 +376,14 @@ Reglas:
 
 - La configuracion se hace desde el detalle del alumno, pestaña `Mensualidades`.
 - El usuario define la fecha exacta de inicio (`fecha_inicio`) con dia, mes y anio.
+- La fecha de inicio (`fecha_inicio`) no puede ser adelantada; debe ser hoy o una fecha
+  anterior. La interfaz usa `max` con la fecha actual y el backend tambien lo valida.
 - Al abrir la lista de mensualidades, si el alumno esta activo y tiene plan activo,
   se generan automaticamente los cobros mensuales faltantes desde `fecha_inicio`
   hasta la fecha actual.
 - La generacion conserva el mismo dia de cobro cada mes usando `addMonthNoOverflow()`.
+- Cada mensualidad generada guarda su fecha de inicio en `periodo` y su fecha real de
+  cierre en `fecha_fin`.
 - Si el alumno esta inactivo (`alumnos.status != 1`), no se generan nuevos meses.
 - Al cambiar un alumno a inactivo, el plan activo de mensualidad se desactiva para cortar
   la generacion. Si se reactiva al alumno, debe configurarse nuevamente la mensualidad
@@ -394,6 +398,8 @@ Reglas:
   de esa ultima mensualidad generada.
 - Si se pausa por fecha especifica, el sistema recalcula proporcionalmente el ultimo mes
   usando los dias cobrados desde el inicio del periodo hasta la fecha de corte.
+- Si se pausa por fecha especifica, la ultima mensualidad tambien actualiza `fecha_fin`
+  con la fecha de corte seleccionada.
 - Al seleccionar corte por fecha especifica, el modal debe mostrar antes de guardar:
   dias cobrados sobre dias del periodo, monto proporcional, descuento proporcional,
   mora conservada, total a cobrar, pagado y saldo estimado.
@@ -408,13 +414,16 @@ Reglas:
 - La fecha de inicio de una nueva mensualidad debe ser posterior al fin del ultimo mes
   generado del alumno. Si el ultimo periodo termina el 25/05, la siguiente mensualidad
   puede iniciar desde el 26/05 en adelante. La interfaz usa esa fecha como `min` y el
-  backend valida contra `ultima_mensualidad.periodo + 1 mes`.
+  backend valida contra `ultima_mensualidad.fecha_fin`.
+- Si la fecha actual todavia esta dentro del ultimo periodo generado, esa mensualidad se
+  considera vigente y no se puede configurar otra, aunque el plan ya este pausado. La
+  interfaz muestra `Mensualidad vigente` bloqueado y el backend tambien rechaza `storePlan()`.
 - Los meses ya generados antes del corte conservan su monto, descuento, mora,
   pagos y saldo historico; no se recalculan con la nueva mensualidad.
 - Cada mensualidad generada conserva historicamente:
-  `monto`, `descuento`, `mora`, `monto_pagado`.
+  `periodo`, `fecha_fin`, `monto`, `descuento`, `mora`, `monto_pagado`.
 - La lista de mensualidades muestra el periodo completo de cada cobro:
-  fecha de inicio y fecha de fin del mes generado.
+  fecha de inicio y fecha de fin guardada en `fecha_fin`.
 - El total a cobrar se calcula como:
   `monto - descuento + mora`, nunca menor a cero.
 - El saldo se calcula como:

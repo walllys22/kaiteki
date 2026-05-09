@@ -3,7 +3,13 @@
     $alumno = $pago->alumno;
     $person = optional($alumno)->person;
     $dojo = optional($alumno)->dojo;
-    $periodo = optional($mensualidad)->periodo ? \Carbon\Carbon::parse($mensualidad->periodo)->format('d/m/Y') : 'N/A';
+    $periodoInicio = optional($mensualidad)->periodo ? \Carbon\Carbon::parse($mensualidad->periodo)->startOfDay() : null;
+    $periodoFin = $mensualidad && $mensualidad->fecha_fin
+        ? \Carbon\Carbon::parse($mensualidad->fecha_fin)->startOfDay()
+        : ($periodoInicio ? $periodoInicio->copy()->addMonthNoOverflow()->subDay() : null);
+    $periodo = $periodoInicio && $periodoFin
+        ? $periodoInicio->format('d/m/Y') . ' al ' . $periodoFin->format('d/m/Y')
+        : 'N/A';
     $total = $mensualidad ? $mensualidad->total() : 0;
     $logo = optional($dojo)->logo ? asset('storage/' . $dojo->logo) : asset('images/default.jpg');
     $cobrador = optional($pago->registerUser)->name ?: 'Sistema';
@@ -201,7 +207,7 @@
             <tbody>
                 @if($esPagoCompleto)
                 <tr>
-                    <td>Mensualidad con fecha {{ $periodo }}</td>
+                    <td>Mensualidad del {{ $periodo }}</td>
                     <td class="right">Bs {{ number_format((float) optional($mensualidad)->monto, 2, '.', ',') }}</td>
                 </tr>
                 <tr>
