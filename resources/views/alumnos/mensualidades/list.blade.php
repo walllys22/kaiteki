@@ -9,6 +9,10 @@
     $planActivo = $plan && (int) $plan->status === 1;
     $ultimaInicio = $ultimaMensualidad ? \Carbon\Carbon::parse($ultimaMensualidad->periodo)->startOfDay() : null;
     $ultimaFin = $ultimaInicio ? $ultimaInicio->copy()->addMonthNoOverflow()->subDay() : null;
+    $minFechaNuevaMensualidad = $ultimaFin ? $ultimaFin->copy()->addDay()->format('Y-m-d') : null;
+    $fechaInicioSugerida = $minFechaNuevaMensualidad && date('Y-m-d') < $minFechaNuevaMensualidad
+        ? $minFechaNuevaMensualidad
+        : date('Y-m-d');
 @endphp
 
 <div class="row" style="margin-bottom:12px;">
@@ -306,8 +310,14 @@
                             <input type="date"
                                    name="fecha_inicio"
                                    class="form-control"
-                                   value="{{ old('fecha_inicio', $planActivo ? \Carbon\Carbon::parse($plan->fecha_inicio)->format('Y-m-d') : date('Y-m-d')) }}"
+                                   @if($minFechaNuevaMensualidad) min="{{ $minFechaNuevaMensualidad }}" @endif
+                                   value="{{ old('fecha_inicio', $planActivo ? \Carbon\Carbon::parse($plan->fecha_inicio)->format('Y-m-d') : $fechaInicioSugerida) }}"
                                    required>
+                            @if($minFechaNuevaMensualidad)
+                                <small class="text-muted">
+                                    El último mes generado termina el {{ $ultimaFin->format('d/m/Y') }}. La nueva mensualidad debe iniciar desde el {{ \Carbon\Carbon::parse($minFechaNuevaMensualidad)->format('d/m/Y') }}.
+                                </small>
+                            @endif
                         </div>
                         <div class="form-group col-md-6">
                             <label>Monto mensual <span class="text-danger">*</span></label>
@@ -409,7 +419,9 @@
                             <div><strong>Monto proporcional:</strong> Bs <span data-field="monto"></span></div>
                             <div><strong>Descuento proporcional:</strong> Bs <span data-field="descuento"></span></div>
                             <div><strong>Mora conservada:</strong> Bs <span data-field="mora"></span></div>
-                            <div><strong>Total a cobrar:</strong> Bs <span data-field="total"></span></div>
+                            <div style="background:#fff8e1; border:1px solid #f1c40f; border-radius:4px; color:#7a4f01; font-size:15px; font-weight:800; margin:8px 0; padding:8px 10px;">
+                                Total a cobrar: Bs <span data-field="total"></span>
+                            </div>
                             <div><strong>Pagado:</strong> Bs <span data-field="pagado"></span></div>
                             <div><strong>Saldo estimado:</strong> Bs <span data-field="saldo"></span></div>
                         </div>

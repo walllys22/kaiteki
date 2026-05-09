@@ -124,6 +124,30 @@ class AlumnoMensualidadController extends Controller
                 ->with(['message' => 'Debe pausar la mensualidad actual antes de configurar una nueva.', 'alert-type' => 'error']);
         }
 
+        $ultimaMensualidad = AlumnoMensualidad::query()
+            ->where('alumno_id', $alumno->id)
+            ->whereNull('deleted_at')
+            ->orderByDesc('periodo')
+            ->orderByDesc('id')
+            ->first();
+
+        if ($ultimaMensualidad) {
+            $ultimoFinPeriodo = Carbon::parse($ultimaMensualidad->periodo)
+                ->startOfDay()
+                ->addMonthNoOverflow()
+                ->subDay();
+            $minFechaInicio = $ultimoFinPeriodo->copy()->addDay();
+
+            if ($fechaInicio->lt($minFechaInicio)) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with([
+                        'message' => 'La nueva mensualidad debe iniciar después del último mes generado. Fecha mínima: ' . $minFechaInicio->format('d/m/Y') . '.',
+                        'alert-type' => 'error',
+                    ]);
+            }
+        }
+
         if ((float) $request->descuento > (float) $request->monto_mensual) {
             return redirect()->back()
                 ->withInput()

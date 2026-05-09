@@ -397,12 +397,18 @@ Reglas:
 - Al seleccionar corte por fecha especifica, el modal debe mostrar antes de guardar:
   dias cobrados sobre dias del periodo, monto proporcional, descuento proporcional,
   mora conservada, total a cobrar, pagado y saldo estimado.
+- El total a cobrar del corte por fecha especifica no es editable, pero debe mostrarse
+  de forma destacada para que el usuario lo identifique antes de pausar.
 - El recorte proporcional ajusta `monto` y `descuento` de la ultima mensualidad.
   La mora y los pagos registrados se conservan.
 - Se puede eliminar solo la mensualidad generada mas reciente.
 - No se puede eliminar una mensualidad si ya tiene pagos registrados.
 - Si se registra una nueva mensualidad despues de un corte, puede tener monto y fecha
   distintos. La nueva configuracion genera cobros solo desde esa nueva fecha en adelante.
+- La fecha de inicio de una nueva mensualidad debe ser posterior al fin del ultimo mes
+  generado del alumno. Si el ultimo periodo termina el 25/05, la siguiente mensualidad
+  puede iniciar desde el 26/05 en adelante. La interfaz usa esa fecha como `min` y el
+  backend valida contra `ultima_mensualidad.periodo + 1 mes`.
 - Los meses ya generados antes del corte conservan su monto, descuento, mora,
   pagos y saldo historico; no se recalculan con la nueva mensualidad.
 - Cada mensualidad generada conserva historicamente:
