@@ -746,9 +746,12 @@
                 $('#mensualidad-pago-monto').val(button.data('saldo') || '');
             });
 
-            $(document).on('show.bs.modal', '#modal-mora-mensualidad', function(event) {
-                var button = $(event.relatedTarget);
+            $(document).on('click', '.btn-mora-mensualidad', function(event) {
+                event.preventDefault();
+                var button = $(this);
                 $('#form-mora-mensualidad').attr('action', button.data('url'));
+                $('#mensualidad-mora-monto').val(button.data('mora') || '0.00');
+                $('#modal-mora-mensualidad').modal('show');
             });
 
             $(document).on('click', '#div-asistencia-list .pagination a', function(e) {

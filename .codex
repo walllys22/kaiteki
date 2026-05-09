@@ -386,11 +386,17 @@ Reglas:
   desde el mes que corresponda para evitar cobros retroactivos no deseados.
 - La mensualidad tambien puede pausarse manualmente desde la pestaña `Mensualidades`
   sin inactivar al alumno. Pausar desactiva el plan activo y corta la generacion de nuevos meses.
+- Mientras exista un plan activo/en curso, no se puede configurar una nueva mensualidad.
+  Primero se debe pausar la mensualidad actual; la interfaz solo muestra `Pausar Mensualidad`
+  y el backend bloquea `storePlan()` si ya existe un plan activo.
 - Al pausar se toma como referencia la ultima mensualidad generada.
 - El usuario puede pausar por `mes completo` o por una `fecha especifica` dentro del rango
   de esa ultima mensualidad generada.
 - Si se pausa por fecha especifica, el sistema recalcula proporcionalmente el ultimo mes
   usando los dias cobrados desde el inicio del periodo hasta la fecha de corte.
+- Al seleccionar corte por fecha especifica, el modal debe mostrar antes de guardar:
+  dias cobrados sobre dias del periodo, monto proporcional, descuento proporcional,
+  mora conservada, total a cobrar, pagado y saldo estimado.
 - El recorte proporcional ajusta `monto` y `descuento` de la ultima mensualidad.
   La mora y los pagos registrados se conservan.
 - Se puede eliminar solo la mensualidad generada mas reciente.
@@ -422,11 +428,21 @@ Reglas:
   que registro el cobro (`alumno_mensualidad_pagos.registerUser_id`).
 - No se puede pagar una mensualidad nueva si existe una mensualidad anterior con saldo.
 - El pago debe seguir orden cronologico: primero se pagan las deudas mas antiguas.
-- La mora se agrega manualmente a una mensualidad especifica solo mientras tenga saldo pendiente.
+- La mora se edita manualmente en una mensualidad especifica solo mientras tenga saldo pendiente.
 - Si la mensualidad ya esta pagada o exonerada (`saldo() <= 0`), no se muestra la accion
   de agregar mora y el backend tambien bloquea el registro.
 - En el listado de mensualidades, la accion de mora debe mostrarse como boton textual
-  `Agregar mora` cuando el registro tenga saldo pendiente.
+  `Agregar mora` o `Editar mora` cuando el registro tenga saldo pendiente.
+- Al guardar mora, el valor enviado reemplaza la mora actual; no se suma encima de la anterior.
+- El modal de mora se abre desde un handler JS delegado sobre `.btn-mora-mensualidad`,
+  porque la lista de mensualidades se carga por AJAX. El handler debe setear `action`,
+  precargar `data-mora` y abrir `#modal-mora-mensualidad` manualmente.
+- La columna `Acciones` del listado de mensualidades debe ser suficientemente ancha para
+  mostrar botones textuales sin quebrarlos.
+- El listado de mensualidades no debe tener una columna separada de `Pagos / Observacion`.
+- Cada fila muestra una pestaña/enlace limpio `Ver pagos (n)` dentro del periodo. Al desplegarla,
+  se abre una fila de detalle con los pagos/facturas y la observacion de esa mensualidad.
+- Cada item de pago del desplegable abre su comprobante imprimible.
 - Estados derivados:
   `Pendiente`, `Parcial`, `Pagado`, `Exonerado`, `Anulado`.
 - `Exonerado` aplica cuando el total de la mensualidad queda en cero por descuento.

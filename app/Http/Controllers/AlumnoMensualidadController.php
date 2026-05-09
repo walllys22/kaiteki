@@ -112,6 +112,18 @@ class AlumnoMensualidadController extends Controller
         $alumno = $this->findAlumno((int) $request->alumno_id);
         $fechaInicio = Carbon::parse($request->fecha_inicio)->startOfDay();
 
+        $planActivo = AlumnoMensualidadPlan::query()
+            ->where('alumno_id', $alumno->id)
+            ->where('status', 1)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($planActivo) {
+            return redirect()->back()
+                ->withInput()
+                ->with(['message' => 'Debe pausar la mensualidad actual antes de configurar una nueva.', 'alert-type' => 'error']);
+        }
+
         if ((float) $request->descuento > (float) $request->monto_mensual) {
             return redirect()->back()
                 ->withInput()
@@ -120,12 +132,6 @@ class AlumnoMensualidadController extends Controller
 
         try {
             DB::transaction(function () use ($request, $alumno, $fechaInicio) {
-                AlumnoMensualidadPlan::query()
-                    ->where('alumno_id', $alumno->id)
-                    ->where('status', 1)
-                    ->whereNull('deleted_at')
-                    ->update(['status' => 0]);
-
                 $plan = AlumnoMensualidadPlan::create([
                     'alumno_id' => $alumno->id,
                     'dojo_id' => $alumno->dojo_id,
@@ -291,15 +297,15 @@ class AlumnoMensualidadController extends Controller
 
         if ($mensualidad->status === 'anulado') {
             return redirect()->back()
-                ->with(['message' => 'No se puede agregar mora a una mensualidad anulada.', 'alert-type' => 'error']);
+                ->with(['message' => 'No se puede editar mora en una mensualidad anulada.', 'alert-type' => 'error']);
         }
 
         if ($mensualidad->saldo() <= 0) {
             return redirect()->back()
-                ->with(['message' => 'No se puede agregar mora a una mensualidad que ya está pagada.', 'alert-type' => 'error']);
+                ->with(['message' => 'No se puede editar mora en una mensualidad que ya está pagada.', 'alert-type' => 'error']);
         }
 
-        $mensualidad->mora = (float) $mensualidad->mora + (float) $request->mora;
+        $mensualidad->mora = (float) $request->mora;
         if ($request->observacion) {
             $mensualidad->observacion = trim(($mensualidad->observacion ? $mensualidad->observacion . "\n" : '') . $request->observacion);
         }
@@ -307,7 +313,7 @@ class AlumnoMensualidadController extends Controller
         $mensualidad->save();
 
         return redirect()->route('voyager.alumnos.show', ['id' => $mensualidad->alumno_id])
-            ->with(['message' => 'Mora agregada correctamente.', 'alert-type' => 'success']);
+            ->with(['message' => 'Mora actualizada correctamente.', 'alert-type' => 'success']);
     }
 
     public function comprobantePago(int $id)
