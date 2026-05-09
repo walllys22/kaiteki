@@ -65,7 +65,6 @@ class AlumnoMensualidadController extends Controller
             'pagado' => $mensualidadesResumen->sum('monto_pagado'),
             'mora' => $mensualidadesResumen->sum('mora'),
             'descuento' => $mensualidadesResumen->sum('descuento'),
-            'beca' => $mensualidadesResumen->sum('beca'),
             'pendientes' => $mensualidadesResumen->filter(fn($item) => $item->estadoPago() === 'Pendiente')->count(),
             'parciales' => $mensualidadesResumen->filter(fn($item) => $item->estadoPago() === 'Parcial')->count(),
             'pagadas' => $mensualidadesResumen->filter(fn($item) => in_array($item->estadoPago(), ['Pagado', 'Exonerado']))->count(),
@@ -73,7 +72,7 @@ class AlumnoMensualidadController extends Controller
         ];
         $resumen['saldo'] = max(0, $resumen['total'] - $resumen['pagado']);
         $resumen['deuda_mensualidad'] = $mensualidadesResumen->sum(function ($item) {
-            return max(0, (float) $item->monto - (float) $item->descuento - (float) $item->beca - (float) $item->monto_pagado);
+            return max(0, (float) $item->monto - (float) $item->descuento - (float) $item->monto_pagado);
         });
         $resumen['mora_pendiente'] = max(0, $resumen['saldo'] - $resumen['deuda_mensualidad']);
 
@@ -106,7 +105,6 @@ class AlumnoMensualidadController extends Controller
             'alumno_id' => 'required|exists:alumnos,id',
             'monto_mensual' => 'required|numeric|min:0|max:99999999.99',
             'descuento' => 'nullable|numeric|min:0|max:99999999.99',
-            'beca' => 'nullable|numeric|min:0|max:99999999.99',
             'fecha_inicio' => 'required|date',
             'observacion' => 'nullable|string|max:500',
         ]);
@@ -114,10 +112,10 @@ class AlumnoMensualidadController extends Controller
         $alumno = $this->findAlumno((int) $request->alumno_id);
         $fechaInicio = Carbon::parse($request->fecha_inicio)->startOfDay();
 
-        if ((float) $request->descuento + (float) $request->beca > (float) $request->monto_mensual) {
+        if ((float) $request->descuento > (float) $request->monto_mensual) {
             return redirect()->back()
                 ->withInput()
-                ->with(['message' => 'La suma de descuento y beca no puede ser mayor a la mensualidad.', 'alert-type' => 'error']);
+                ->with(['message' => 'El descuento no puede ser mayor a la mensualidad.', 'alert-type' => 'error']);
         }
 
         try {
@@ -133,7 +131,6 @@ class AlumnoMensualidadController extends Controller
                     'dojo_id' => $alumno->dojo_id,
                     'monto_mensual' => (float) $request->monto_mensual,
                     'descuento' => (float) ($request->descuento ?? 0),
-                    'beca' => (float) ($request->beca ?? 0),
                     'fecha_inicio' => $fechaInicio->toDateString(),
                     'observacion' => $request->observacion,
                     'status' => 1,
@@ -254,11 +251,9 @@ class AlumnoMensualidadController extends Controller
 
                     $montoOriginal = (float) $ultimaMensualidad->monto;
                     $descuentoOriginal = (float) $ultimaMensualidad->descuento;
-                    $becaOriginal = (float) $ultimaMensualidad->beca;
 
                     $ultimaMensualidad->monto = round($montoOriginal * $factor, 2);
                     $ultimaMensualidad->descuento = round($descuentoOriginal * $factor, 2);
-                    $ultimaMensualidad->beca = round($becaOriginal * $factor, 2);
                     $ultimaMensualidad->status = $this->resolverStatus($ultimaMensualidad);
                     $ultimaMensualidad->observacion = trim(
                         ($ultimaMensualidad->observacion ? $ultimaMensualidad->observacion . "\n" : '') .
@@ -401,7 +396,6 @@ class AlumnoMensualidadController extends Controller
                     'periodo' => $periodo->toDateString(),
                     'monto' => (float) $plan->monto_mensual,
                     'descuento' => (float) $plan->descuento,
-                    'beca' => (float) $plan->beca,
                     'mora' => 0,
                     'monto_pagado' => 0,
                     'observacion' => $plan->observacion,

@@ -22,7 +22,6 @@ class AlumnoMensualidad extends Model
         'periodo',
         'monto',
         'descuento',
-        'beca',
         'mora',
         'monto_pagado',
         'observacion',
@@ -57,7 +56,7 @@ class AlumnoMensualidad extends Model
 
     public function total(): float
     {
-        return max(0, (float) $this->monto - (float) $this->descuento - (float) $this->beca + (float) $this->mora);
+        return max(0, (float) $this->monto - (float) $this->descuento + (float) $this->mora);
     }
 
     public function saldo(): float

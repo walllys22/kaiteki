@@ -20,7 +20,6 @@ class AlumnoMensualidadPlan extends Model
         'dojo_id',
         'monto_mensual',
         'descuento',
-        'beca',
         'fecha_inicio',
         'observacion',
         'status',

@@ -6,7 +6,6 @@
     $moraPendiente = (float) ($resumen['mora_pendiente'] ?? 0);
     $deudaMensualidad = (float) ($resumen['deuda_mensualidad'] ?? 0);
     $descuentoTotal = (float) ($resumen['descuento'] ?? 0);
-    $becaTotal = (float) ($resumen['beca'] ?? 0);
     $planActivo = $plan && (int) $plan->status === 1;
     $ultimaInicio = $ultimaMensualidad ? \Carbon\Carbon::parse($ultimaMensualidad->periodo)->startOfDay() : null;
     $ultimaFin = $ultimaInicio ? $ultimaInicio->copy()->addMonthNoOverflow()->subDay() : null;
@@ -21,9 +20,6 @@
                 Bs <strong>{{ number_format((float) $plan->monto_mensual, 2, '.', ',') }}</strong>
                 @if((float) $plan->descuento > 0)
                     · descuento Bs <strong>{{ number_format((float) $plan->descuento, 2, '.', ',') }}</strong>
-                @endif
-                @if((float) $plan->beca > 0)
-                    · beca Bs <strong>{{ number_format((float) $plan->beca, 2, '.', ',') }}</strong>
                 @endif
                 @if((int) $alumno->status !== 1)
                     <span class="label label-warning" style="margin-left:6px;">Alumno inactivo: no genera nuevos meses</span>
@@ -96,7 +92,6 @@
     <strong>{{ $resumen['parciales'] ?? 0 }}</strong> parciales,
     <strong>{{ $resumen['pagadas'] ?? 0 }}</strong> pagados/exonerados.
     Descuentos acumulados: <strong>Bs {{ number_format($descuentoTotal, 2, '.', ',') }}</strong>.
-    Becas acumuladas: <strong>Bs {{ number_format($becaTotal, 2, '.', ',') }}</strong>.
 </div>
 
 <style>
@@ -138,7 +133,6 @@
                 <th style="width:170px;">Período</th>
                 <th style="width:95px; text-align:right;">Monto</th>
                 <th style="width:95px; text-align:right;">Desc.</th>
-                <th style="width:95px; text-align:right;">Beca</th>
                 <th style="width:95px; text-align:right;">Mora</th>
                 <th style="width:95px; text-align:right;">Total</th>
                 <th style="width:95px; text-align:right;">Pagado</th>
@@ -173,7 +167,6 @@
                     </td>
                     <td style="text-align:right;">Bs {{ number_format((float) $item->monto, 2, '.', ',') }}</td>
                     <td style="text-align:right;">Bs {{ number_format((float) $item->descuento, 2, '.', ',') }}</td>
-                    <td style="text-align:right;">Bs {{ number_format((float) $item->beca, 2, '.', ',') }}</td>
                     <td style="text-align:right;">Bs {{ number_format((float) $item->mora, 2, '.', ',') }}</td>
                     <td style="text-align:right;">Bs {{ number_format($item->total(), 2, '.', ',') }}</td>
                     <td style="text-align:right;">Bs {{ number_format((float) $item->monto_pagado, 2, '.', ',') }}</td>
@@ -244,7 +237,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="11" class="text-center text-muted">Sin mensualidades generadas.</td>
+                    <td colspan="10" class="text-center text-muted">Sin mensualidades generadas.</td>
                 </tr>
             @endforelse
         </tbody>
@@ -290,20 +283,12 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="form-group col-md-6">
+                        <div class="form-group col-md-12">
                             <label>Descuento</label>
                             <div class="input-group">
                                 <span class="input-group-addon">Bs</span>
                                 <input type="number" name="descuento" class="form-control" min="0" step="0.01"
                                        value="{{ old('descuento', $planActivo ? $plan->descuento : 0) }}">
-                            </div>
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label>Beca</label>
-                            <div class="input-group">
-                                <span class="input-group-addon">Bs</span>
-                                <input type="number" name="beca" class="form-control" min="0" step="0.01"
-                                       value="{{ old('beca', $planActivo ? $plan->beca : 0) }}">
                             </div>
                         </div>
                     </div>

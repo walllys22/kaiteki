@@ -14,7 +14,6 @@ return new class extends Migration
             $table->foreignId('dojo_id')->nullable()->constrained('dojos')->nullOnDelete();
             $table->decimal('monto_mensual', 10, 2)->default(0);
             $table->decimal('descuento', 10, 2)->default(0);
-            $table->decimal('beca', 10, 2)->default(0);
             $table->date('fecha_inicio');
             $table->text('observacion')->nullable();
             $table->smallInteger('status')->default(1);

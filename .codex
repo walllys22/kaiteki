@@ -356,7 +356,7 @@ Objetivo:
 - controlar cuanto se cobro
 - controlar saldo pendiente
 - permitir pagos parciales
-- permitir descuentos y becas
+- permitir descuentos
 - permitir agregar mora
 - cortar la generacion de nuevos meses cuando el alumno queda inactivo
 
@@ -391,30 +391,30 @@ Reglas:
   de esa ultima mensualidad generada.
 - Si se pausa por fecha especifica, el sistema recalcula proporcionalmente el ultimo mes
   usando los dias cobrados desde el inicio del periodo hasta la fecha de corte.
-- El recorte proporcional ajusta `monto`, `descuento` y `beca` de la ultima mensualidad.
+- El recorte proporcional ajusta `monto` y `descuento` de la ultima mensualidad.
   La mora y los pagos registrados se conservan.
 - Se puede eliminar solo la mensualidad generada mas reciente.
 - No se puede eliminar una mensualidad si ya tiene pagos registrados.
 - Si se registra una nueva mensualidad despues de un corte, puede tener monto y fecha
   distintos. La nueva configuracion genera cobros solo desde esa nueva fecha en adelante.
-- Los meses ya generados antes del corte conservan su monto, descuento, beca, mora,
+- Los meses ya generados antes del corte conservan su monto, descuento, mora,
   pagos y saldo historico; no se recalculan con la nueva mensualidad.
 - Cada mensualidad generada conserva historicamente:
-  `monto`, `descuento`, `beca`, `mora`, `monto_pagado`.
+  `monto`, `descuento`, `mora`, `monto_pagado`.
 - La lista de mensualidades muestra el periodo completo de cada cobro:
   fecha de inicio y fecha de fin del mes generado.
 - El total a cobrar se calcula como:
-  `monto - descuento - beca + mora`, nunca menor a cero.
+  `monto - descuento + mora`, nunca menor a cero.
 - El saldo se calcula como:
   `total - monto_pagado`, nunca menor a cero.
 - La pestaña `Mensualidades` muestra resumen economico del alumno:
   deuda total, mora acumulada, mora pendiente estimada, cobrado, total a cobrar,
-  cantidad de meses pendientes/parciales/pagados, descuentos y becas acumuladas.
+  cantidad de meses pendientes/parciales/pagados y descuentos acumulados.
 - Los pagos pueden ser parciales y se registran en `alumno_mensualidad_pagos`.
 - Cada pago suma a `alumno_mensualidades.monto_pagado`.
 - Cada pago de mensualidad, parcial o completo, tiene comprobante imprimible.
 - El comprobante de pago parcial solo muestra el monto pagado.
-- El comprobante de pago completo muestra detalle de mensualidad, descuento, beca, mora
+- El comprobante de pago completo muestra detalle de mensualidad, descuento, mora
   y pago total.
 - El comprobante de mensualidad incluye QR. El QR no apunta a URL; contiene texto con
   numero de comprobante, alumno, documento, mensualidad, monto pagado y fecha de pago.
@@ -425,7 +425,9 @@ Reglas:
 - La mora se agrega manualmente a una mensualidad especifica.
 - Estados derivados:
   `Pendiente`, `Parcial`, `Pagado`, `Exonerado`, `Anulado`.
-- `Exonerado` aplica cuando el total de la mensualidad queda en cero por descuentos/beca.
+- `Exonerado` aplica cuando el total de la mensualidad queda en cero por descuento.
+- El campo `beca` fue eliminado del flujo de mensualidades. La configuracion, el calculo,
+  el listado y los comprobantes trabajan solo con `descuento`.
 - La mensualidad no reemplaza los aranceles de grados; ambos controles economicos son separados.
 
 Rutas:
@@ -721,5 +723,5 @@ Los select con clase `select2` dentro de modales deben reinicializarse con `drop
 - Comprobante de punta solo se imprime si esta pagado
 - Las mensualidades son independientes de grados y pertenecen al alumno
 - Las mensualidades se generan automaticamente desde la fecha de inicio hasta la fecha actual si el alumno esta activo
-- Las mensualidades permiten pagos parciales, descuento, beca y mora
+- Las mensualidades permiten pagos parciales, descuento y mora
 - `.codex` = documento central del proyecto
