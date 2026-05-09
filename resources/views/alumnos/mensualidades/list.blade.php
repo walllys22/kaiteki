@@ -164,6 +164,39 @@
         font-size: 11px;
         margin-right: 3px;
     }
+    .mensualidad-status-stack {
+        display: inline-flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 116px;
+        text-align: left;
+    }
+    .mensualidad-periodo-chip {
+        border-radius: 3px;
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.2;
+        padding: 3px 6px;
+    }
+    .mensualidad-periodo-chip.vigente {
+        background: #e8f6ff;
+        color: #2471a3;
+    }
+    .mensualidad-periodo-chip.concluida {
+        background: #eef7ee;
+        color: #2e7d32;
+    }
+    .mensualidad-periodo-chip.programada {
+        background: #f4f1ff;
+        color: #6c5ce7;
+    }
+    .mensualidad-status-help {
+        color: #7f8c8d;
+        display: block;
+        font-size: 10px;
+        line-height: 1.25;
+    }
 </style>
 
 <div class="table-responsive">
@@ -177,7 +210,7 @@
                 <th style="width:95px; text-align:right;">Total</th>
                 <th style="width:95px; text-align:right;">Pagado</th>
                 <th style="width:95px; text-align:right;">Saldo</th>
-                <th style="width:95px; text-align:center;">Estado</th>
+                <th style="width:140px; text-align:center;">Estado</th>
                 <th style="width:210px; min-width:210px; text-align:center;">Acciones</th>
             </tr>
         </thead>
@@ -190,6 +223,20 @@
                     $periodoFin = $item->fecha_fin
                         ? \Carbon\Carbon::parse($item->fecha_fin)->startOfDay()
                         : $periodoInicio->copy()->addMonthNoOverflow()->subDay();
+                    $hoy = now()->startOfDay();
+                    if ($hoy->lt($periodoInicio)) {
+                        $estadoPeriodo = 'Programada';
+                        $estadoPeriodoClase = 'programada';
+                        $estadoPeriodoAyuda = 'Inicia el ' . $periodoInicio->format('d/m/Y');
+                    } elseif ($hoy->gt($periodoFin)) {
+                        $estadoPeriodo = 'Concluida';
+                        $estadoPeriodoClase = 'concluida';
+                        $estadoPeriodoAyuda = 'Terminó el ' . $periodoFin->format('d/m/Y');
+                    } else {
+                        $estadoPeriodo = 'Vigente';
+                        $estadoPeriodoClase = 'vigente';
+                        $estadoPeriodoAyuda = 'Termina el ' . $periodoFin->format('d/m/Y');
+                    }
                     $tieneMensualidadAnteriorPendiente = collect($periodosPendientes ?? [])
                         ->contains(fn($periodo) => $periodo < $item->periodo);
                     $puedePagarMensualidad = !$tieneMensualidadAnteriorPendiente;
@@ -221,7 +268,13 @@
                     <td style="text-align:right;">Bs {{ number_format((float) $item->monto_pagado, 2, '.', ',') }}</td>
                     <td style="text-align:right;">Bs {{ number_format($item->saldo(), 2, '.', ',') }}</td>
                     <td style="text-align:center;">
-                        <span class="label {{ $label }}">{{ $estado }}</span>
+                        <span class="mensualidad-status-stack">
+                            <span>
+                                <span class="label {{ $label }}">{{ $estado }}</span>
+                            </span>
+                            <span class="mensualidad-periodo-chip {{ $estadoPeriodoClase }}">{{ $estadoPeriodo }}</span>
+                            <span class="mensualidad-status-help">{{ $estadoPeriodoAyuda }}</span>
+                        </span>
                     </td>
                     <td style="width:210px; min-width:210px;" class="no-sort no-click bread-actions text-right">
                         @if(auth()->user()->hasPermission('edit_alumnos') && $item->status !== 'anulado')
@@ -329,7 +382,7 @@
                                 <option value="fecha_fin" {{ old('tipo_generacion') === 'fecha_fin' ? 'selected' : '' }}>Con fecha fin</option>
                             </select>
                             <small class="text-muted">
-                                Automática genera mes por mes hasta hoy. Con fecha fin genera un rango cerrado y prorratea el último tramo si corresponde.
+                                Automática genera mensualidades completas desde la fecha de inicio. Con fecha fin genera un rango cerrado y prorratea el último tramo si corresponde.
                             </small>
                         </div>
                     </div>
@@ -548,13 +601,28 @@
             return Math.floor((end - start) / msDia) + 1;
         }
 
+        function finAutomatico(inicio) {
+            var hoy = parseDate($fechaInicio.attr('max'));
+            var cursor = new Date(inicio.getTime());
+            var fin = new Date(addMonthNoOverflow(cursor).getTime());
+            fin.setDate(fin.getDate() - 1);
+
+            while (hoy && addMonthNoOverflow(cursor) <= hoy) {
+                cursor = addMonthNoOverflow(cursor);
+                fin = new Date(addMonthNoOverflow(cursor).getTime());
+                fin.setDate(fin.getDate() - 1);
+            }
+
+            return fin;
+        }
+
         function calcularGeneracion() {
             if (!$form.length || !$resumen.length) {
                 return;
             }
 
             var inicio = parseDate($fechaInicio.val());
-            var fin = $tipo.val() === 'fecha_fin' ? parseDate($fechaFin.val()) : parseDate($fechaInicio.attr('max'));
+            var fin = $tipo.val() === 'fecha_fin' ? parseDate($fechaFin.val()) : (inicio ? finAutomatico(inicio) : null);
             var montoMensual = Number($monto.val() || 0);
             var descuentoMensual = Number($descuento.val() || 0);
 

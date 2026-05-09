@@ -380,8 +380,9 @@ Reglas:
   anterior. La interfaz usa `max` con la fecha actual y el backend tambien lo valida.
 - Al configurar la mensualidad, el usuario elige el tipo de generacion:
   `automatica` o `fecha_fin`.
-- La generacion `automatica` mantiene el comportamiento mensual normal y genera cobros
-  desde `fecha_inicio` hasta la fecha actual.
+- La generacion `automatica` mantiene el comportamiento mensual normal y genera
+  mensualidades completas desde `fecha_inicio`, incluyendo el periodo mensual vigente
+  cuando la fecha de inicio del periodo ya llego.
 - La generacion con `fecha_fin` exige una fecha final mayor o igual a `fecha_inicio`;
   puede ser una fecha futura, genera un rango cerrado completo y desactiva el plan
   despues de crear esos cobros.
@@ -441,6 +442,10 @@ Reglas:
   `periodo`, `fecha_fin`, `monto`, `descuento`, `mora`, `monto_pagado`.
 - La lista de mensualidades muestra el periodo completo de cada cobro:
   fecha de inicio y fecha de fin guardada en `fecha_fin`.
+- La columna `Estado` muestra dos lecturas: estado financiero
+  (`Pendiente`, `Parcial`, `Pagado`, `Exonerado`, `Anulado`) y estado del periodo
+  (`Programada`, `Vigente`, `Concluida`) segun la fecha actual comparada contra
+  `periodo` y `fecha_fin`.
 - El total a cobrar se calcula como:
   `monto - descuento + mora`, nunca menor a cero.
 - El saldo se calcula como:
