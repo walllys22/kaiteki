@@ -414,9 +414,11 @@ Reglas:
 - Cada mensualidad generada guarda su fecha de inicio en `periodo` y su fecha real de
   cierre en `fecha_fin`.
 - Si el alumno esta inactivo (`alumnos.status != 1`), no se generan nuevos meses.
-- Al cambiar un alumno a inactivo, el plan activo de mensualidad se desactiva para cortar
-  la generacion. Si se reactiva al alumno, debe configurarse nuevamente la mensualidad
-  desde el mes que corresponda para evitar cobros retroactivos no deseados.
+- No se puede cambiar un alumno activo a inactivo si tiene una mensualidad vigente
+  o un plan de mensualidad en proceso. Primero se debe pausar o finalizar la mensualidad
+  del alumno desde la pestaña `Mensualidades`.
+- La validacion se aplica en backend desde `AlumnoController@updateStatus`; ya no se
+  desactiva automaticamente el plan activo al inactivar.
 - La mensualidad tambien puede pausarse manualmente desde la pestaña `Mensualidades`
   sin inactivar al alumno. Pausar desactiva el plan activo y corta la generacion de nuevos meses.
 - Mientras exista un plan activo/en curso, no se puede configurar una nueva mensualidad.

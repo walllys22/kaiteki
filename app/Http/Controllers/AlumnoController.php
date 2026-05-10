@@ -9,6 +9,7 @@ use App\Models\AlumnoEnfermedad;
 use App\Models\AlumnoGrado;
 use App\Models\AlumnoGradoExamen;
 use App\Models\AlumnoHorario;
+use App\Models\AlumnoMensualidad;
 use App\Models\AlumnoMensualidadPlan;
 use App\Models\Arancele;
 use App\Models\AsistenciaAlumno;
@@ -18,6 +19,7 @@ use App\Models\Parentesco;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Grado;
 use App\Models\Horario;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -123,6 +125,48 @@ class AlumnoController extends Controller
                 'person_id' => "La persona seleccionada ya está registrada como alumno en {$dojoName}.",
             ]);
         }
+    }
+
+    protected function finPeriodoMensualidad(AlumnoMensualidad $mensualidad): Carbon
+    {
+        if ($mensualidad->fecha_fin) {
+            return Carbon::parse($mensualidad->fecha_fin)->startOfDay();
+        }
+
+        return Carbon::parse($mensualidad->periodo)
+            ->startOfDay()
+            ->addMonthNoOverflow()
+            ->subDay();
+    }
+
+    protected function alumnoTieneMensualidadVigenteOEnProceso(Alumno $alumno): bool
+    {
+        $tienePlanEnProceso = AlumnoMensualidadPlan::query()
+            ->where('alumno_id', $alumno->id)
+            ->where('status', 1)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($tienePlanEnProceso) {
+            return true;
+        }
+
+        $hoy = now()->startOfDay();
+
+        return AlumnoMensualidad::query()
+            ->where('alumno_id', $alumno->id)
+            ->whereNull('deleted_at')
+            ->where(function ($query) {
+                $query->whereNull('status')
+                    ->orWhere('status', '!=', 'anulado');
+            })
+            ->get()
+            ->contains(function (AlumnoMensualidad $mensualidad) use ($hoy) {
+                $inicio = Carbon::parse($mensualidad->periodo)->startOfDay();
+                $fin = $this->finPeriodoMensualidad($mensualidad);
+
+                return $hoy->gte($inicio) && $hoy->lte($fin);
+            });
     }
 
     public function index()
@@ -286,18 +330,17 @@ class AlumnoController extends Controller
             return $query->where('dojo_id', $userDojoId);
         })->findOrFail($id);
 
+        if ((int) $alumno->status === 1 && $this->alumnoTieneMensualidadVigenteOEnProceso($alumno)) {
+            return back()->with([
+                'message' => 'No se puede inactivar al alumno porque tiene una mensualidad vigente o en proceso. Primero debe finalizar o pausar su mensualidad.',
+                'alert-type' => 'error',
+            ]);
+        }
+
         $alumno->status = $alumno->status == 1 ? 0 : 1;
         $alumno->save();
 
         $msg = $alumno->status == 1 ? 'Activo' : 'Inactivo';
-
-        if ($alumno->status != 1) {
-            AlumnoMensualidadPlan::query()
-                ->where('alumno_id', $alumno->id)
-                ->where('status', 1)
-                ->whereNull('deleted_at')
-                ->update(['status' => 0]);
-        }
 
         return back()->with(['message' => "El estado del alumno se cambió a $msg.", 'alert-type' => 'success']);
     }
