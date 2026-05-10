@@ -434,6 +434,9 @@ Reglas:
   corte por `mes completo`.
 - Si la mensualidad fue creada como `automatica`, se puede pausar/finalizar por
   `mes completo` o por `fecha especifica`.
+- En mensualidades `automatica`, la interfaz debe mostrar controles claros para
+  cancelar la generacion automatica y volver a activarla. Al cancelar, el plan queda
+  `status = 0`; al activar, vuelve a `status = 1` y genera los meses faltantes.
 - Mientras exista un plan activo/en curso, no se puede configurar una nueva mensualidad.
   Primero se debe pausar la mensualidad actual; la interfaz solo muestra `Pausar Mensualidad`
   y el backend bloquea `storePlan()` si ya existe un plan activo.

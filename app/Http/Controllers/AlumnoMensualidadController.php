@@ -31,6 +31,11 @@ class AlumnoMensualidadController extends Controller
             ->whereNull('deleted_at')
             ->orderByDesc('id')
             ->first();
+        $ultimoPlan = AlumnoMensualidadPlan::query()
+            ->where('alumno_id', $alumno->id)
+            ->whereNull('deleted_at')
+            ->orderByDesc('id')
+            ->first();
 
         if ($plan && (int) $alumno->status === 1) {
             $this->generarMensualidades($alumno, $plan);
@@ -88,7 +93,8 @@ class AlumnoMensualidadController extends Controller
             'data',
             'resumen',
             'periodosPendientes',
-            'ultimaMensualidad'
+            'ultimaMensualidad',
+            'ultimoPlan'
         ));
     }
 
@@ -407,6 +413,47 @@ class AlumnoMensualidadController extends Controller
 
         return redirect()->route('voyager.alumnos.show', ['id' => $plan->alumno_id])
             ->with(['message' => 'Mensualidad pausada correctamente. No se generarán nuevos meses hasta configurar una nueva mensualidad.', 'alert-type' => 'success']);
+    }
+
+    public function activarPlan(int $id)
+    {
+        $this->custom_authorize('edit_alumnos');
+
+        $userDojoId = auth()->user()->dojo_id;
+        $plan = AlumnoMensualidadPlan::with('alumno')
+            ->whereNull('deleted_at')
+            ->when($userDojoId, function ($query, $userDojoId) {
+                return $query->where('dojo_id', $userDojoId);
+            })
+            ->findOrFail($id);
+
+        $this->ensureAlumnoActivo($plan->alumno, 'El alumno esta inactivo. No se puede activar la mensualidad.');
+
+        if ($plan->tipo_generacion !== 'automatica') {
+            return redirect()->back()
+                ->with(['message' => 'Solo las mensualidades automáticas se pueden activar nuevamente.', 'alert-type' => 'error']);
+        }
+
+        $planActivo = AlumnoMensualidadPlan::query()
+            ->where('alumno_id', $plan->alumno_id)
+            ->where('status', 1)
+            ->whereNull('deleted_at')
+            ->where('id', '!=', $plan->id)
+            ->exists();
+
+        if ($planActivo) {
+            return redirect()->back()
+                ->with(['message' => 'El alumno ya tiene una mensualidad activa.', 'alert-type' => 'error']);
+        }
+
+        $plan->status = 1;
+        $plan->fecha_fin = null;
+        $plan->save();
+
+        $this->generarMensualidades($plan->alumno, $plan);
+
+        return redirect()->route('voyager.alumnos.show', ['id' => $plan->alumno_id])
+            ->with(['message' => 'Generación automática activada correctamente.', 'alert-type' => 'success']);
     }
 
     public function comprobantePago(int $id)

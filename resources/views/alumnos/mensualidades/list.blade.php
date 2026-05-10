@@ -4,6 +4,17 @@
     $saldo = (float) ($resumen['saldo'] ?? 0);
     $descuentoTotal = (float) ($resumen['descuento'] ?? 0);
     $planActivo = $plan && (int) $plan->status === 1;
+    $ultimoPlanAutomaticoPausado = !$planActivo
+        && isset($ultimoPlan)
+        && $ultimoPlan
+        && $ultimoPlan->tipo_generacion === 'automatica'
+        && (int) $ultimoPlan->status !== 1;
+    $estadoGeneracionAutomatica = null;
+    if ($planActivo && $plan->tipo_generacion === 'automatica') {
+        $estadoGeneracionAutomatica = 'activa';
+    } elseif ($ultimoPlanAutomaticoPausado) {
+        $estadoGeneracionAutomatica = 'desactivada';
+    }
     $ultimaInicio = $ultimaMensualidad ? \Carbon\Carbon::parse($ultimaMensualidad->periodo)->startOfDay() : null;
     $ultimaFin = $ultimaMensualidad
         ? ($ultimaMensualidad->fecha_fin
@@ -64,7 +75,12 @@
         @if($planActivo)
             <div class="alert alert-info" style="font-size:12px; padding:8px 10px; margin-bottom:8px;">
                 <i class="fa-solid fa-calendar-check"></i>
-                Mensualidad activa desde <strong>{{ \Carbon\Carbon::parse($plan->fecha_inicio)->format('d/m/Y') }}</strong>:
+                @if($plan->tipo_generacion === 'automatica')
+                    Generación automática activa desde
+                @else
+                    Mensualidad activa desde
+                @endif
+                <strong>{{ \Carbon\Carbon::parse($plan->fecha_inicio)->format('d/m/Y') }}</strong>:
                 Bs <strong>{{ number_format((float) $plan->monto_mensual, 2, '.', ',') }}</strong>
                 @if($plan->tipo_generacion === 'fecha_fin' && $plan->fecha_fin)
                     · hasta <strong>{{ \Carbon\Carbon::parse($plan->fecha_fin)->format('d/m/Y') }}</strong>
@@ -74,6 +90,14 @@
                 @endif
                 @if((int) $alumno->status !== 1)
                     <span class="label label-warning" style="margin-left:6px;">Alumno inactivo: no genera nuevos meses</span>
+                @endif
+            </div>
+        @elseif($ultimoPlanAutomaticoPausado)
+            <div class="alert alert-warning" style="font-size:12px; padding:8px 10px; margin-bottom:8px;">
+                <i class="fa-solid fa-pause"></i>
+                Generación automática cancelada. Los meses ya generados se conservan.
+                @if($ultimaFin)
+                    Último mes generado hasta <strong>{{ $ultimaFin->format('d/m/Y') }}</strong>.
                 @endif
             </div>
         @elseif($mensualidadVigente)
@@ -98,10 +122,19 @@
         @if(auth()->user()->hasPermission('edit_alumnos') && $alumnoActivo)
             @if($planActivo)
                 <button class="btn btn-warning btn-sm" data-toggle="modal" data-target="#modal-pausar-mensualidad">
-                    <i class="fa-solid fa-pause"></i> Pausar Mensualidad
+                    <i class="fa-solid fa-pause"></i>
+                    {{ $plan->tipo_generacion === 'automatica' ? 'Cancelar automático' : 'Pausar / finalizar' }}
                 </button>
             @else
-                @if($mensualidadVigente)
+                @if($ultimoPlanAutomaticoPausado)
+                    <form action="{{ route('alumno.mensualidades.plan.activar', $ultimoPlan->id) }}" method="POST" style="display:inline-block; margin:0;">
+                        @csrf
+                        @method('PUT')
+                        <button type="submit" class="btn btn-success btn-sm">
+                            <i class="fa-solid fa-play"></i> Activar automático
+                        </button>
+                    </form>
+                @elseif($mensualidadVigente)
                     @if($planPausable)
                         <button class="btn btn-warning btn-sm" data-toggle="modal" data-target="#modal-pausar-mensualidad" title="La última mensualidad sigue vigente hasta {{ $ultimaFin->format('d/m/Y') }}.">
                             <i class="fa-solid fa-pause"></i> Pausar / finalizar
@@ -120,6 +153,18 @@
         @endif
     </div>
 </div>
+
+@if($estadoGeneracionAutomatica)
+<div class="alert {{ $estadoGeneracionAutomatica === 'activa' ? 'alert-success' : 'alert-warning' }}" style="font-size:12px; padding:10px 12px; margin-bottom:12px;">
+    <i class="fa-solid {{ $estadoGeneracionAutomatica === 'activa' ? 'fa-rotate' : 'fa-pause' }}"></i>
+    <strong>Generación automática:</strong>
+    @if($estadoGeneracionAutomatica === 'activa')
+        activa. El sistema seguirá generando mensualidades mes a mes mientras el alumno esté activo.
+    @else
+        desactivada. No se generarán nuevas mensualidades hasta volver a activar el automático.
+    @endif
+</div>
+@endif
 
 <div class="row" style="margin-bottom:12px;">
     <div class="col-md-4 col-sm-6">
@@ -549,11 +594,18 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-                    <h4 class="modal-title"><i class="fa-solid fa-pause"></i> Pausar / finalizar Mensualidad</h4>
+                    <h4 class="modal-title">
+                        <i class="fa-solid fa-pause"></i>
+                        {{ $planPausable && $planPausable->tipo_generacion === 'automatica' ? 'Cancelar generación automática' : 'Pausar / finalizar Mensualidad' }}
+                    </h4>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-warning" style="font-size:12px;">
-                        Al pausar o finalizar, no se generarán nuevas mensualidades. Los meses ya generados conservarán sus saldos y pagos.
+                        @if($planPausable && $planPausable->tipo_generacion === 'automatica')
+                            Al cancelar la generación automática, no se crearán nuevos meses hasta volver a activarla. Los meses ya generados conservarán sus saldos y pagos.
+                        @else
+                            Al pausar o finalizar, no se generarán nuevas mensualidades. Los meses ya generados conservarán sus saldos y pagos.
+                        @endif
                         @if($planPausableConFechaFin)
                             <br>
                             Esta mensualidad fue creada con fecha fin, por eso solo se puede finalizar con una fecha específica.
@@ -623,7 +675,9 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-warning btn-submit">Pausar / finalizar</button>
+                    <button type="submit" class="btn btn-warning btn-submit">
+                        {{ $planPausable && $planPausable->tipo_generacion === 'automatica' ? 'Cancelar automático' : 'Pausar / finalizar' }}
+                    </button>
                 </div>
             </div>
         </div>
