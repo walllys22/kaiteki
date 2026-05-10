@@ -287,9 +287,9 @@
                 @endphp
                 <tr>
                     <td>
-                        <strong>{{ $periodoInicio->format('d/m/Y') }}</strong>
+                        Desde <small> {{ $periodoInicio->format('d/m/Y') }}</small>
                         <br>
-                        <small class="text-muted">al {{ $periodoFin->format('d/m/Y') }}</small>
+                        Hasta <small class="text-muted">{{ $periodoFin->format('d/m/Y') }}</small>
                         <br>
                         <a href="#detalle-mensualidad-{{ $item->id }}"
                            class="mensualidad-detail-tab"
