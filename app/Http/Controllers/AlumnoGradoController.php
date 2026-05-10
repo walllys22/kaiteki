@@ -70,6 +70,7 @@ class AlumnoGradoController extends Controller
         ]);
 
         $alumnoId = (int) $request->alumno_id;
+        $this->ensureAlumnoActivo($alumnoId);
 
         // Validar que el alumno no tenga este grado ya registrado
         $gradoYaRegistrado = AlumnoGrado::where('alumno_id', $alumnoId)
@@ -158,6 +159,7 @@ class AlumnoGradoController extends Controller
         ]);
 
         $alumnoGrado = AlumnoGrado::with(['alumno', 'grado', 'repasos', 'examenes'])->findOrFail($request->alumno_grado_id);
+        $this->ensureAlumnoActivo($alumnoGrado->alumno);
 
         if ($alumnoGrado->isCompletado()) {
             return redirect()->back()
@@ -307,6 +309,7 @@ class AlumnoGradoController extends Controller
                 });
             })
             ->findOrFail($id);
+        $this->ensureAlumnoActivo($repaso->alumnoGrado->alumno);
 
         $monto = (float) $request->monto;
 
@@ -326,8 +329,9 @@ class AlumnoGradoController extends Controller
     public function destroyRepaso(int $id)
     {
         $this->custom_authorize('delete_alumnos');
-        $repaso = AlumnoGradoRepaso::findOrFail($id);
-        $alumnoId = AlumnoGrado::findOrFail($repaso->alumno_grado_id)->alumno_id;
+        $repaso = AlumnoGradoRepaso::with('alumnoGrado.alumno')->findOrFail($id);
+        $alumnoId = $repaso->alumnoGrado->alumno_id;
+        $this->ensureAlumnoActivo($repaso->alumnoGrado->alumno);
 
         $hayExamen = AlumnoGradoExamen::where('alumno_grado_id', $repaso->alumno_grado_id)
             ->whereNull('deleted_at')
@@ -375,6 +379,7 @@ class AlumnoGradoController extends Controller
         ]);
 
         $alumnoGrado = AlumnoGrado::with(['alumno', 'grado', 'repasos', 'examenes'])->findOrFail($request->alumno_grado_id);
+        $this->ensureAlumnoActivo($alumnoGrado->alumno);
 
         if ($alumnoGrado->isCompletado()) {
             return redirect()->back()
@@ -489,6 +494,7 @@ class AlumnoGradoController extends Controller
                 });
             })
             ->findOrFail($id);
+        $this->ensureAlumnoActivo($examen->alumnoGrado->alumno);
 
         $monto = (float) $request->monto;
 
@@ -569,10 +575,11 @@ class AlumnoGradoController extends Controller
     public function destroyExamen(int $id)
     {
         $this->custom_authorize('delete_alumnos');
-        $examen = AlumnoGradoExamen::findOrFail($id);
-        $alumnoGrado = AlumnoGrado::findOrFail($examen->alumno_grado_id);
+        $examen = AlumnoGradoExamen::with('alumnoGrado.alumno')->findOrFail($id);
+        $alumnoGrado = $examen->alumnoGrado;
         $alumnoId    = $alumnoGrado->alumno_id;
         $eraAprobado = (bool) $examen->aprobado;
+        $this->ensureAlumnoActivo($alumnoGrado->alumno);
 
         $ultimoExamen = AlumnoGradoExamen::where('alumno_grado_id', $examen->alumno_grado_id)
             ->whereNull('deleted_at')

@@ -24,6 +24,7 @@ class AlumnoHorarioController extends Controller
 
         $alumnoId  = (int) $request->alumno_id;
         $horarioId = (int) $request->horario_id;
+        $this->ensureAlumnoActivo($alumnoId, 'El alumno esta inactivo. No se puede asignar horario.');
 
         $yaAsignado = AlumnoHorario::where('alumno_id', $alumnoId)
             ->where('horario_id', $horarioId)
@@ -62,8 +63,9 @@ class AlumnoHorarioController extends Controller
     {
         $this->custom_authorize('delete_alumnos');
 
-        $alumnoHorario = AlumnoHorario::findOrFail($id);
+        $alumnoHorario = AlumnoHorario::with('alumno')->findOrFail($id);
         $alumnoId = $alumnoHorario->alumno_id;
+        $this->ensureAlumnoActivo($alumnoHorario->alumno, 'El alumno esta inactivo. No se puede eliminar horario.');
 
         if ($alumnoHorario->status != '1') {
             return redirect()->route('voyager.alumnos.show', ['id' => $alumnoId])

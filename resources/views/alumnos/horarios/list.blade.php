@@ -8,7 +8,7 @@
                 <th style="width:100px; text-align:center;">Estado</th>
                 <th style="width:130px;">Fecha Asignación</th>
                 <th>Observación</th>
-                @if(auth()->user()->hasPermission('delete_alumnos'))
+                @if(auth()->user()->hasPermission('delete_alumnos') && ($alumnoActivo ?? true))
                 <th style="width:60px; text-align:center;">Acc.</th>
                 @endif
             </tr>
@@ -39,7 +39,7 @@
                         {{ $item->created_at ? \Carbon\Carbon::parse($item->created_at)->format('d/m/Y') : '—' }}
                     </td>
                     <td style="vertical-align:middle;">{{ $item->observacion ?: '—' }}</td>
-                    @if(auth()->user()->hasPermission('delete_alumnos'))
+                    @if(auth()->user()->hasPermission('delete_alumnos') && ($alumnoActivo ?? true))
                     <td style="text-align:center; vertical-align:middle;">
                         @if($item->status == '1' || $item->status == 1)
                             <a href="#" onclick="deleteItem('{{ route('alumno.horario.destroy', $item->id) }}')"
@@ -55,7 +55,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="{{ auth()->user()->hasPermission('delete_alumnos') ? 7 : 6 }}"
+                    <td colspan="{{ auth()->user()->hasPermission('delete_alumnos') && ($alumnoActivo ?? true) ? 7 : 6 }}"
                         class="text-center text-muted">
                         Sin horarios asignados.
                     </td>

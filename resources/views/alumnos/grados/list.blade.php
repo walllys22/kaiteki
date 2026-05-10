@@ -1,5 +1,5 @@
 {{-- Comunicar al JS de read.blade.php si se puede agregar nuevo grado y la fecha mínima --}}
-<input type="hidden" id="puede-agregar-grado" value="{{ $puedeAgregarGrado ? '1' : '0' }}">
+<input type="hidden" id="puede-agregar-grado" value="{{ ($puedeAgregarGrado && ($alumnoActivo ?? true)) ? '1' : '0' }}">
 <input type="hidden" id="active-grado-id" value="{{ $activeGrado ? $activeGrado->id : '' }}">
 <input type="hidden" id="min-fecha-grado" value="{{ $minFechaGrado ?? '' }}">
 
@@ -110,7 +110,7 @@
                             <i class="fa-solid fa-repeat" style="color:#8e44ad;"></i> Repasos
                             <small class="text-muted">({{ $repasos->count() }} total · {{ $repasos->where('aprobado', 1)->count() }} aprobados)</small>
                         </h5>
-                        @if(!$activeGrado->isCompletado() && !$progress['cumplePuntas'])
+                        @if(($alumnoActivo ?? true) && !$activeGrado->isCompletado() && !$progress['cumplePuntas'])
                             @if($arancelRepaso)
                                 <button class="btn btn-primary btn-xs" data-toggle="modal" data-target="#modal-add-repaso">
                                     <i class="voyager-plus"></i> Agregar Repaso
@@ -191,6 +191,7 @@
                                                 <i class="fa-solid fa-print"></i>
                                             </a>
                                         @else
+                                            @if($alumnoActivo ?? true)
                                             <button type="button"
                                                     class="btn btn-success btn-xs btn-pagar-repaso"
                                                     title="Registrar pago"
@@ -200,8 +201,9 @@
                                                     data-monto="{{ number_format((float) ($repaso->monto ?? 0), 2, '.', '') }}">
                                                 <i class="fa-solid fa-money-bill"></i>
                                             </button>
+                                            @endif
                                         @endif
-                                        @if(!$activeGrado->isCompletado() && $loop->first && $examenes->isEmpty())
+                                        @if(($alumnoActivo ?? true) && !$activeGrado->isCompletado() && $loop->first && $examenes->isEmpty())
                                         <a href="#" onclick="deleteItem('{{ route('alumno.grado.repaso.destroy', $repaso->id) }}')"
                                            data-toggle="modal" data-target="#modal-delete"
                                            class="btn btn-danger btn-xs"
@@ -234,7 +236,7 @@
                                 <span class="label label-success" style="margin-left:6px;"><i class="fa-solid fa-check"></i> Aprobado</span>
                             @endif
                         </h5>
-                        @if($progress['puedeExamen'] && !$activeGrado->isCompletado())
+                        @if(($alumnoActivo ?? true) && $progress['puedeExamen'] && !$activeGrado->isCompletado())
                             @if($arancelExamen)
                                 <button class="btn btn-warning btn-xs" data-toggle="modal" data-target="#modal-add-examen">
                                     <i class="voyager-plus"></i> Registrar Examen
@@ -310,6 +312,7 @@
                                                 <i class="fa-solid fa-print"></i>
                                             </a>
                                         @else
+                                            @if($alumnoActivo ?? true)
                                             <button type="button"
                                                     class="btn btn-success btn-xs btn-pagar-examen"
                                                     title="Registrar pago"
@@ -319,6 +322,7 @@
                                                     data-monto="{{ number_format((float) ($examen->monto ?? 0), 2, '.', '') }}">
                                                 <i class="fa-solid fa-money-bill"></i>
                                             </button>
+                                            @endif
                                         @endif
                                         @if((int) optional($activeGrado->alumno)->dojo_id === 3 && $examen->aprobado)
                                             <a href="{{ route('alumno.grado.examen.certificado', $examen->id) }}"
@@ -328,7 +332,7 @@
                                                 <i class="fa-solid fa-certificate"></i>
                                             </a>
                                         @endif
-                                        @if(!$activeGrado->isCompletado() && $loop->first)
+                                        @if(($alumnoActivo ?? true) && !$activeGrado->isCompletado() && $loop->first)
                                             <a href="#" onclick="deleteItem('{{ route('alumno.grado.examen.destroy', $examen->id) }}')"
                                                data-toggle="modal" data-target="#modal-delete"
                                                class="btn btn-danger btn-xs">
@@ -752,7 +756,7 @@
                                                                title="Imprimir comprobante">
                                                                 <i class="fa-solid fa-print"></i>
                                                             </a>
-                                                        @else
+                                                        @elseif($alumnoActivo ?? true)
                                                             <button type="button"
                                                                     class="btn btn-success btn-xs btn-pagar-repaso"
                                                                     title="Registrar pago"
@@ -820,7 +824,7 @@
                                                                title="Imprimir comprobante">
                                                                 <i class="fa-solid fa-print"></i>
                                                             </a>
-                                                        @else
+                                                        @elseif($alumnoActivo ?? true)
                                                             <button type="button"
                                                                     class="btn btn-success btn-xs btn-pagar-examen"
                                                                     title="Registrar pago"

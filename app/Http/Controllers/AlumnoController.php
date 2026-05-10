@@ -369,6 +369,7 @@ class AlumnoController extends Controller
     {
         $search = request('search');
         $paginate = request('paginate') ?? 10;
+        $alumnoActivo = (int) optional(Alumno::find($alumno_id))->status === 1;
 
         $data = AlumnoTutor::with(['tutor', 'pariente'])
             ->where('alumno_id', $alumno_id)
@@ -380,7 +381,7 @@ class AlumnoController extends Controller
             ->orderBy('id', 'DESC')
             ->paginate($paginate);   
 
-        return view('alumnos.tutores.list', compact('data', 'alumno_id'));
+        return view('alumnos.tutores.list', compact('data', 'alumno_id', 'alumnoActivo'));
     }
 
     public function storeAlumnoTutor(Request $request)
@@ -395,6 +396,7 @@ class AlumnoController extends Controller
 
         try {
             $alumno = Alumno::with('person')->findOrFail($request->alumno_id);
+            $this->ensureAlumnoActivo($alumno);
 
             if ((int) $alumno->person_id === (int) $request->person_id) {
                 return redirect()->back()
@@ -439,6 +441,8 @@ class AlumnoController extends Controller
         ]);
 
         try {
+            $this->ensureAlumnoActivo((int) $request->alumno_id);
+
             AlumnoEnfermedad::create([
                 'alumno_id' => $request->alumno_id,
                 'nombre' => $request->nombre,
@@ -459,7 +463,8 @@ class AlumnoController extends Controller
 
     public function tutorDestroy($id)
     {
-        $alumnoTutor = AlumnoTutor::findOrFail($id);
+        $alumnoTutor = AlumnoTutor::with('alumno')->findOrFail($id);
+        $this->ensureAlumnoActivo($alumnoTutor->alumno);
    
         try {
             
@@ -478,7 +483,8 @@ class AlumnoController extends Controller
     {
         $this->custom_authorize('edit_alumnos');
 
-        $alumnoTutor = AlumnoTutor::findOrFail($id);
+        $alumnoTutor = AlumnoTutor::with('alumno')->findOrFail($id);
+        $this->ensureAlumnoActivo($alumnoTutor->alumno);
 
         try {
             $isActive = (string) $alumnoTutor->status === '1' || $alumnoTutor->status === 1 || $alumnoTutor->status === null;
@@ -499,6 +505,8 @@ class AlumnoController extends Controller
     {
         $search   = request('search');
         $paginate = request('paginate') ?? 10;
+        $alumno = Alumno::findOrFail($alumno_id);
+        $alumnoActivo = (int) $alumno->status === 1;
 
         // Grado activo (en progreso): el más reciente con status != '1'
         $activeGrado = AlumnoGrado::with(['alumno', 'grado', 'repasos', 'examenes'])
@@ -586,7 +594,7 @@ class AlumnoController extends Controller
             ->get();
 
         return view('alumnos.grados.list', compact(
-            'data', 'alumno_id', 'activeGrado', 'progress', 'puedeAgregarGrado', 'grados', 'minFechaGrado', 'arancelRepaso', 'arancelExamen'
+            'data', 'alumno_id', 'activeGrado', 'progress', 'puedeAgregarGrado', 'grados', 'minFechaGrado', 'arancelRepaso', 'arancelExamen', 'alumnoActivo'
         ));
     }
 
@@ -594,6 +602,7 @@ class AlumnoController extends Controller
     {
         $search = request('search');
         $paginate = request('paginate') ?? 10;
+        $alumnoActivo = (int) optional(Alumno::find($alumno_id))->status === 1;
 
         $data = AlumnoEnfermedad::with(['alumno'])
             ->where('alumno_id', $alumno_id)
@@ -606,12 +615,13 @@ class AlumnoController extends Controller
             ->orderBy('id', 'DESC')
             ->paginate($paginate);   
 
-        return view('alumnos.enfermedades.list', compact('data', 'alumno_id'));
+        return view('alumnos.enfermedades.list', compact('data', 'alumno_id', 'alumnoActivo'));
     }
 
     public function enfermedadDestroy($id)
     {
-        $alumnoEnfer = AlumnoEnfermedad::findOrFail($id);
+        $alumnoEnfer = AlumnoEnfermedad::with('alumno')->findOrFail($id);
+        $this->ensureAlumnoActivo($alumnoEnfer->alumno);
 
         try {
 
@@ -633,6 +643,7 @@ class AlumnoController extends Controller
         $search   = request('search');
         $paginate = request('paginate') ?? 10;
         $userDojoId = auth()->user()->dojo_id;
+        $alumnoActivo = (int) optional(Alumno::find($alumno_id))->status === 1;
 
         $data = AlumnoHorario::with(['horario.dojo'])
             ->where('alumno_id', $alumno_id)
@@ -660,7 +671,7 @@ class AlumnoController extends Controller
             ->orderBy('nombre')
             ->get();
 
-        return view('alumnos.horarios.list', compact('data', 'alumno_id', 'horarios'));
+        return view('alumnos.horarios.list', compact('data', 'alumno_id', 'horarios', 'alumnoActivo'));
     }
 
     public function asistenciaList($alumno_id)

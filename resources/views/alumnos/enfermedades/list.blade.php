@@ -19,11 +19,15 @@
                     <td>{{ $item->administracion ?: 'No registrada' }}</td>
                     <td>{{ $item->observacion ?: 'Sin observación' }}</td>
                     <td class="text-center">
+                        @if($alumnoActivo ?? true)
                         <a href="javascript:void(0);"
                             onclick="deleteItem('{{ route('alumno.enfermedade.destroy', ['id' => $item->id]) }}')"
                             data-toggle="modal" data-target="#modal-delete" class="btn btn-sm btn-danger">
                             <i class="voyager-trash"></i>
                         </a>
+                        @else
+                            <span class="text-muted">—</span>
+                        @endif
                     </td>
                 </tr>
             @empty

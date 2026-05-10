@@ -112,6 +112,7 @@ class AlumnoMensualidadController extends Controller
         ]);
 
         $alumno = $this->findAlumno((int) $request->alumno_id);
+        $this->ensureAlumnoActivo($alumno, 'El alumno esta inactivo. No se puede configurar mensualidad.');
         $fechaInicio = Carbon::parse($request->fecha_inicio)->startOfDay();
         $fechaFinPlan = $request->tipo_generacion === 'fecha_fin'
             ? Carbon::parse($request->fecha_fin)->startOfDay()
@@ -226,6 +227,8 @@ class AlumnoMensualidadController extends Controller
         ]);
 
         $mensualidad = $this->findMensualidad($id);
+        $mensualidad->loadMissing('alumno');
+        $this->ensureAlumnoActivo($mensualidad->alumno, 'El alumno esta inactivo. No se pueden registrar pagos.');
 
         if ($mensualidad->status === 'anulado') {
             return redirect()->back()
@@ -288,6 +291,7 @@ class AlumnoMensualidadController extends Controller
                 return $query->where('dojo_id', $userDojoId);
             })
             ->findOrFail($id);
+        $this->ensureAlumnoActivo($plan->alumno, 'El alumno esta inactivo. No se puede pausar ni modificar mensualidades.');
 
         $mensualidadVigente = AlumnoMensualidad::query()
             ->where('alumno_id', $plan->alumno_id)
@@ -375,6 +379,8 @@ class AlumnoMensualidadController extends Controller
         ]);
 
         $mensualidad = $this->findMensualidad($id);
+        $mensualidad->loadMissing('alumno');
+        $this->ensureAlumnoActivo($mensualidad->alumno, 'El alumno esta inactivo. No se puede agregar ni editar mora.');
 
         if ($mensualidad->status === 'anulado') {
             return redirect()->back()
@@ -424,6 +430,8 @@ class AlumnoMensualidadController extends Controller
         $this->custom_authorize('delete_alumnos');
 
         $mensualidad = $this->findMensualidad($id);
+        $mensualidad->loadMissing('alumno');
+        $this->ensureAlumnoActivo($mensualidad->alumno, 'El alumno esta inactivo. No se pueden eliminar mensualidades.');
 
         $ultimaMensualidadId = AlumnoMensualidad::query()
             ->where('alumno_id', $mensualidad->alumno_id)

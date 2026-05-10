@@ -22,10 +22,17 @@
     $fechaInicioSugerida = $minFechaNuevaMensualidad && date('Y-m-d') < $minFechaNuevaMensualidad
         ? $minFechaNuevaMensualidad
         : date('Y-m-d');
+    $alumnoActivo = (int) $alumno->status === 1;
 @endphp
 
 <div class="row" style="margin-bottom:12px;">
     <div class="col-md-8">
+        @if(!$alumnoActivo)
+            <div class="alert alert-warning" style="font-size:12px; padding:8px 10px; margin-bottom:8px;">
+                <i class="fa-solid fa-lock"></i>
+                Alumno inactivo: mensualidades en modo solo visualizacion. No se pueden configurar, pausar, pagar, agregar mora ni eliminar registros.
+            </div>
+        @endif
         @if($planActivo)
             <div class="alert alert-info" style="font-size:12px; padding:8px 10px; margin-bottom:8px;">
                 <i class="fa-solid fa-calendar-check"></i>
@@ -55,7 +62,7 @@
         @endif
     </div>
     <div class="col-md-4 text-right">
-        @if(auth()->user()->hasPermission('edit_alumnos'))
+        @if(auth()->user()->hasPermission('edit_alumnos') && $alumnoActivo)
             @if($planActivo)
                 <button class="btn btn-warning btn-sm" data-toggle="modal" data-target="#modal-pausar-mensualidad">
                     <i class="fa-solid fa-pause"></i> Pausar Mensualidad
@@ -312,7 +319,7 @@
                         </span>
                     </td>
                     <td style="width:210px; min-width:210px;" class="no-sort no-click bread-actions text-right">
-                        @if(auth()->user()->hasPermission('edit_alumnos') && $item->status !== 'anulado')
+                        @if(auth()->user()->hasPermission('edit_alumnos') && $alumnoActivo && $item->status !== 'anulado')
                             @if($item->saldo() > 0 && $puedePagarMensualidad)
                                 <button type="button"
                                         class="btn btn-success btn-sm btn-pagar-mensualidad"
@@ -397,7 +404,7 @@
 
 {{ $data->links() }}
 
-@if(auth()->user()->hasPermission('edit_alumnos'))
+@if(auth()->user()->hasPermission('edit_alumnos') && $alumnoActivo)
 <form id="form-mensualidad-plan" action="{{ route('alumno.mensualidades.plan.store') }}" method="POST" class="form-edit-add">
     @csrf
     <div class="modal fade" tabindex="-1" id="modal-mensualidad-plan" role="dialog">

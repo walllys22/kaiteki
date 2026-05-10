@@ -29,7 +29,7 @@
                         @php
                             $isActive = (string) $item->status === '1' || $item->status === 1 || $item->status === null;
                         @endphp
-                        @if (auth()->user()->hasPermission('edit_alumnos'))
+                        @if (auth()->user()->hasPermission('edit_alumnos') && ($alumnoActivo ?? true))
                             <form action="{{ route('alumno.tutores.status.update', ['id' => $item->id]) }}" method="POST" style="display:inline-block; margin:0;">
                                 @csrf
                                 <button type="submit"
@@ -39,11 +39,13 @@
                                 </button>
                             </form>
                         @endif
+                        @if($alumnoActivo ?? true)
                         <a href="javascript:void(0);"
                             onclick="deleteItem('{{ route('alumno.tutores.destroy', ['id' => $item->id]) }}')"
                             data-toggle="modal" data-target="#modal-delete" class="btn btn-sm btn-danger">
                             <i class="voyager-trash"></i>
                         </a>
+                        @endif
                     </td>
                 </tr>
             @empty

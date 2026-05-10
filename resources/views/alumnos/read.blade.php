@@ -32,6 +32,7 @@
         $alumno = $dataTypeContent;
         $person = $alumno->person;
         $dojoData = $alumno->dojo;
+        $alumnoActivo = (int) $alumno->status === 1;
         $image = asset('images/default.jpg');
         if (optional($person)->image) {
             $image = asset('storage/' . str_replace('.avif', '', $person->image) . '-cropped.webp');
@@ -39,6 +40,13 @@
     @endphp
 
     <div class="page-content read container-fluid">
+        @if(!$alumnoActivo)
+            <div class="alert alert-warning">
+                <i class="fa-solid fa-lock"></i>
+                Alumno inactivo: esta ficha queda en modo solo visualizacion. No se pueden registrar mensualidades, grados, repasos, examenes, horarios, asistencias, tutores ni enfermedades.
+            </div>
+        @endif
+
         <div class="row">
             <div class="col-md-12">
                 <div class="panel panel-bordered alumno-summary-panel">
@@ -241,7 +249,7 @@
                                         </div>
                                     </div>
                                     <div class="col-sm-2 text-right" style="margin-bottom: 10px;">
-                                        @if(auth()->user()->hasPermission('edit_alumnos'))
+                                        @if(auth()->user()->hasPermission('edit_alumnos') && $alumnoActivo)
                                         <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#modal-add-horario">
                                             <i class="voyager-plus"></i> Asignar
                                         </button>
@@ -311,9 +319,11 @@
                                         </div>
                                     </div>
                                     <div class="col-sm-2 text-right" style="margin-bottom: 10px;">
+                                        @if($alumnoActivo)
                                         <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#modal-add-enfermedad">
                                             <i class="voyager-plus"></i> Agregar
                                         </button>
+                                        @endif
                                     </div>
                                     <div class="col-sm-2" style="margin-bottom: 10px;">
                                         <input type="text" id="input-search-enfermedad" placeholder="🔍 Buscar..." class="form-control">
@@ -337,9 +347,11 @@
                                         </div>
                                     </div>
                                     <div class="col-sm-2 text-right" style="margin-bottom: 10px;">
+                                        @if($alumnoActivo)
                                         <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#modal-add-tutor">
                                             <i class="voyager-plus"></i> Agregar
                                         </button>
+                                        @endif
                                     </div>
                                     <div class="col-sm-2" style="margin-bottom: 10px;">
                                         <input type="text" id="input-search-tutor" placeholder="🔍 Buscar..." class="form-control">
@@ -805,7 +817,7 @@
                     $('#div-grados-list').loading('toggle');
                     // Mostrar u ocultar el botón "Nuevo Grado"
                     var puedeAgregar = $('#puede-agregar-grado').val();
-                    $('#btn-add-grado').toggle(puedeAgregar === '1');
+                    $('#btn-add-grado').toggle(puedeAgregar === '1' && {{ $alumnoActivo ? 'true' : 'false' }});
                     // Pre-cargar fecha del último examen aprobado como fecha de inicio
                     var minFecha = $('#min-fecha-grado').val();
                     var $fechaInput = $('#form-add-grado input[name="fecha"]');

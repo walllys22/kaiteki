@@ -142,6 +142,25 @@ class AsistenciaController extends Controller
                 ->with(['message' => 'Ya existe una lista de asistencia para ese horario y fecha.', 'alert-type' => 'error']);
         }
 
+        $alumnoIds = collect(array_keys($request->estados))->map(fn($id) => (int) $id)->unique()->values();
+        $alumnosActivosDelHorario = AlumnoHorario::query()
+            ->where('horario_id', $request->horario_id)
+            ->where('status', '1')
+            ->whereNull('deleted_at')
+            ->whereIn('alumno_id', $alumnoIds)
+            ->whereHas('alumno', function ($query) use ($dojoId) {
+                $query->where('dojo_id', $dojoId)
+                    ->where('status', 1)
+                    ->whereNull('deleted_at');
+            })
+            ->distinct('alumno_id')
+            ->count('alumno_id');
+
+        if ($alumnosActivosDelHorario !== $alumnoIds->count()) {
+            return redirect()->back()->withInput()
+                ->with(['message' => 'La asistencia solo puede registrarse para alumnos activos del horario seleccionado.', 'alert-type' => 'error']);
+        }
+
         try {
             DB::beginTransaction();
 
@@ -197,6 +216,21 @@ class AsistenciaController extends Controller
         $asistencia = Asistencia::when($userDojoId, fn($q) => $q->where('dojo_id', $userDojoId))
             ->whereNull('deleted_at')
             ->findOrFail($id);
+
+        $detalleIds = collect(array_keys($request->estados))->map(fn($id) => (int) $id)->unique()->values();
+        $hayAlumnoInactivo = AsistenciaAlumno::query()
+            ->where('asistencia_id', $asistencia->id)
+            ->whereIn('id', $detalleIds)
+            ->whereHas('alumno', function ($query) {
+                $query->where('status', '!=', 1)
+                    ->orWhereNotNull('deleted_at');
+            })
+            ->exists();
+
+        if ($hayAlumnoInactivo) {
+            return redirect()->back()
+                ->with(['message' => 'No se puede modificar asistencia de alumnos inactivos. Solo visualizacion.', 'alert-type' => 'error']);
+        }
 
         foreach ($request->estados as $detalleId => $estado) {
             AsistenciaAlumno::where('id', $detalleId)

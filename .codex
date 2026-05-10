@@ -88,6 +88,8 @@ La vista `resources/views/alumnos/read.blade.php` es el centro operativo del alu
 tutores, enfermedades, grados, puntas/repasos y examenes se gestionan desde ese detalle.
 La edicion directa de alumnos desde listado esta deshabilitada; desde el listado se permite creacion
 y cambio de estado.
+Si un alumno queda inactivo (`alumnos.status = 0`), su ficha queda en modo solo visualizacion.
+No se pueden registrar, modificar ni eliminar datos operativos vinculados al alumno.
 
 ## Multisucursal
 
@@ -179,6 +181,18 @@ con `person_id` y `dojo_id` vinculados.
   en todo el sistema.
 - El cambio de estado de alumno se hace solo sobre `Alumno.status`
   desde modal/listado, sin depender de historial para habilitar o deshabilitar.
+- Cuando `Alumno.status = 0`, el sistema bloquea operaciones sobre ese alumno:
+  - configurar, pausar, pagar, eliminar mensualidades o agregar/editar mora
+  - registrar nuevos grados
+  - registrar, pagar o eliminar repasos/puntas
+  - registrar, pagar o eliminar examenes
+  - asignar o eliminar horarios
+  - registrar o modificar asistencia del alumno
+  - agregar, activar/desactivar o eliminar tutores
+  - agregar o eliminar enfermedades
+- El bloqueo se aplica en backend con `Controller::ensureAlumnoActivo()` y tambien se refleja
+  en las vistas ocultando acciones operativas. La unica accion permitida sobre un alumno
+  inactivo es visualizar su informacion o reactivarlo desde el cambio de estado.
 - El detalle del alumno se ve desde `resources/views/alumnos/read.blade.php`.
 - Solo se permite crear alumno; la edicion fue deshabilitada en rutas y listado.
 - Tutores y enfermedades se administran desde la vista detalle del alumno.

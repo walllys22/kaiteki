@@ -32,6 +32,7 @@
         $licencias = $detalles->where('estado', 'licencia')->count();
         $faltas    = $detalles->where('estado', 'falta')->count();
         $total     = $detalles->count();
+        $tieneAlumnosActivos = $detalles->contains(fn($det) => $det->alumno && (int) $det->alumno->status === 1 && !$det->alumno->deleted_at);
     @endphp
 
     <div class="page-content read container-fluid">
@@ -120,13 +121,19 @@
                                 </thead>
                                 <tbody>
                                     @foreach($detalles->sortBy(fn($d) => optional(optional($d->alumno)->person)->first_name) as $idx => $det)
+                                        @php
+                                            $detAlumnoActivo = $det->alumno && (int) $det->alumno->status === 1 && !$det->alumno->deleted_at;
+                                        @endphp
                                         <tr>
                                             <td style="vertical-align:middle;">{{ $idx + 1 }}</td>
                                             <td style="vertical-align:middle;">
                                                 <strong>{{ optional(optional($det->alumno)->person)->first_name ?? 'Sin nombre' }}</strong>
+                                                @if(!$detAlumnoActivo)
+                                                    <span class="label label-default" style="margin-left:6px;">Inactivo</span>
+                                                @endif
                                             </td>
                                             <td style="text-align:center; vertical-align:middle;">
-                                                @if(auth()->user()->hasPermission('edit_asistencias'))
+                                                @if(auth()->user()->hasPermission('edit_asistencias') && $detAlumnoActivo)
                                                     <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap;">
                                                         <input type="radio" class="estado-radio radio-asistencia" name="estados[{{ $det->id }}]" id="a_{{ $det->id }}" value="asistencia" {{ $det->estado === 'asistencia' ? 'checked' : '' }}>
                                                         <label class="estado-label" for="a_{{ $det->id }}" style="color:#27ae60; border-color:#27ae60;">✓ Asistencia</label>
@@ -153,7 +160,7 @@
                             </table>
                         </div>
 
-                        @if(auth()->user()->hasPermission('edit_asistencias'))
+                        @if(auth()->user()->hasPermission('edit_asistencias') && $tieneAlumnosActivos)
                             <div class="text-right" style="margin-top:10px;">
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fa fa-save"></i> Guardar cambios
