@@ -511,6 +511,46 @@ Vista:
 - `resources/views/alumnos/mensualidades/list.blade.php`
 - `resources/views/alumnos/mensualidades/comprobantePago.blade.php`
 
+#### Dashboard general del sistema
+
+La vista principal de Voyager fue reemplazada por un panel operativo propio:
+
+- Vista: `resources/views/vendor/voyager/index.blade.php`.
+- Objetivo: mostrar al usuario un resumen economico y operativo de la sucursal.
+- Incluye totales de:
+  - repasos / puntas
+  - examenes
+  - mensualidades
+  - total a cobrar
+  - total pagado
+  - saldo pendiente
+  - alumnos activos
+- Incluye graficos tipo torta/donut hechos con CSS interno (`conic-gradient`), sin
+  dependencia externa de JavaScript. Los graficos muestran:
+  - estado general de cobros: pagado vs pendiente
+  - distribucion del total por area: repasos, examenes y mensualidades
+- Incluye tablas de:
+  - deudas de mensualidad por alumno
+  - examenes pendientes de pago
+  - mensualidades pendientes
+  - ultimos pagos de mensualidad
+- El dashboard no muestra la tabla de aranceles configurados ni el detalle de repasos
+  pendientes de pago; esos datos quedan solo como parte de los totales/resumen cuando
+  corresponde.
+
+Reglas de sucursal:
+
+- Si el usuario logueado tiene `users.dojo_id`, el dashboard queda fijado automaticamente
+  a ese dojo y no muestra selector.
+- Si el usuario logueado no tiene `dojo_id`, se considera global/admin y puede seleccionar
+  la sucursal con `dojo_id` en query string.
+- Todas las consultas del dashboard se filtran por el `dojo_id` seleccionado/resuelto.
+- Un usuario de sucursal no puede usar el selector ni ver informacion economica de otro dojo.
+- Para repasos y examenes el filtro se aplica desde `alumno_grados -> alumnos.dojo_id`.
+- Para mensualidades y pagos de mensualidad el filtro se aplica por `dojo_id` directo.
+- El dashboard no reemplaza los listados operativos; sirve como vista resumida de estado
+  economico y seguimiento general.
+
 ### Problemas corregidos durante el proceso
 
 - Error por columna `status` duplicada en migracion de `alumnos`.

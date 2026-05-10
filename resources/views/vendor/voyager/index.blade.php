@@ -1,1045 +1,832 @@
 @extends('voyager::master')
 
+@php
+    use App\Models\Alumno;
+    use App\Models\AlumnoGradoExamen;
+    use App\Models\AlumnoGradoRepaso;
+    use App\Models\AlumnoMensualidad;
+    use App\Models\AlumnoMensualidadPago;
+    use App\Models\Dojo;
+    use Illuminate\Support\Collection;
+
+    $user = auth()->user();
+    $userDojoId = $user->dojo_id;
+    $dojos = Dojo::query()
+        ->whereNull('deleted_at')
+        ->where('status', 1)
+        ->orderBy('nombre')
+        ->get();
+
+    $selectedDojoId = $userDojoId ?: request('dojo_id');
+    if (!$selectedDojoId && $dojos->isNotEmpty()) {
+        $selectedDojoId = $dojos->first()->id;
+    }
+
+    if (!$userDojoId && $selectedDojoId && !$dojos->contains('id', (int) $selectedDojoId)) {
+        $selectedDojoId = $dojos->first()->id ?? null;
+    }
+
+    $selectedDojo = $selectedDojoId
+        ? $dojos->firstWhere('id', (int) $selectedDojoId)
+        : null;
+
+    $money = fn($value) => 'Bs ' . number_format((float) $value, 2, '.', ',');
+    $debtOf = fn($monto, $pagado) => max(0, (float) $monto - (float) $pagado);
+    $today = now();
+    $monthStart = now()->startOfMonth()->toDateString();
+    $monthEnd = now()->endOfMonth()->toDateString();
+
+    $empty = collect();
+
+    $alumnos = $selectedDojoId
+        ? Alumno::with('person')
+            ->where('dojo_id', $selectedDojoId)
+            ->whereNull('deleted_at')
+            ->get()
+        : $empty;
+
+    $repasos = $selectedDojoId
+        ? AlumnoGradoRepaso::with([
+            'alumnoGrado.alumno.person',
+            'alumnoGrado.grado',
+            'arancel',
+        ])
+            ->whereNull('deleted_at')
+            ->whereHas('alumnoGrado.alumno', function ($query) use ($selectedDojoId) {
+                $query->where('dojo_id', $selectedDojoId);
+            })
+            ->get()
+        : $empty;
+
+    $examenes = $selectedDojoId
+        ? AlumnoGradoExamen::with([
+            'alumnoGrado.alumno.person',
+            'alumnoGrado.grado',
+            'arancel',
+        ])
+            ->whereNull('deleted_at')
+            ->whereHas('alumnoGrado.alumno', function ($query) use ($selectedDojoId) {
+                $query->where('dojo_id', $selectedDojoId);
+            })
+            ->get()
+        : $empty;
+
+    $mensualidades = $selectedDojoId
+        ? AlumnoMensualidad::with(['alumno.person', 'pagos' => function ($query) {
+            $query->whereNull('deleted_at')->orderByDesc('fecha')->orderByDesc('id');
+        }])
+            ->where('dojo_id', $selectedDojoId)
+            ->whereNull('deleted_at')
+            ->where('status', '!=', 'anulado')
+            ->get()
+        : $empty;
+
+    $pagosMensualidades = $selectedDojoId
+        ? AlumnoMensualidadPago::with(['alumno.person', 'mensualidad'])
+            ->where('dojo_id', $selectedDojoId)
+            ->whereNull('deleted_at')
+            ->orderByDesc('fecha')
+            ->orderByDesc('id')
+            ->limit(10)
+            ->get()
+        : $empty;
+
+    $repasoTotal = $repasos->sum('monto');
+    $repasoPagado = $repasos->sum('monto_pagado');
+    $repasoSaldo = $repasos->sum(fn($item) => $debtOf($item->monto, $item->monto_pagado));
+
+    $examenTotal = $examenes->sum('monto');
+    $examenPagado = $examenes->sum('monto_pagado');
+    $examenSaldo = $examenes->sum(fn($item) => $debtOf($item->monto, $item->monto_pagado));
+
+    $mensualidadTotal = $mensualidades->sum(fn($item) => $item->total());
+    $mensualidadPagado = $mensualidades->sum('monto_pagado');
+    $mensualidadSaldo = $mensualidades->sum(fn($item) => $item->saldo());
+
+    $totalCobrar = $repasoTotal + $examenTotal + $mensualidadTotal;
+    $totalPagado = $repasoPagado + $examenPagado + $mensualidadPagado;
+    $totalSaldo = $repasoSaldo + $examenSaldo + $mensualidadSaldo;
+    $percent = fn($value, $total) => $total > 0 ? min(100, round(((float) $value / (float) $total) * 100, 1)) : 0;
+    $paidPercent = $percent($totalPagado, $totalCobrar);
+    $debtPercent = $percent($totalSaldo, $totalCobrar);
+    $repasoAreaPercent = $percent($repasoTotal, $totalCobrar);
+    $examenAreaPercent = $percent($examenTotal, $totalCobrar);
+    $mensualidadAreaPercent = $percent($mensualidadTotal, $totalCobrar);
+    $areaRepasoEnd = $repasoAreaPercent;
+    $areaExamenEnd = min(100, $repasoAreaPercent + $examenAreaPercent);
+    $dashboardCharts = [
+        [
+            'label' => 'Repasos / Puntas',
+            'total' => $repasoTotal,
+            'pagado' => $repasoPagado,
+            'saldo' => $repasoSaldo,
+            'count' => $repasos->count(),
+        ],
+        [
+            'label' => 'Examenes',
+            'total' => $examenTotal,
+            'pagado' => $examenPagado,
+            'saldo' => $examenSaldo,
+            'count' => $examenes->count(),
+        ],
+        [
+            'label' => 'Mensualidades',
+            'total' => $mensualidadTotal,
+            'pagado' => $mensualidadPagado,
+            'saldo' => $mensualidadSaldo,
+            'count' => $mensualidades->count(),
+        ],
+    ];
+
+    $repasosMes = $repasos->filter(fn($item) => $item->fecha >= $monthStart && $item->fecha <= $monthEnd);
+    $examenesMes = $examenes->filter(fn($item) => $item->fecha >= $monthStart && $item->fecha <= $monthEnd);
+    $mensualidadesMes = $mensualidades->filter(function ($item) use ($monthStart, $monthEnd) {
+        $periodo = optional($item->periodo)->toDateString() ?: $item->periodo;
+        return $periodo >= $monthStart && $periodo <= $monthEnd;
+    });
+
+    $deudasExamenes = $examenes
+        ->filter(fn($item) => $debtOf($item->monto, $item->monto_pagado) > 0)
+        ->sortByDesc(fn($item) => $debtOf($item->monto, $item->monto_pagado))
+        ->take(8)
+        ->values();
+
+    $deudasMensualidades = $mensualidades
+        ->filter(fn($item) => $item->saldo() > 0)
+        ->sortByDesc(fn($item) => $item->saldo())
+        ->take(10)
+        ->values();
+
+    $alumnosConDeuda = $mensualidades
+        ->filter(fn($item) => $item->saldo() > 0)
+        ->groupBy('alumno_id')
+        ->map(function (Collection $items) {
+            $first = $items->first();
+            return [
+                'alumno' => $first->alumno,
+                'total' => $items->sum(fn($item) => $item->saldo()),
+                'meses' => $items->count(),
+            ];
+        })
+        ->sortByDesc('total')
+        ->take(8)
+        ->values();
+@endphp
+
 @section('page_header')
-    <div class="page-content container-fluid">
+    <div class="page-content container-fluid dashboard-kaiteki-header">
         <div class="row">
-            <div class="col-md-12">
-                <div class="panel panel-bordered">
-                    <div class="panel-body">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <h2>Hola, {{ Auth::user()->name }}</h2>
-                                <p class="text-muted">Resumen de rendimiento - {{ now()->format('d F Y') }}</p>
-                            </div>
-                            <div class="col-md-4 text-right">
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-primary" id="refresh-dashboard">
-                                        <i class="voyager-refresh"></i> Actualizar
-                                    </button>
-                                </div>
-                            </div>
-                        </div>                        
+            <div class="col-md-8">
+                <h1 class="page-title">
+                    <i class="voyager-dashboard"></i> Panel general del sistema
+                </h1>
+                <p class="text-muted">
+                    Resumen economico y operativo de {{ $selectedDojo ? $selectedDojo->nombre : 'la sucursal seleccionada' }}.
+                </p>
+            </div>
+            <div class="col-md-4">
+                @if ($userDojoId)
+                    <div class="dojo-fixed-box">
+                        <span class="text-muted">Sucursal asignada</span>
+                        <strong>{{ optional($selectedDojo)->nombre ?? 'Sin sucursal activa' }}</strong>
                     </div>
-                </div>
+                @else
+                    <form method="GET" action="{{ url('/admin') }}" class="dojo-selector-form">
+                        <label for="dashboard-dojo-id">Sucursal</label>
+                        <div class="input-group">
+                            <select name="dojo_id" id="dashboard-dojo-id" class="form-control" onchange="this.form.submit()">
+                                @foreach ($dojos as $dojo)
+                                    <option value="{{ $dojo->id }}" @selected((int) $selectedDojoId === (int) $dojo->id)>
+                                        {{ $dojo->nombre }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <span class="input-group-btn">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="voyager-search"></i>
+                                </button>
+                            </span>
+                        </div>
+                    </form>
+                @endif
             </div>
         </div>
     </div>
 @stop
 
 @section('content')
-    @php
-        $meses = array('', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre');       
-    @endphp
-    
-    <div class="page-content container-fluid">
+    <div class="page-content container-fluid dashboard-kaiteki">
         @include('voyager::alerts')
-        @include('voyager::dimmers')
 
-        <!-- KPI Cards -->
-        <div class="row">
-            <div class="col-md-3">
-                <div class="panel panel-bordered dashboard-kpi">
-                    <div class="panel-body text-center">
-                        <div class="kpi-icon">
-                            <i class="voyager-dollar"></i>
-                        </div>
-                        <h3 class="kpi-value">$24,580</h3>
-                        <p class="kpi-label">Ventas Totales</p>
-                        <div class="kpi-trend trend-up">
-                            <i class="voyager-up"></i> 12.5%
+        @if (!$selectedDojo)
+            <div class="alert alert-warning">
+                No hay una sucursal activa para mostrar informacion. Registra o activa un dojo primero.
+            </div>
+        @else
+            <div class="row">
+                <div class="col-md-3 col-sm-6">
+                    <div class="panel panel-bordered metric-card metric-total">
+                        <div class="panel-body">
+                            <span class="metric-label">Total a cobrar</span>
+                            <strong class="metric-value">{{ $money($totalCobrar) }}</strong>
+                            <span class="metric-help">Repasos, examenes y mensualidades</span>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="panel panel-bordered dashboard-kpi">
-                    <div class="panel-body text-center">
-                        <div class="kpi-icon">
-                            <i class="voyager-bag"></i>
-                        </div>
-                        <h3 class="kpi-value">328</h3>
-                        <p class="kpi-label">Pedidos Hoy</p>
-                        <div class="kpi-trend trend-up">
-                            <i class="voyager-up"></i> 5.2%
+                <div class="col-md-3 col-sm-6">
+                    <div class="panel panel-bordered metric-card metric-paid">
+                        <div class="panel-body">
+                            <span class="metric-label">Pagado</span>
+                            <strong class="metric-value">{{ $money($totalPagado) }}</strong>
+                            <span class="metric-help">Ingresos registrados</span>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="panel panel-bordered dashboard-kpi">
-                    <div class="panel-body text-center">
-                        <div class="kpi-icon">
-                            <i class="voyager-person"></i>
-                        </div>
-                        <h3 class="kpi-value">42</h3>
-                        <p class="kpi-label">Nuevos Clientes</p>
-                        <div class="kpi-trend trend-down">
-                            <i class="voyager-down"></i> 3.1%
+                <div class="col-md-3 col-sm-6">
+                    <div class="panel panel-bordered metric-card metric-debt">
+                        <div class="panel-body">
+                            <span class="metric-label">Saldo pendiente</span>
+                            <strong class="metric-value">{{ $money($totalSaldo) }}</strong>
+                            <span class="metric-help">Deuda total de la sucursal</span>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="panel panel-bordered dashboard-kpi">
-                    <div class="panel-body text-center">
-                        <div class="kpi-icon">
-                            <i class="voyager-bar-chart"></i>
-                        </div>
-                        <h3 class="kpi-value">$78.50</h3>
-                        <p class="kpi-label">Ticket Promedio</p>
-                        <div class="kpi-trend trend-up">
-                            <i class="voyager-up"></i> 8.7%
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <!-- Gráfico de ventas mensuales con controles -->
-            <div class="col-md-6">
-                <div class="panel panel-bordered">
-                    <div class="panel-heading">
-                        <div class="panel-title-container">
-                            <h3 class="panel-title">Ventas Mensuales</h3>
-                            <div class="chart-controls">
-                                <select class="form-control chart-type-selector" data-chart="ventasMensualesChart">
-                                    <option value="bar">Barras</option>
-                                    <option value="line">Líneas</option>
-                                </select>
-                                <button class="btn btn-sm btn-default chart-export" data-chart="ventasMensualesChart">
-                                    <i class="voyager-download"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="panel-body">
-                        <div class="chart-container">
-                            <canvas id="ventasMensualesChart" height="250"></canvas>
-                        </div>
-                        <div class="chart-summary">
-                            <div class="summary-item">
-                                <span class="summary-label">Total Mes:</span>
-                                <span class="summary-value">$2,580,000</span>
-                            </div>
-                            <div class="summary-item">
-                                <span class="summary-label">Crecimiento:</span>
-                                <span class="summary-value trend-up">+12.5%</span>
-                            </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="panel panel-bordered metric-card metric-students">
+                        <div class="panel-body">
+                            <span class="metric-label">Alumnos activos</span>
+                            <strong class="metric-value">{{ $alumnos->where('status', 1)->count() }}</strong>
+                            <span class="metric-help">{{ $alumnos->count() }} registrados</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Gráfico de productos más vendidos con filtros -->
-            <div class="col-md-6">
-                <div class="panel panel-bordered">
-                    <div class="panel-heading">
-                        <div class="panel-title-container">
-                            <h3 class="panel-title">Productos Más Vendidos</h3>
-                            <div class="chart-controls">
-                                <select class="form-control chart-period-selector" data-chart="topProductosChart">
-                                    <option value="week">Esta semana</option>
-                                    <option value="month" selected>Este mes</option>
-                                    <option value="year">Este año</option>
-                                </select>
-                            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-bordered chart-panel">
+                        <div class="panel-heading">
+                            <h3 class="panel-title"><i class="voyager-pie-chart"></i> Grafico economico</h3>
                         </div>
-                    </div>
-                    <div class="panel-body">
-                        <div class="chart-container">
-                            <canvas id="topProductosChart" height="250"></canvas>
-                        </div>
-                        <div class="chart-legend-detailed">
-                            <div class="legend-item">
-                                <span class="legend-color" style="background-color: rgba(255, 99, 132, 0.7)"></span>
-                                <span class="legend-label">Hamburguesa</span>
-                                <span class="legend-value">1,200 unidades</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                        <div class="panel-body">
+                            <div class="donut-grid">
+                                <div class="donut-card">
+                                    <div class="donut-chart donut-status {{ $totalCobrar > 0 ? '' : 'donut-empty' }}"
+                                         style="--paid: {{ $paidPercent }}%; --debt: {{ $debtPercent }}%;"
+                                         aria-label="Pagado {{ $paidPercent }} por ciento, pendiente {{ $debtPercent }} por ciento">
+                                        <div class="donut-hole">
+                                            <span>Pagado</span>
+                                            <strong>{{ $paidPercent }}%</strong>
+                                        </div>
+                                    </div>
+                                    <div class="donut-copy">
+                                        <h4>Estado de cobros</h4>
+                                        <p>Total registrado: {{ $money($totalCobrar) }}</p>
+                                        <div class="donut-legend">
+                                            <span><i class="legend-dot paid-dot"></i> Pagado {{ $money($totalPagado) }}</span>
+                                            <span><i class="legend-dot debt-dot"></i> Pendiente {{ $money($totalSaldo) }}</span>
+                                        </div>
+                                    </div>
+                                </div>
 
-        <div class="row">
-            <!-- Gráfico de ventas por día de la semana interactivo -->
-            <div class="col-md-6">
-                <div class="panel panel-bordered">
-                    <div class="panel-heading">
-                        <div class="panel-title-container">
-                            <h3 class="panel-title">Ventas por Día de la Semana</h3>
-                            <div class="chart-controls">
-                                <button class="btn btn-sm btn-default toggle-dataset" data-chart="ventasDiasChart">
-                                    <i class="voyager-eye"></i> Alternar Datos
-                                </button>
+                                <div class="donut-card">
+                                    <div class="donut-chart donut-area {{ $totalCobrar > 0 ? '' : 'donut-empty' }}"
+                                         style="--repasos: {{ $areaRepasoEnd }}%; --examenes: {{ $areaExamenEnd }}%;"
+                                         aria-label="Distribucion por area">
+                                        <div class="donut-hole">
+                                            <span>Areas</span>
+                                            <strong>{{ $dashboardCharts[0]['count'] + $dashboardCharts[1]['count'] + $dashboardCharts[2]['count'] }}</strong>
+                                        </div>
+                                    </div>
+                                    <div class="donut-copy">
+                                        <h4>Distribucion del total</h4>
+                                        <p>Total a cobrar por area de la sucursal.</p>
+                                        <div class="donut-legend">
+                                            <span><i class="legend-dot repaso-dot"></i> Repasos {{ $repasoAreaPercent }}%</span>
+                                            <span><i class="legend-dot examen-dot"></i> Examenes {{ $examenAreaPercent }}%</span>
+                                            <span><i class="legend-dot mensualidad-dot"></i> Mensualidades {{ $mensualidadAreaPercent }}%</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    <div class="panel-body">
-                        <div class="chart-container">
-                            <canvas id="ventasDiasChart" height="250"></canvas>
-                        </div>
-                        <div class="chart-tooltip-info">
-                            <i class="voyager-info"></i> Haz clic en los elementos para ver detalles
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Gráfico de comparación anual mejorado -->
-            <div class="col-md-6">
-                <div class="panel panel-bordered">
-                    <div class="panel-heading">
-                        <div class="panel-title-container">
-                            <h3 class="panel-title">Comparación Anual</h3>
-                            <div class="chart-controls">
-                                <select class="form-control year-selector" data-chart="comparacionAnualChart">
-                                    <option value="2021">2021-2022</option>
-                                    <option value="2022" selected>2022-2023</option>
-                                    <option value="2023">2023-2024</option>
-                                </select>
+                            <div class="chart-bars">
+                                @foreach ($dashboardCharts as $chartRow)
+                                    <div class="chart-row">
+                                        <div class="chart-row-header">
+                                            <strong>{{ $chartRow['label'] }}</strong>
+                                            <span>{{ $chartRow['count'] }} registros - {{ $money($chartRow['total']) }}</span>
+                                        </div>
+                                        <div class="chart-row-values">
+                                            <span class="text-success">Pagado: {{ $money($chartRow['pagado']) }} ({{ $percent($chartRow['pagado'], $chartRow['total']) }}%)</span>
+                                            <span class="text-danger">Pendiente: {{ $money($chartRow['saldo']) }} ({{ $percent($chartRow['saldo'], $chartRow['total']) }}%)</span>
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
-                        </div>
-                    </div>
-                    <div class="panel-body">
-                        <div class="chart-container">
-                            <canvas id="comparacionAnualChart" height="250"></canvas>
-                        </div>
-                        <div class="comparison-stats">
-                            <div class="stat-item">
-                                <span class="stat-year">2022</span>
-                                <span class="stat-total">$2,340,000</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-year">2023</span>
-                                <span class="stat-total">$2,580,000</span>
-                                <span class="stat-difference trend-up">+$240,000</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Nuevos gráficos agregados -->
-        <div class="row">
-            <!-- Gráfico de ventas en tiempo real -->
-            <div class="col-md-6">
-                <div class="panel panel-bordered">
-                    <div class="panel-heading">
-                        <div class="panel-title-container">
-                            <h3 class="panel-title">Ventas en Tiempo Real - Hoy</h3>
-                            <div class="chart-controls">
-                                <button class="btn btn-sm btn-success" id="start-realtime">
-                                    <i class="voyager-play"></i> Iniciar
-                                </button>
-                                <button class="btn btn-sm btn-danger" id="stop-realtime">
-                                    <i class="voyager-pause"></i> Pausar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="panel-body">
-                        <div class="chart-container">
-                            <canvas id="ventasTiempoRealChart" height="200"></canvas>
-                        </div>
-                        <div class="realtime-info">
-                            <span class="realtime-label">Actualizado:</span>
-                            <span class="realtime-time" id="lastUpdateTime">{{ now()->format('H:i:s') }}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Gráfico de métricas de rendimiento -->
-            <div class="col-md-6">
-                <div class="panel panel-bordered">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">Métricas de Rendimiento</h3>
-                    </div>
-                    <div class="panel-body">
-                        <div class="chart-container">
-                            <canvas id="metricasRendimientoChart" height="200"></canvas>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="panel panel-bordered summary-panel">
+                        <div class="panel-heading">
+                            <h3 class="panel-title"><i class="voyager-star"></i> Repasos / Puntas</h3>
                         </div>
-                        <div class="metrics-radar-info">
-                            <div class="metric-score">
-                                <span class="score-value">85%</span>
-                                <span class="score-label">Puntuación General</span>
-                            </div>
+                        <div class="panel-body">
+                            <div class="summary-row"><span>Registros</span><strong>{{ $repasos->count() }}</strong></div>
+                            <div class="summary-row"><span>Aprobados</span><strong>{{ $repasos->where('aprobado', 1)->count() }}</strong></div>
+                            <div class="summary-row"><span>Total</span><strong>{{ $money($repasoTotal) }}</strong></div>
+                            <div class="summary-row"><span>Pagado</span><strong class="text-success">{{ $money($repasoPagado) }}</strong></div>
+                            <div class="summary-row"><span>Pendiente</span><strong class="text-danger">{{ $money($repasoSaldo) }}</strong></div>
+                            <div class="summary-footer">Este mes: {{ $repasosMes->count() }} registros, {{ $money($repasosMes->sum('monto_pagado')) }} pagado</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="panel panel-bordered summary-panel">
+                        <div class="panel-heading">
+                            <h3 class="panel-title"><i class="voyager-certificate"></i> Examenes</h3>
+                        </div>
+                        <div class="panel-body">
+                            <div class="summary-row"><span>Registros</span><strong>{{ $examenes->count() }}</strong></div>
+                            <div class="summary-row"><span>Aprobados</span><strong>{{ $examenes->where('aprobado', 1)->count() }}</strong></div>
+                            <div class="summary-row"><span>Total</span><strong>{{ $money($examenTotal) }}</strong></div>
+                            <div class="summary-row"><span>Pagado</span><strong class="text-success">{{ $money($examenPagado) }}</strong></div>
+                            <div class="summary-row"><span>Pendiente</span><strong class="text-danger">{{ $money($examenSaldo) }}</strong></div>
+                            <div class="summary-footer">Este mes: {{ $examenesMes->count() }} registros, {{ $money($examenesMes->sum('monto_pagado')) }} pagado</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="panel panel-bordered summary-panel">
+                        <div class="panel-heading">
+                            <h3 class="panel-title"><i class="voyager-calendar"></i> Mensualidades</h3>
+                        </div>
+                        <div class="panel-body">
+                            <div class="summary-row"><span>Registros</span><strong>{{ $mensualidades->count() }}</strong></div>
+                            <div class="summary-row"><span>Pendientes/parciales</span><strong>{{ $mensualidades->filter(fn($item) => in_array($item->estadoPago(), ['Pendiente', 'Parcial']))->count() }}</strong></div>
+                            <div class="summary-row"><span>Total</span><strong>{{ $money($mensualidadTotal) }}</strong></div>
+                            <div class="summary-row"><span>Pagado</span><strong class="text-success">{{ $money($mensualidadPagado) }}</strong></div>
+                            <div class="summary-row"><span>Pendiente</span><strong class="text-danger">{{ $money($mensualidadSaldo) }}</strong></div>
+                            <div class="summary-footer">Este mes: {{ $mensualidadesMes->count() }} cobros, {{ $money($mensualidadesMes->sum('monto_pagado')) }} pagado</div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Gráfico de embudo de conversión -->
-        <div class="row">
-            <div class="col-md-12">
-                <div class="panel panel-bordered">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">Embudo de Conversión</h3>
-                    </div>
-                    <div class="panel-body">
-                        <div class="chart-container">
-                            <canvas id="embudoConversionChart" height="150"></canvas>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-bordered">
+                        <div class="panel-heading">
+                            <h3 class="panel-title"><i class="voyager-dollar"></i> Deudas de mensualidad por alumno</h3>
                         </div>
-                        <div class="funnel-stats">
-                            <div class="funnel-stage">
-                                <span class="stage-name">Visitantes</span>
-                                <span class="stage-value">10,000</span>
-                                <span class="stage-rate">100%</span>
-                            </div>
-                            <div class="funnel-stage">
-                                <span class="stage-name">Carrito</span>
-                                <span class="stage-value">2,500</span>
-                                <span class="stage-rate">25%</span>
-                            </div>
-                            <div class="funnel-stage">
-                                <span class="stage-name">Checkout</span>
-                                <span class="stage-value">1,200</span>
-                                <span class="stage-rate">12%</span>
-                            </div>
-                            <div class="funnel-stage">
-                                <span class="stage-name">Completado</span>
-                                <span class="stage-value">980</span>
-                                <span class="stage-rate">9.8%</span>
+                        <div class="panel-body no-padding">
+                            <div class="table-responsive">
+                                <table class="table table-hover dashboard-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Alumno</th>
+                                            <th>Meses pendientes</th>
+                                            <th class="text-right">Saldo</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($alumnosConDeuda as $deuda)
+                                            <tr>
+                                                <td>{{ optional(optional($deuda['alumno'])->person)->first_name ?? 'Sin alumno' }}</td>
+                                                <td>{{ $deuda['meses'] }}</td>
+                                                <td class="text-right text-danger">{{ $money($deuda['total']) }}</td>
+                                                <td class="text-right">
+                                                    @if ($deuda['alumno'])
+                                                        <a href="{{ route('voyager.alumnos.show', ['id' => $deuda['alumno']->id]) }}" class="btn btn-xs btn-default">
+                                                            Ver
+                                                        </a>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="4" class="empty-state">No hay deudas de mensualidad para esta sucursal.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Tabla de últimos pedidos -->
-        <div class="row">
-            <div class="col-md-12">
-                <div class="panel panel-bordered">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">Pedidos Recientes</h3>
-                    </div>
-                    <div class="panel-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th># Pedido</th>
-                                        <th>Cliente</th>
-                                        <th>Fecha</th>
-                                        <th>Total</th>
-                                        <th>Estado</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>#12345</td>
-                                        <td>Juan Pérez</td>
-                                        <td>20 Nov 2023</td>
-                                        <td>$125.80</td>
-                                        <td><span class="label label-success">Completado</span></td>
-                                        <td>
-                                            <a href="#" class="btn btn-sm btn-primary">Ver</a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#12344</td>
-                                        <td>María García</td>
-                                        <td>20 Nov 2023</td>
-                                        <td>$89.50</td>
-                                        <td><span class="label label-warning">Procesando</span></td>
-                                        <td>
-                                            <a href="#" class="btn btn-sm btn-primary">Ver</a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#12343</td>
-                                        <td>Carlos López</td>
-                                        <td>19 Nov 2023</td>
-                                        <td>$210.00</td>
-                                        <td><span class="label label-success">Completado</span></td>
-                                        <td>
-                                            <a href="#" class="btn btn-sm btn-primary">Ver</a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#12342</td>
-                                        <td>Ana Martínez</td>
-                                        <td>19 Nov 2023</td>
-                                        <td>$56.90</td>
-                                        <td><span class="label label-danger">Cancelado</span></td>
-                                        <td>
-                                            <a href="#" class="btn btn-sm btn-primary">Ver</a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>#12341</td>
-                                        <td>Pedro Sánchez</td>
-                                        <td>18 Nov 2023</td>
-                                        <td>$178.30</td>
-                                        <td><span class="label label-success">Completado</span></td>
-                                        <td>
-                                            <a href="#" class="btn btn-sm btn-primary">Ver</a>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="panel panel-bordered">
+                        <div class="panel-heading">
+                            <h3 class="panel-title"><i class="voyager-warning"></i> Examenes pendientes de pago</h3>
+                        </div>
+                        <div class="panel-body no-padding">
+                            <div class="table-responsive">
+                                <table class="table table-hover dashboard-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Alumno</th>
+                                            <th>Grado</th>
+                                            <th>Fecha</th>
+                                            <th class="text-right">Saldo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($deudasExamenes as $examen)
+                                            <tr>
+                                                <td>{{ optional(optional(optional($examen->alumnoGrado)->alumno)->person)->first_name ?? 'Sin alumno' }}</td>
+                                                <td>{{ optional(optional($examen->alumnoGrado)->grado)->nombre ?? 'Sin grado' }}</td>
+                                                <td>{{ $examen->fecha ? \Carbon\Carbon::parse($examen->fecha)->format('d/m/Y') : '-' }}</td>
+                                                <td class="text-right text-danger">{{ $money($debtOf($examen->monto, $examen->monto_pagado)) }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="4" class="empty-state">No hay examenes pendientes.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+
+            <div class="row">
+                <div class="col-md-7">
+                    <div class="panel panel-bordered">
+                        <div class="panel-heading">
+                            <h3 class="panel-title"><i class="voyager-calendar"></i> Mensualidades pendientes</h3>
+                        </div>
+                        <div class="panel-body no-padding">
+                            <div class="table-responsive">
+                                <table class="table table-hover dashboard-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Alumno</th>
+                                            <th>Periodo</th>
+                                            <th>Estado</th>
+                                            <th class="text-right">Total</th>
+                                            <th class="text-right">Pagado</th>
+                                            <th class="text-right">Saldo</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($deudasMensualidades as $mensualidad)
+                                            <tr>
+                                                <td>{{ optional(optional($mensualidad->alumno)->person)->first_name ?? 'Sin alumno' }}</td>
+                                                <td>
+                                                    {{ optional($mensualidad->periodo)->format('d/m/Y') }}
+                                                    @if ($mensualidad->fecha_fin)
+                                                        - {{ optional($mensualidad->fecha_fin)->format('d/m/Y') }}
+                                                    @endif
+                                                </td>
+                                                <td>{{ $mensualidad->estadoPago() }}</td>
+                                                <td class="text-right">{{ $money($mensualidad->total()) }}</td>
+                                                <td class="text-right text-success">{{ $money($mensualidad->monto_pagado) }}</td>
+                                                <td class="text-right text-danger">{{ $money($mensualidad->saldo()) }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="6" class="empty-state">No hay mensualidades pendientes.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="panel panel-bordered">
+                        <div class="panel-heading">
+                            <h3 class="panel-title"><i class="voyager-receipt"></i> Ultimos pagos de mensualidad</h3>
+                        </div>
+                        <div class="panel-body no-padding">
+                            <div class="table-responsive">
+                                <table class="table table-hover dashboard-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Alumno</th>
+                                            <th>Fecha</th>
+                                            <th class="text-right">Monto</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($pagosMensualidades as $pago)
+                                            <tr>
+                                                <td>{{ optional(optional($pago->alumno)->person)->first_name ?? 'Sin alumno' }}</td>
+                                                <td>{{ $pago->fecha ? \Carbon\Carbon::parse($pago->fecha)->format('d/m/Y') : '-' }}</td>
+                                                <td class="text-right text-success">{{ $money($pago->monto) }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="3" class="empty-state">No hay pagos recientes de mensualidad.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 @stop
 
 @section('css')
     <style>
-        .dashboard-kpi {
-            transition: all 0.3s ease;
+        .dashboard-kaiteki-header .page-title {
+            margin-bottom: 4px;
         }
-        .dashboard-kpi:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+
+        .dojo-fixed-box,
+        .dojo-selector-form {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 14px;
         }
-        .kpi-icon {
-            font-size: 24px;
-            color: #22A7F0;
-            margin-bottom: 10px;
+
+        .dojo-fixed-box span,
+        .dojo-fixed-box strong,
+        .dojo-selector-form label {
+            display: block;
         }
-        .kpi-value {
-            font-size: 28px;
-            font-weight: bold;
-            margin: 10px 0;
+
+        .dojo-fixed-box strong {
+            margin-top: 4px;
+            font-size: 16px;
         }
-        .kpi-label {
-            color: #6c757d;
-            margin-bottom: 5px;
+
+        .dashboard-kaiteki .panel {
+            border-radius: 6px;
+            overflow: hidden;
         }
-        .kpi-trend {
-            font-size: 12px;
-            font-weight: bold;
+
+        .metric-card .panel-body {
+            min-height: 126px;
         }
-        .trend-up {
-            color: #2ecc71;
+
+        .metric-label,
+        .metric-help {
+            display: block;
+            color: #6b7280;
         }
-        .trend-down {
-            color: #e74c3c;
+
+        .metric-value {
+            display: block;
+            margin: 10px 0 8px;
+            font-size: 26px;
+            line-height: 1.1;
+            color: #111827;
         }
-        .panel-heading .btn-group {
-            margin-top: -5px;
+
+        .metric-total {
+            border-top: 4px solid #2563eb;
         }
-        .chart-container {
-            position: relative;
-            height: 250px;
-            width: 100%;
+
+        .metric-paid {
+            border-top: 4px solid #059669;
         }
-        
-        /* Nuevos estilos para funcionalidades adicionales */
-        .panel-title-container {
+
+        .metric-debt {
+            border-top: 4px solid #dc2626;
+        }
+
+        .metric-students {
+            border-top: 4px solid #7c3aed;
+        }
+
+        .summary-panel .panel-title {
+            font-weight: 600;
+        }
+
+        .chart-panel .panel-body {
+            padding: 18px;
+        }
+
+        .donut-grid,
+        .donut-card,
+        .donut-legend,
+        .chart-row-header,
+        .chart-row-values {
             display: flex;
+            gap: 16px;
+        }
+
+        .donut-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+            margin-bottom: 12px;
+        }
+
+        .donut-card {
+            align-items: center;
+            min-height: 220px;
+            padding: 18px;
+            border: 1px solid #edf2f7;
+            border-radius: 6px;
+            background: #fbfdff;
+        }
+
+        .donut-chart {
+            position: relative;
+            flex: 0 0 178px;
+            width: 178px;
+            height: 178px;
+            border-radius: 50%;
+            box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.05);
+        }
+
+        .donut-status {
+            background:
+                conic-gradient(
+                    #059669 0 var(--paid),
+                    #dc2626 var(--paid) 100%
+                );
+        }
+
+        .donut-area {
+            background:
+                conic-gradient(
+                    #2563eb 0 var(--repasos),
+                    #7c3aed var(--repasos) var(--examenes),
+                    #f59e0b var(--examenes) 100%
+                );
+        }
+
+        .donut-empty {
+            background: #e5e7eb !important;
+        }
+
+        .donut-hole {
+            position: absolute;
+            inset: 28px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+            text-align: center;
+        }
+
+        .donut-hole span,
+        .donut-copy p,
+        .chart-row-header span,
+        .chart-row-values {
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .donut-hole strong {
+            display: block;
+            margin-top: 3px;
+            font-size: 28px;
+            color: #111827;
+            line-height: 1;
+        }
+
+        .donut-copy {
+            min-width: 0;
+        }
+
+        .donut-copy h4 {
+            margin: 0 0 6px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .donut-legend {
+            flex-direction: column;
+            gap: 7px;
+            margin-top: 12px;
+            color: #4b5563;
+        }
+
+        .legend-dot {
+            display: inline-block;
+            width: 9px;
+            height: 9px;
+            margin-right: 5px;
+            border-radius: 50%;
+        }
+
+        .paid-dot {
+            background: #059669;
+        }
+
+        .debt-dot {
+            background: #dc2626;
+        }
+
+        .repaso-dot {
+            background: #2563eb;
+        }
+
+        .examen-dot {
+            background: #7c3aed;
+        }
+
+        .mensualidad-dot {
+            background: #f59e0b;
+        }
+
+        .chart-row {
+            padding: 12px 0;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .chart-row:first-child {
+            border-top: 0;
+        }
+
+        .chart-row-header {
             justify-content: space-between;
             align-items: center;
-            width: 100%;
+            margin-bottom: 8px;
         }
-        .chart-controls {
-            display: flex;
-            gap: 5px;
-            align-items: center;
+
+        .chart-row-values {
+            justify-content: space-between;
+            margin-top: 6px;
         }
-        .chart-controls select {
-            width: auto;
-            display: inline-block;
+
+        @media (max-width: 991px) {
+            .donut-grid {
+                grid-template-columns: 1fr;
+            }
         }
-        .chart-summary {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
-        }
-        .summary-item {
-            text-align: center;
-        }
-        .summary-label {
-            display: block;
-            font-size: 12px;
-            color: #6c757d;
-        }
-        .summary-value {
-            display: block;
-            font-weight: bold;
-            font-size: 16px;
-        }
-        .chart-legend-detailed {
-            margin-top: 15px;
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 5px;
-            padding: 5px;
-            border-radius: 3px;
-            background: #f8f9fa;
-        }
-        .legend-color {
-            width: 15px;
-            height: 15px;
-            border-radius: 3px;
-            margin-right: 10px;
-        }
-        .legend-label {
-            flex: 1;
-            font-size: 12px;
-        }
-        .legend-value {
-            font-weight: bold;
-            font-size: 12px;
-        }
-        .chart-tooltip-info {
-            text-align: center;
-            font-size: 11px;
-            color: #6c757d;
-            margin-top: 10px;
-        }
-        .comparison-stats {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 15px;
-        }
-        .stat-item {
-            text-align: center;
-        }
-        .stat-year {
-            display: block;
-            font-weight: bold;
-        }
-        .stat-total {
-            display: block;
-            font-size: 14px;
-            color: #333;
-        }
-        .stat-difference {
-            display: block;
-            font-size: 12px;
-        }
-        .realtime-info {
-            text-align: center;
-            margin-top: 10px;
-            font-size: 12px;
-        }
-        .realtime-time {
-            font-weight: bold;
-            color: #22A7F0;
-        }
-        .metrics-radar-info {
-            text-align: center;
-            margin-top: 15px;
-        }
-        .metric-score {
-            display: inline-block;
-            text-align: center;
-        }
-        .score-value {
-            display: block;
-            font-size: 24px;
-            font-weight: bold;
-            color: #22A7F0;
-        }
-        .score-label {
-            font-size: 12px;
-            color: #6c757d;
-        }
-        .funnel-stats {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 20px;
-        }
-        .funnel-stage {
-            text-align: center;
-            flex: 1;
-        }
-        .stage-name {
-            display: block;
-            font-weight: bold;
-            font-size: 12px;
-        }
-        .stage-value {
-            display: block;
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-        }
-        .stage-rate {
-            display: block;
-            font-size: 12px;
-            color: #6c757d;
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .panel-title-container {
+
+        @media (max-width: 640px) {
+            .donut-card,
+            .chart-row-header,
+            .chart-row-values {
                 flex-direction: column;
                 align-items: flex-start;
             }
-            .chart-controls {
-                margin-top: 10px;
-                width: 100%;
-                justify-content: flex-end;
-            }
-            .chart-summary,
-            .comparison-stats,
-            .funnel-stats {
-                flex-direction: column;
-                gap: 10px;
+
+            .donut-chart {
+                align-self: center;
             }
         }
+
+        .summary-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .summary-row:last-of-type {
+            border-bottom: 0;
+        }
+
+        .summary-footer {
+            margin-top: 12px;
+            padding: 10px;
+            border-radius: 4px;
+            background: #f8fafc;
+            color: #475569;
+            font-size: 12px;
+        }
+
+        .dashboard-table {
+            margin-bottom: 0;
+        }
+
+        .dashboard-table th {
+            white-space: nowrap;
+            color: #4b5563;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .dashboard-table td {
+            vertical-align: middle !important;
+        }
+
+        .empty-state {
+            padding: 24px !important;
+            text-align: center;
+            color: #6b7280;
+        }
+
+        .no-padding {
+            padding: 0 !important;
+        }
     </style>
-@stop
-
-@section('javascript')
-    <!-- Incluir Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-
-    <script>
-        $(document).ready(function(){   
-            // Registrar plugins
-            Chart.register(ChartDataLabels);
-            
-            // Variables para control de tiempo real
-            let realtimeInterval;
-            let realtimeChart;
-            
-            // Datos de ejemplo mejorados
-            const ventasMensualesData = {
-                labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
-                datasets: [{
-                    label: 'Ventas 2023',
-                    data: [120000, 190000, 150000, 180000, 210000, 230000, 250000, 220000, 240000, 260000, 280000, 300000],
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 2
-                }]
-            };
-
-            const topProductosData = {
-                labels: ['Hamburguesa', 'Pizza', 'Ensalada', 'Bebida', 'Postre'],
-                datasets: [{
-                    label: 'Unidades Vendidas',
-                    data: [1200, 800, 500, 1500, 300],
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.7)',
-                        'rgba(54, 162, 235, 0.7)',
-                        'rgba(255, 206, 86, 0.7)',
-                        'rgba(75, 192, 192, 0.7)',
-                        'rgba(153, 102, 255, 0.7)'
-                    ],
-                    borderColor: [
-                        'rgba(255, 99, 132, 1)',
-                        'rgba(54, 162, 235, 1)',
-                        'rgba(255, 206, 86, 1)',
-                        'rgba(75, 192, 192, 1)',
-                        'rgba(153, 102, 255, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            };
-
-            const ventasDiasData = {
-                labels: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
-                datasets: [{
-                    label: 'Ventas promedio',
-                    data: [80000, 85000, 90000, 95000, 120000, 150000, 130000],
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    borderWidth: 2,
-                    tension: 0.3,
-                    fill: true
-                }]
-            };
-
-            const comparacionAnualData = {
-                labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
-                datasets: [
-                    {
-                        label: '2022',
-                        data: [100000, 150000, 130000, 160000, 190000, 210000, 230000, 200000, 220000, 240000, 260000, 280000],
-                        borderColor: 'rgba(201, 203, 207, 1)',
-                        backgroundColor: 'rgba(201, 203, 207, 0.2)',
-                        borderWidth: 2,
-                        tension: 0.3,
-                        fill: true
-                    },
-                    {
-                        label: '2023',
-                        data: [120000, 190000, 150000, 180000, 210000, 230000, 250000, 220000, 240000, 260000, 280000, 300000],
-                        borderColor: 'rgba(54, 162, 235, 1)',
-                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                        borderWidth: 2,
-                        tension: 0.3,
-                        fill: true
-                    }
-                ]
-            };
-
-            // Nuevos datos para gráficos adicionales
-            const ventasTiempoRealData = {
-                labels: [],
-                datasets: [{
-                    label: 'Ventas por Hora',
-                    data: [],
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    backgroundColor: 'rgba(255, 99, 132, 0.1)',
-                    borderWidth: 2,
-                    tension: 0.4,
-                    fill: true
-                }]
-            };
-
-            const metricasRendimientoData = {
-                labels: ['Ventas', 'Clientes', 'Eficiencia', 'Calidad', 'Rentabilidad', 'Crecimiento'],
-                datasets: [{
-                    label: 'Rendimiento Actual',
-                    data: [85, 78, 92, 88, 76, 90],
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-                    pointBorderColor: '#fff',
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: 'rgba(54, 162, 235, 1)'
-                }]
-            };
-
-            const embudoConversionData = {
-                labels: ['Visitantes', 'Carrito', 'Checkout', 'Completado'],
-                datasets: [{
-                    data: [10000, 2500, 1200, 980],
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.7)',
-                        'rgba(255, 159, 64, 0.7)',
-                        'rgba(255, 205, 86, 0.7)',
-                        'rgba(75, 192, 192, 0.7)'
-                    ],
-                    borderWidth: 1
-                }]
-            };
-
-            // Configuración común para los gráficos
-            const chartOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed.y !== undefined) {
-                                    label += new Intl.NumberFormat('en-US', {
-                                        style: 'currency',
-                                        currency: 'USD'
-                                    }).format(context.parsed.y);
-                                } else {
-                                    label += context.parsed;
-                                }
-                                return label;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            drawBorder: false
-                        },
-                        ticks: {
-                            callback: function(value) {
-                                if (value >= 1000) {
-                                    return '$' + value / 1000 + 'k';
-                                }
-                                return '$' + value;
-                            }
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
-            };
-            
-            const pieChartOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                    },
-                    datalabels: {
-                        color: '#fff',
-                        font: {
-                            weight: 'bold'
-                        },
-                        formatter: (value, ctx) => {
-                            return ctx.chart.data.labels[ctx.dataIndex];
-                        },
-                    }
-                }
-            };
-
-            const realtimeOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                },
-                animation: {
-                    duration: 0
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            };
-
-            const radarOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    r: {
-                        angleLines: {
-                            display: true
-                        },
-                        suggestedMin: 0,
-                        suggestedMax: 100
-                    }
-                }
-            };
-
-            const funnelOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return `${context.label}: ${context.parsed} visitas`;
-                            }
-                        }
-                    }
-                }
-            };
-
-            // Crear los gráficos principales
-            const ventasMensualesChart = new Chart(document.getElementById('ventasMensualesChart'), {
-                type: 'bar',
-                data: ventasMensualesData,
-                options: chartOptions
-            });
-
-            const topProductosChart = new Chart(document.getElementById('topProductosChart'), {
-                type: 'pie',
-                data: topProductosData,
-                options: pieChartOptions
-            });
-
-            const ventasDiasChart = new Chart(document.getElementById('ventasDiasChart'), {
-                type: 'line',
-                data: ventasDiasData,
-                options: chartOptions
-            });
-
-            const comparacionAnualChart = new Chart(document.getElementById('comparacionAnualChart'), {
-                type: 'line',
-                data: comparacionAnualData,
-                options: chartOptions
-            });
-
-            // Crear nuevos gráficos
-            realtimeChart = new Chart(document.getElementById('ventasTiempoRealChart'), {
-                type: 'line',
-                data: ventasTiempoRealData,
-                options: realtimeOptions
-            });
-
-            new Chart(document.getElementById('metricasRendimientoChart'), {
-                type: 'radar',
-                data: metricasRendimientoData,
-                options: radarOptions
-            });
-
-            new Chart(document.getElementById('embudoConversionChart'), {
-                type: 'bar',
-                data: embudoConversionData,
-                options: funnelOptions
-            });
-
-            // Funcionalidades adicionales
-
-            // Cambiar tipo de gráfico
-            $('.chart-type-selector').change(function() {
-                const chartId = $(this).data('chart');
-                const newType = $(this).val();
-                
-                if (chartId === 'ventasMensualesChart') {
-                    ventasMensualesChart.config.type = newType;
-                    ventasMensualesChart.update();
-                }
-            });
-
-            // Exportar gráfico
-            $('.chart-export').click(function() {
-                const chartId = $(this).data('chart');
-                const canvas = document.getElementById(chartId);
-                const url = canvas.toDataURL('image/png');
-                
-                const link = document.createElement('a');
-                link.download = `${chartId}.png`;
-                link.href = url;
-                link.click();
-            });
-
-            // Alternar dataset
-            $('.toggle-dataset').click(function() {
-                const chart = ventasDiasChart;
-                const currentData = chart.data.datasets[0].data;
-                
-                // Datos alternativos
-                const alternativeData = [70000, 78000, 82000, 88000, 110000, 140000, 125000];
-                
-                if (JSON.stringify(currentData) === JSON.stringify(ventasDiasData.datasets[0].data)) {
-                    chart.data.datasets[0].data = alternativeData;
-                    chart.data.datasets[0].label = 'Ventas proyectadas';
-                } else {
-                    chart.data.datasets[0].data = ventasDiasData.datasets[0].data;
-                    chart.data.datasets[0].label = 'Ventas promedio';
-                }
-                
-                chart.update();
-            });
-
-            // Tiempo real
-            $('#start-realtime').click(function() {
-                if (realtimeInterval) {
-                    clearInterval(realtimeInterval);
-                }
-                
-                realtimeInterval = setInterval(() => {
-                    const now = new Date();
-                    const timeLabel = now.getHours() + ':' + now.getMinutes() + ':' + now.getSeconds();
-                    
-                    // Agregar nuevo dato aleatorio
-                    const newData = Math.floor(Math.random() * 1000) + 500;
-                    
-                    realtimeChart.data.labels.push(timeLabel);
-                    realtimeChart.data.datasets[0].data.push(newData);
-                    
-                    // Mantener solo últimos 10 puntos
-                    if (realtimeChart.data.labels.length > 10) {
-                        realtimeChart.data.labels.shift();
-                        realtimeChart.data.datasets[0].data.shift();
-                    }
-                    
-                    realtimeChart.update('none');
-                    
-                    // Actualizar timestamp
-                    $('#lastUpdateTime').text(timeLabel);
-                }, 2000);
-            });
-
-            $('#stop-realtime').click(function() {
-                if (realtimeInterval) {
-                    clearInterval(realtimeInterval);
-                    realtimeInterval = null;
-                }
-            });
-
-            // Selector de año para comparación
-            $('.year-selector').change(function() {
-                const selectedYear = $(this).val();
-                // En una implementación real, aquí harías una petición AJAX
-                // para obtener los datos del año seleccionado
-                alert(`Cargando datos para años ${selectedYear}-${parseInt(selectedYear)+1}`);
-            });
-
-            // Selector de período para productos
-            $('.chart-period-selector').change(function() {
-                const period = $(this).val();
-                // En una implementación real, aquí harías una petición AJAX
-                alert(`Cargando productos más vendidos del ${period}`);
-            });
-
-            // Interactividad en gráficos
-            ventasDiasChart.canvas.addEventListener('click', function(evt) {
-                const points = ventasDiasChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
-                if (points.length) {
-                    const firstPoint = points[0];
-                    const label = ventasDiasChart.data.labels[firstPoint.index];
-                    const value = ventasDiasChart.data.datasets[firstPoint.datasetIndex].data[firstPoint.index];
-                    alert(`Ventas del ${label}: $${value.toLocaleString()}`);
-                }
-            });
-
-            // Botón de refresh
-            $('#refresh-dashboard').click(function() {
-                const $btn = $(this);
-                const originalText = $btn.html();
-                
-                $btn.prop('disabled', true).html('<i class="voyager-refresh"></i> Actualizando...');
-                
-                // Simular actualización de datos
-                setTimeout(() => {
-                    // En una implementación real, aquí actualizarías los datos
-                    ventasMensualesChart.update();
-                    topProductosChart.update();
-                    ventasDiasChart.update();
-                    comparacionAnualChart.update();
-                    
-                    $btn.prop('disabled', false).html(originalText);
-                    showToast('Datos actualizados correctamente', 'success');
-                }, 1500);
-            });
-
-            // Función para mostrar notificaciones
-            function showToast(message, type = 'info') {
-                // Implementación básica de toast
-                const toast = $(`
-                    <div class="alert alert-${type} alert-dismissible" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
-                        <button type="button" class="close" data-dismiss="alert">&times;</button>
-                        ${message}
-                    </div>
-                `);
-                
-                $('body').append(toast);
-                
-                setTimeout(() => {
-                    toast.alert('close');
-                }, 3000);
-            }
-
-            // Selector de rango de tiempo
-            $('.dropdown-menu a[data-range]').click(function(e) {
-                e.preventDefault();
-                const range = $(this).data('range');
-                // En una implementación real, aquí actualizarías todos los gráficos
-                // según el rango de tiempo seleccionado
-                alert(`Filtrando datos para: ${range}`);
-            });
-        });
-    </script>
 @stop
