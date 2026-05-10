@@ -10,23 +10,46 @@
             ? \Carbon\Carbon::parse($ultimaMensualidad->fecha_fin)->startOfDay()
             : $ultimaInicio->copy()->addMonthNoOverflow()->subDay())
         : null;
+    $ultimaFinNatural = $ultimaMensualidad
+        ? $ultimaInicio->copy()->addMonthNoOverflow()->subDay()
+        : null;
+    $ultimaMensualidadConCorteFecha = $ultimaMensualidad
+        && $ultimaMensualidad->fecha_fin
+        && !$ultimaFin->isSameDay($ultimaFinNatural);
     $mensualidadVigente = !$planActivo && $ultimaFin && now()->startOfDay()->lte($ultimaFin);
     $planPausable = $planActivo
         ? $plan
         : (($mensualidadVigente && $ultimaMensualidad && $ultimaMensualidad->plan) ? $ultimaMensualidad->plan : null);
+    $planPausableConFechaFin = ($planPausable && $planPausable->tipo_generacion === 'fecha_fin')
+        || $ultimaMensualidadConCorteFecha;
     $planUltimaMensualidad = $ultimaMensualidad ? $ultimaMensualidad->plan : null;
-    $corteProgramado = $planUltimaMensualidad
-        && $planUltimaMensualidad->tipo_generacion === 'fecha_fin'
-        && $planUltimaMensualidad->fecha_fin
-        && now()->startOfDay()->lte(\Carbon\Carbon::parse($planUltimaMensualidad->fecha_fin)->startOfDay());
+    $corteProgramado = (
+            $planUltimaMensualidad
+            && $planUltimaMensualidad->tipo_generacion === 'fecha_fin'
+            && $planUltimaMensualidad->fecha_fin
+            && now()->startOfDay()->lte(\Carbon\Carbon::parse($planUltimaMensualidad->fecha_fin)->startOfDay())
+        ) || ($ultimaMensualidadConCorteFecha && $ultimaFin && now()->startOfDay()->lte($ultimaFin));
     $fechaCorteProgramado = $corteProgramado
-        ? \Carbon\Carbon::parse($planUltimaMensualidad->fecha_fin)->startOfDay()
+        ? ($planUltimaMensualidad && $planUltimaMensualidad->fecha_fin
+            ? \Carbon\Carbon::parse($planUltimaMensualidad->fecha_fin)->startOfDay()
+            : $ultimaFin)
+        : null;
+    $fechaIngresoAlumno = $alumno->fechaIngreso
+        ? \Carbon\Carbon::parse($alumno->fechaIngreso)->startOfDay()
         : null;
     $minFechaNuevaMensualidad = $ultimaFin ? $ultimaFin->copy()->addDay()->format('Y-m-d') : null;
     $maxFechaNuevaMensualidad = date('Y-m-d');
-    $fechaInicioSugerida = $minFechaNuevaMensualidad && date('Y-m-d') < $minFechaNuevaMensualidad
-        ? $minFechaNuevaMensualidad
+    $fechaPrimeraMensualidad = $fechaIngresoAlumno
+        ? ($fechaIngresoAlumno->gt(now()->startOfDay()) ? now()->format('Y-m-d') : $fechaIngresoAlumno->format('Y-m-d'))
         : date('Y-m-d');
+    $fechaInicioSugerida = $ultimaMensualidad
+        ? ($minFechaNuevaMensualidad && date('Y-m-d') < $minFechaNuevaMensualidad
+            ? $minFechaNuevaMensualidad
+            : date('Y-m-d'))
+        : $fechaPrimeraMensualidad;
+    $fechaCortePausable = $ultimaMensualidad && date('Y-m-d') >= $ultimaInicio->format('Y-m-d') && date('Y-m-d') <= $ultimaFin->format('Y-m-d')
+            ? date('Y-m-d')
+            : ($ultimaFin ? $ultimaFin->format('Y-m-d') : date('Y-m-d'));
     $alumnoActivo = (int) $alumno->status === 1;
 @endphp
 
@@ -404,6 +427,16 @@
                 </div>
                 <div class="modal-body">
                     <input type="hidden" name="alumno_id" value="{{ $alumno->id }}">
+                    <div class="alert alert-info" style="font-size:12px; padding:8px 10px;">
+                        <i class="fa-solid fa-calendar-day"></i>
+                        @if($ultimaMensualidad)
+                            Última mensualidad finaliza el <strong>{{ $ultimaFin->format('d/m/Y') }}</strong>.
+                            La nueva mensualidad debe iniciar desde <strong>{{ \Carbon\Carbon::parse($minFechaNuevaMensualidad)->format('d/m/Y') }}</strong>.
+                        @else
+                            Primera mensualidad del alumno.
+                            Fecha de ingreso: <strong>{{ $fechaIngresoAlumno ? $fechaIngresoAlumno->format('d/m/Y') : 'No registrada' }}</strong>.
+                        @endif
+                    </div>
                     <div class="row">
                         <div class="form-group col-md-12">
                             <label>Tipo de generación <span class="text-danger">*</span></label>
@@ -421,15 +454,23 @@
                                    name="fecha_inicio"
                                    id="fecha-inicio-mensualidad"
                                    class="form-control"
-                                   @if($minFechaNuevaMensualidad) min="{{ $minFechaNuevaMensualidad }}" @endif
+                                   @if($minFechaNuevaMensualidad)
+                                       min="{{ $minFechaNuevaMensualidad }}"
+                                   @elseif($fechaIngresoAlumno)
+                                       min="{{ $fechaIngresoAlumno->format('Y-m-d') }}"
+                                   @endif
                                    max="{{ $maxFechaNuevaMensualidad }}"
                                    value="{{ old('fecha_inicio', $planActivo ? \Carbon\Carbon::parse($plan->fecha_inicio)->format('Y-m-d') : $fechaInicioSugerida) }}"
                                    required>
-                            {{-- @if($minFechaNuevaMensualidad)
+                            @if($minFechaNuevaMensualidad)
                                 <small class="text-muted">
                                     El último mes generado termina el {{ $ultimaFin->format('d/m/Y') }}. La nueva mensualidad debe iniciar desde el {{ \Carbon\Carbon::parse($minFechaNuevaMensualidad)->format('d/m/Y') }}.
                                 </small>
-                            @endif --}}
+                            @elseif($fechaIngresoAlumno)
+                                <small class="text-muted">
+                                    Primera mensualidad: se sugiere iniciar desde la fecha de ingreso del alumno.
+                                </small>
+                            @endif
                         </div>
                         <div class="form-group col-md-6" id="grupo-fecha-fin-plan-mensualidad">
                             <label>Fecha fin</label>
@@ -513,6 +554,10 @@
                 <div class="modal-body">
                     <div class="alert alert-warning" style="font-size:12px;">
                         Al pausar o finalizar, no se generarán nuevas mensualidades. Los meses ya generados conservarán sus saldos y pagos.
+                        @if($planPausableConFechaFin)
+                            <br>
+                            Esta mensualidad fue creada con fecha fin, por eso solo se puede finalizar con una fecha específica.
+                        @endif
                         @if($ultimaMensualidad)
                             <br>
                             Último período generado:
@@ -522,14 +567,23 @@
                     </div>
                     <div class="form-group">
                         <label>Tipo de corte <span class="text-danger">*</span></label>
+                        @if($planPausableConFechaFin)
+                            <input type="hidden" name="tipo_corte" id="tipo-corte-mensualidad" value="fecha">
+                            <input type="text" class="form-control" value="Fecha específica" readonly>
+                        @else
                         <select name="tipo_corte" id="tipo-corte-mensualidad" class="form-control" required>
                             <option value="mes_completo">Mes completo</option>
                             @if($ultimaMensualidad)
                             <option value="fecha">Cortar en una fecha específica</option>
                             @endif
                         </select>
+                        @endif
                         <small class="text-muted">
-                            Si elige fecha específica, se recalcula proporcionalmente el último mes generado.
+                            @if($planPausableConFechaFin)
+                                Las mensualidades con fecha fin no pueden cerrarse por mes completo.
+                            @else
+                                Si elige fecha específica, se recalcula proporcionalmente el último mes generado.
+                            @endif
                         </small>
                     </div>
                     @if($ultimaMensualidad)
@@ -546,7 +600,7 @@
                                data-monto="{{ number_format((float) $ultimaMensualidad->monto, 2, '.', '') }}"
                                data-descuento="{{ number_format((float) $ultimaMensualidad->descuento, 2, '.', '') }}"
                                data-pagado="{{ number_format((float) $ultimaMensualidad->monto_pagado, 2, '.', '') }}"
-                               value="{{ date('Y-m-d') >= $ultimaInicio->format('Y-m-d') && date('Y-m-d') <= $ultimaFin->format('Y-m-d') ? date('Y-m-d') : $ultimaFin->format('Y-m-d') }}">
+                               value="{{ $fechaCortePausable }}">
                         <small class="text-muted">
                             Debe estar dentro del último período generado.
                         </small>

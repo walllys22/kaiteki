@@ -914,8 +914,9 @@
             let url = "{{ url('admin/alumnos') }}/" + id + "/mensualidades/list";
 
             $.ajax({
-                url: `${url}?search=${search}&paginate=${countPageMensualidad}&page=${page}`,
+                url: `${url}?search=${search}&paginate=${countPageMensualidad}&page=${page}&_=${Date.now()}`,
                 type: 'get',
+                cache: false,
                 success: function(result) {
                     $('#div-mensualidades-list').html(result);
                     $('#div-mensualidades-list').loading('toggle');

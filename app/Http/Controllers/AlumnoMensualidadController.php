@@ -155,6 +155,19 @@ class AlumnoMensualidadController extends Controller
             ->orderByDesc('id')
             ->first();
 
+        if (!$ultimaMensualidad && $alumno->fechaIngreso) {
+            $fechaIngreso = Carbon::parse($alumno->fechaIngreso)->startOfDay();
+
+            if ($fechaInicio->lt($fechaIngreso)) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with([
+                        'message' => 'La primera mensualidad debe iniciar desde la fecha de ingreso del alumno o una fecha posterior. Fecha de ingreso: ' . $fechaIngreso->format('d/m/Y') . '.',
+                        'alert-type' => 'error',
+                    ]);
+            }
+        }
+
         if ($ultimaMensualidad) {
             $ultimoFinPeriodo = $this->finPeriodoMensualidad($ultimaMensualidad);
             $minFechaInicio = $ultimoFinPeriodo->copy()->addDay();
@@ -296,6 +309,29 @@ class AlumnoMensualidadController extends Controller
             })
             ->findOrFail($id);
         $this->ensureAlumnoActivo($plan->alumno, 'El alumno esta inactivo. No se puede pausar ni modificar mensualidades.');
+
+        $ultimaMensualidadPlan = AlumnoMensualidad::query()
+            ->where('alumno_id', $plan->alumno_id)
+            ->where('alumno_mensualidad_plan_id', $plan->id)
+            ->whereNull('deleted_at')
+            ->orderByDesc('periodo')
+            ->orderByDesc('id')
+            ->first();
+
+        $ultimaMensualidadConCorteFecha = false;
+        if ($ultimaMensualidadPlan && $ultimaMensualidadPlan->fecha_fin) {
+            $finNatural = Carbon::parse($ultimaMensualidadPlan->periodo)
+                ->startOfDay()
+                ->addMonthNoOverflow()
+                ->subDay();
+            $fechaFinUltimaMensualidad = Carbon::parse($ultimaMensualidadPlan->fecha_fin)->startOfDay();
+            $ultimaMensualidadConCorteFecha = $fechaFinUltimaMensualidad->toDateString() !== $finNatural->toDateString();
+        }
+
+        if (($plan->tipo_generacion === 'fecha_fin' || $ultimaMensualidadConCorteFecha) && $request->tipo_corte !== 'fecha') {
+            return redirect()->back()
+                ->with(['message' => 'Las mensualidades creadas con fecha fin solo se pueden finalizar por fecha, no por mes completo.', 'alert-type' => 'error']);
+        }
 
         $mensualidadVigente = AlumnoMensualidad::query()
             ->where('alumno_id', $plan->alumno_id)

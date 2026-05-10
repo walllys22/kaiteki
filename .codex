@@ -411,6 +411,10 @@ Reglas:
   cobran el monto mensual completo y el tramo final se prorratea si no cubre el mes entero.
 - El modal de configuracion muestra antes de guardar la cantidad de tramos, dias cobrados,
   monto calculado, descuento calculado, total a generar y el detalle de cada tramo.
+- En la primera mensualidad del alumno, el modal muestra la fecha de ingreso del estudiante
+  y sugiere esa fecha como inicio de cobro.
+- Si el alumno ya tiene mensualidades generadas, el modal muestra la fecha de finalizacion
+  del ultimo mes y exige que la nueva mensualidad inicie desde el dia siguiente.
 - Al abrir la lista de mensualidades, si el alumno esta activo y tiene plan activo,
   se generan automaticamente los cobros mensuales faltantes desde `fecha_inicio`
   hasta la fecha actual.
@@ -425,12 +429,17 @@ Reglas:
   desactiva automaticamente el plan activo al inactivar.
 - La mensualidad tambien puede pausarse manualmente desde la pestaña `Mensualidades`
   sin inactivar al alumno. Pausar desactiva el plan activo y corta la generacion de nuevos meses.
+- Si la mensualidad fue creada con `fecha_fin`, solo se puede pausar/finalizar por
+  `fecha especifica` dentro del ultimo periodo generado; no debe ofrecer ni aceptar
+  corte por `mes completo`.
+- Si la mensualidad fue creada como `automatica`, se puede pausar/finalizar por
+  `mes completo` o por `fecha especifica`.
 - Mientras exista un plan activo/en curso, no se puede configurar una nueva mensualidad.
   Primero se debe pausar la mensualidad actual; la interfaz solo muestra `Pausar Mensualidad`
   y el backend bloquea `storePlan()` si ya existe un plan activo.
 - Al pausar se toma como referencia la ultima mensualidad generada.
-- El usuario puede pausar por `mes completo` o por una `fecha especifica` dentro del rango
-  de esa ultima mensualidad generada.
+- En mensualidades `automatica`, el usuario puede pausar por `mes completo` o por una
+  `fecha especifica` dentro del rango de esa ultima mensualidad generada.
 - Si se pausa por fecha especifica, el sistema recalcula proporcionalmente el ultimo mes
   usando los dias cobrados desde el inicio del periodo hasta la fecha de corte.
 - Si se pausa por fecha especifica, la ultima mensualidad tambien actualiza `fecha_fin`
