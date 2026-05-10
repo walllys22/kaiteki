@@ -14,6 +14,14 @@
     $planPausable = $planActivo
         ? $plan
         : (($mensualidadVigente && $ultimaMensualidad && $ultimaMensualidad->plan) ? $ultimaMensualidad->plan : null);
+    $planUltimaMensualidad = $ultimaMensualidad ? $ultimaMensualidad->plan : null;
+    $corteProgramado = $planUltimaMensualidad
+        && $planUltimaMensualidad->tipo_generacion === 'fecha_fin'
+        && $planUltimaMensualidad->fecha_fin
+        && now()->startOfDay()->lte(\Carbon\Carbon::parse($planUltimaMensualidad->fecha_fin)->startOfDay());
+    $fechaCorteProgramado = $corteProgramado
+        ? \Carbon\Carbon::parse($planUltimaMensualidad->fecha_fin)->startOfDay()
+        : null;
     $minFechaNuevaMensualidad = $ultimaFin ? $ultimaFin->copy()->addDay()->format('Y-m-d') : null;
     $maxFechaNuevaMensualidad = date('Y-m-d');
     $fechaInicioSugerida = $minFechaNuevaMensualidad && date('Y-m-d') < $minFechaNuevaMensualidad
@@ -48,8 +56,13 @@
         @elseif($mensualidadVigente)
             <div class="alert alert-info" style="font-size:12px; padding:8px 10px; margin-bottom:8px;">
                 <i class="fa-solid fa-calendar-day"></i>
-                Mensualidad vigente hasta <strong>{{ $ultimaFin->format('d/m/Y') }}</strong>.
-                Puede pausarse o finalizarse con corte por fecha específica.
+                @if($corteProgramado)
+                    Mensualidad con corte programado hasta <strong>{{ $fechaCorteProgramado->format('d/m/Y') }}</strong>.
+                    Ya se generaron los períodos hasta esa fecha.
+                @else
+                    Mensualidad vigente hasta <strong>{{ $ultimaFin->format('d/m/Y') }}</strong>.
+                    Puede pausarse o finalizarse con corte por fecha específica.
+                @endif
             </div>
         @else
             <div class="alert alert-warning" style="font-size:12px; padding:8px 10px; margin-bottom:8px;">
@@ -395,12 +408,10 @@
                         <div class="form-group col-md-12">
                             <label>Tipo de generación <span class="text-danger">*</span></label>
                             <select name="tipo_generacion" id="tipo-generacion-mensualidad" class="form-control" required>
-                                <option value="automatica" {{ old('tipo_generacion', 'automatica') === 'automatica' ? 'selected' : '' }}>Automática mensual</option>
-                                <option value="fecha_fin" {{ old('tipo_generacion') === 'fecha_fin' ? 'selected' : '' }}>Con fecha fin</option>
+                                <option value="automatica" {{ old('tipo_generacion', 'automatica') === 'automatica' ? 'selected' : '' }}>Automática mensual, sin fecha fin</option>
+                                <option value="fecha_fin" {{ old('tipo_generacion') === 'fecha_fin' ? 'selected' : '' }}>Con fecha fin / corte programado</option>
                             </select>
-                            <small class="text-muted">
-                                Automática genera mensualidades completas desde la fecha de inicio. Con fecha fin genera un rango cerrado y prorratea el último tramo si corresponde.
-                            </small>
+                         
                         </div>
                     </div>
                     <div class="row">
@@ -414,11 +425,11 @@
                                    max="{{ $maxFechaNuevaMensualidad }}"
                                    value="{{ old('fecha_inicio', $planActivo ? \Carbon\Carbon::parse($plan->fecha_inicio)->format('Y-m-d') : $fechaInicioSugerida) }}"
                                    required>
-                            @if($minFechaNuevaMensualidad)
+                            {{-- @if($minFechaNuevaMensualidad)
                                 <small class="text-muted">
                                     El último mes generado termina el {{ $ultimaFin->format('d/m/Y') }}. La nueva mensualidad debe iniciar desde el {{ \Carbon\Carbon::parse($minFechaNuevaMensualidad)->format('d/m/Y') }}.
                                 </small>
-                            @endif
+                            @endif --}}
                         </div>
                         <div class="form-group col-md-6" id="grupo-fecha-fin-plan-mensualidad">
                             <label>Fecha fin</label>
@@ -428,10 +439,12 @@
                                    class="form-control"
                                    min="{{ old('fecha_inicio', $fechaInicioSugerida) }}"
                                    value="{{ old('fecha_fin') }}">
-                            <small class="text-muted">
-                                Obligatoria solo cuando se usa generación con fecha fin.
-                            </small>
+                        
                         </div>
+                    </div>
+                    <div id="aviso-corte-programado-mensualidad" class="alert alert-info" style="display:none; font-size:12px; padding:8px 10px;">
+                        <i class="fa-solid fa-calendar-check"></i>
+                        Se registrará un corte programado hasta <strong data-field="fecha"></strong>. Después de esa fecha no se generarán más mensualidades de este plan.
                     </div>
                     <div class="row">
                         <div class="form-group col-md-6">
@@ -572,6 +585,7 @@
         var $fechaFin = $('#fecha-fin-plan-mensualidad');
         var $grupoFechaFin = $('#grupo-fecha-fin-plan-mensualidad');
         var $resumen = $('#resumen-generacion-mensualidad');
+        var $avisoCorte = $('#aviso-corte-programado-mensualidad');
         var $monto = $form.find('input[name="monto_mensual"]');
         var $descuento = $form.find('input[name="descuento"]');
 
@@ -637,13 +651,22 @@
             }
 
             var inicio = parseDate($fechaInicio.val());
-            var fin = $tipo.val() === 'fecha_fin' ? parseDate($fechaFin.val()) : (inicio ? finAutomatico(inicio) : null);
+            var usaFechaFin = $tipo.val() === 'fecha_fin';
+            var fin = usaFechaFin ? parseDate($fechaFin.val()) : (inicio ? finAutomatico(inicio) : null);
             var montoMensual = Number($monto.val() || 0);
             var descuentoMensual = Number($descuento.val() || 0);
 
             if (!inicio || !fin || fin < inicio || montoMensual < 0 || descuentoMensual < 0) {
                 $resumen.hide();
+                $avisoCorte.hide();
                 return;
+            }
+
+            if (usaFechaFin) {
+                $avisoCorte.find('[data-field="fecha"]').text(formatDate(fin));
+                $avisoCorte.show();
+            } else {
+                $avisoCorte.hide();
             }
 
             var cursor = new Date(inicio.getTime());
@@ -681,6 +704,7 @@
 
             if (!tramos.length) {
                 $resumen.hide();
+                $avisoCorte.hide();
                 return;
             }
 
@@ -708,6 +732,7 @@
 
             if (!usaFechaFin) {
                 $fechaFin.val('');
+                $avisoCorte.hide();
             }
 
             if ($fechaInicio.val()) {

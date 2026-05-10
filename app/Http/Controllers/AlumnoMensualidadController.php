@@ -148,7 +148,7 @@ class AlumnoMensualidadController extends Controller
                 ->with(['message' => 'Debe pausar la mensualidad actual antes de configurar una nueva.', 'alert-type' => 'error']);
         }
 
-        $ultimaMensualidad = AlumnoMensualidad::query()
+        $ultimaMensualidad = AlumnoMensualidad::with('plan')
             ->where('alumno_id', $alumno->id)
             ->whereNull('deleted_at')
             ->orderByDesc('periodo')
@@ -160,10 +160,19 @@ class AlumnoMensualidadController extends Controller
             $minFechaInicio = $ultimoFinPeriodo->copy()->addDay();
 
             if (now()->startOfDay()->lte($ultimoFinPeriodo)) {
+                $planUltimaMensualidad = $ultimaMensualidad->plan;
+                $tieneCorteProgramado = $planUltimaMensualidad
+                    && $planUltimaMensualidad->tipo_generacion === 'fecha_fin'
+                    && $planUltimaMensualidad->fecha_fin
+                    && now()->startOfDay()->lte(Carbon::parse($planUltimaMensualidad->fecha_fin)->startOfDay());
+                $mensaje = $tieneCorteProgramado
+                    ? 'No se puede configurar otra mensualidad porque el alumno ya tiene un corte programado hasta el ' . Carbon::parse($planUltimaMensualidad->fecha_fin)->format('d/m/Y') . '.'
+                    : 'No se puede configurar otra mensualidad porque la última sigue vigente hasta el ' . $ultimoFinPeriodo->format('d/m/Y') . '.';
+
                 return redirect()->back()
                     ->withInput()
                     ->with([
-                        'message' => 'No se puede configurar otra mensualidad porque la última sigue vigente hasta el ' . $ultimoFinPeriodo->format('d/m/Y') . '.',
+                        'message' => $mensaje,
                         'alert-type' => 'error',
                     ]);
             }

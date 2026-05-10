@@ -395,9 +395,15 @@ Reglas:
 - La generacion `automatica` mantiene el comportamiento mensual normal y genera
   mensualidades completas desde `fecha_inicio`, incluyendo el periodo mensual vigente
   cuando la fecha de inicio del periodo ya llego.
+- La generacion `automatica` no usa fecha final; se presenta en la interfaz como
+  mensualidad mensual sin fecha fin.
 - La generacion con `fecha_fin` exige una fecha final mayor o igual a `fecha_inicio`;
   puede ser una fecha futura, genera un rango cerrado completo y desactiva el plan
   despues de crear esos cobros.
+- La generacion con `fecha_fin` se presenta en la interfaz como corte programado.
+  Al seleccionar una fecha futura, el modal debe avisar que se registrara un corte
+  programado hasta esa fecha. Si el alumno ya tiene ese corte, la pestaña
+  `Mensualidades` debe mostrar la fecha de corte programado.
 - El campo `fecha_fin` solo se habilita cuando el tipo de generacion es `fecha_fin`.
   En generacion `automatica` queda deshabilitado y el backend rechaza cualquier envio
   manipulado que incluya `fecha_fin`.
