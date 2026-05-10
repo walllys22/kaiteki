@@ -102,18 +102,15 @@
     $mensualidadTotal = $mensualidades->sum(fn($item) => $item->total());
     $mensualidadPagado = $mensualidades->sum('monto_pagado');
     $mensualidadSaldo = $mensualidades->sum(fn($item) => $item->saldo());
+    $mensualidadMora = $mensualidades->sum('mora');
+    $arancelTotal = $repasoTotal + $examenTotal;
 
     $totalCobrar = $repasoTotal + $examenTotal + $mensualidadTotal;
-    $totalPagado = $repasoPagado + $examenPagado + $mensualidadPagado;
-    $totalSaldo = $repasoSaldo + $examenSaldo + $mensualidadSaldo;
     $percent = fn($value, $total) => $total > 0 ? min(100, round(((float) $value / (float) $total) * 100, 1)) : 0;
-    $paidPercent = $percent($totalPagado, $totalCobrar);
-    $debtPercent = $percent($totalSaldo, $totalCobrar);
-    $repasoAreaPercent = $percent($repasoTotal, $totalCobrar);
-    $examenAreaPercent = $percent($examenTotal, $totalCobrar);
+    $arancelAreaPercent = $percent($arancelTotal, $totalCobrar);
     $mensualidadAreaPercent = $percent($mensualidadTotal, $totalCobrar);
-    $areaRepasoEnd = $repasoAreaPercent;
-    $areaExamenEnd = min(100, $repasoAreaPercent + $examenAreaPercent);
+    $repasoArancelPercent = $percent($repasoTotal, $arancelTotal);
+    $examenArancelPercent = $percent($examenTotal, $arancelTotal);
     $dashboardCharts = [
         [
             'label' => 'Repasos / Puntas',
@@ -181,18 +178,18 @@
                     <i class="voyager-dashboard"></i> Panel general del sistema
                 </h1>
                 <p class="text-muted">
-                    Resumen economico y operativo de {{ $selectedDojo ? $selectedDojo->nombre : 'la sucursal seleccionada' }}.
+                    Resumen economico y operativo de {{ $selectedDojo ? $selectedDojo->nombre : 'la dojo seleccionado' }}.
                 </p>
             </div>
             <div class="col-md-4">
                 @if ($userDojoId)
                     <div class="dojo-fixed-box">
-                        <span class="text-muted">Sucursal asignada</span>
-                        <strong>{{ optional($selectedDojo)->nombre ?? 'Sin sucursal activa' }}</strong>
+                        <span class="text-muted">Dojo Asignado</span>
+                        <strong>{{ optional($selectedDojo)->nombre ?? 'Sin Dojo' }}</strong>
                     </div>
                 @else
                     <form method="GET" action="{{ url('/admin') }}" class="dojo-selector-form">
-                        <label for="dashboard-dojo-id">Sucursal</label>
+                        <label for="dashboard-dojo-id">DOJO</label>
                         <div class="input-group">
                             <select name="dojo_id" id="dashboard-dojo-id" class="form-control" onchange="this.form.submit()">
                                 @foreach ($dojos as $dojo)
@@ -220,7 +217,7 @@
 
         @if (!$selectedDojo)
             <div class="alert alert-warning">
-                No hay una sucursal activa para mostrar informacion. Registra o activa un dojo primero.
+                No hay una dojo activo para mostrar informacion. Registra o activa un dojo primero.
             </div>
         @else
             <div class="row">
@@ -234,29 +231,29 @@
                     </div>
                 </div>
                 <div class="col-md-3 col-sm-6">
-                    <div class="panel panel-bordered metric-card metric-paid">
+                    <div class="panel panel-bordered metric-card metric-aranceles">
                         <div class="panel-body">
-                            <span class="metric-label">Pagado</span>
-                            <strong class="metric-value">{{ $money($totalPagado) }}</strong>
-                            <span class="metric-help">Ingresos registrados</span>
+                            <span class="metric-label">Total aranceles</span>
+                            <strong class="metric-value">{{ $money($arancelTotal) }}</strong>
+                            <span class="metric-help">Repasos y examenes</span>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3 col-sm-6">
-                    <div class="panel panel-bordered metric-card metric-debt">
+                    <div class="panel panel-bordered metric-card metric-mensualidades">
                         <div class="panel-body">
-                            <span class="metric-label">Saldo pendiente</span>
-                            <strong class="metric-value">{{ $money($totalSaldo) }}</strong>
-                            <span class="metric-help">Deuda total de la sucursal</span>
+                            <span class="metric-label">Total mensualidades</span>
+                            <strong class="metric-value">{{ $money($mensualidadTotal) }}</strong>
+                            <span class="metric-help">Incluye descuentos y mora</span>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3 col-sm-6">
-                    <div class="panel panel-bordered metric-card metric-students">
+                    <div class="panel panel-bordered metric-card metric-mora">
                         <div class="panel-body">
-                            <span class="metric-label">Alumnos activos</span>
-                            <strong class="metric-value">{{ $alumnos->where('status', 1)->count() }}</strong>
-                            <span class="metric-help">{{ $alumnos->count() }} registrados</span>
+                            <span class="metric-label">Total mora</span>
+                            <strong class="metric-value">{{ $money($mensualidadMora) }}</strong>
+                            <span class="metric-help">Mora acumulada en mensualidades</span>
                         </div>
                     </div>
                 </div>
@@ -271,40 +268,40 @@
                         <div class="panel-body">
                             <div class="donut-grid">
                                 <div class="donut-card">
-                                    <div class="donut-chart donut-status {{ $totalCobrar > 0 ? '' : 'donut-empty' }}"
-                                         style="--paid: {{ $paidPercent }}%; --debt: {{ $debtPercent }}%;"
-                                         aria-label="Pagado {{ $paidPercent }} por ciento, pendiente {{ $debtPercent }} por ciento">
+                                    <div class="donut-chart donut-total {{ $totalCobrar > 0 ? '' : 'donut-empty' }}"
+                                         style="--aranceles: {{ $arancelAreaPercent }}%;"
+                                         aria-label="Aranceles {{ $arancelAreaPercent }} por ciento, mensualidades {{ $mensualidadAreaPercent }} por ciento">
                                         <div class="donut-hole">
-                                            <span>Pagado</span>
-                                            <strong>{{ $paidPercent }}%</strong>
+                                            <span>Total</span>
+                                            <strong>{{ $money($totalCobrar) }}</strong>
                                         </div>
                                     </div>
                                     <div class="donut-copy">
-                                        <h4>Estado de cobros</h4>
-                                        <p>Total registrado: {{ $money($totalCobrar) }}</p>
+                                        <h4>Total a cobrar</h4>
+                                        <p>Suma de aranceles y mensualidades del dojo.</p>
                                         <div class="donut-legend">
-                                            <span><i class="legend-dot paid-dot"></i> Pagado {{ $money($totalPagado) }}</span>
-                                            <span><i class="legend-dot debt-dot"></i> Pendiente {{ $money($totalSaldo) }}</span>
+                                            <span><i class="legend-dot arancel-dot"></i> Aranceles {{ $money($arancelTotal) }} ({{ $arancelAreaPercent }}%)</span>
+                                            <span><i class="legend-dot mensualidad-dot"></i> Mensualidades {{ $money($mensualidadTotal) }} ({{ $mensualidadAreaPercent }}%)</span>
+                                            <span><i class="legend-dot mora-dot"></i> Mora incluida {{ $money($mensualidadMora) }}</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="donut-card">
-                                    <div class="donut-chart donut-area {{ $totalCobrar > 0 ? '' : 'donut-empty' }}"
-                                         style="--repasos: {{ $areaRepasoEnd }}%; --examenes: {{ $areaExamenEnd }}%;"
-                                         aria-label="Distribucion por area">
+                                    <div class="donut-chart donut-arancel {{ $arancelTotal > 0 ? '' : 'donut-empty' }}"
+                                         style="--repasos: {{ $repasoArancelPercent }}%;"
+                                         aria-label="Repasos {{ $repasoArancelPercent }} por ciento, examenes {{ $examenArancelPercent }} por ciento">
                                         <div class="donut-hole">
-                                            <span>Areas</span>
-                                            <strong>{{ $dashboardCharts[0]['count'] + $dashboardCharts[1]['count'] + $dashboardCharts[2]['count'] }}</strong>
+                                            <span>Aranceles</span>
+                                            <strong>{{ $money($arancelTotal) }}</strong>
                                         </div>
                                     </div>
                                     <div class="donut-copy">
-                                        <h4>Distribucion del total</h4>
-                                        <p>Total a cobrar por area de la sucursal.</p>
+                                        <h4>Detalle de aranceles</h4>
+                                        <p>Distribucion entre repasos/puntas y examenes.</p>
                                         <div class="donut-legend">
-                                            <span><i class="legend-dot repaso-dot"></i> Repasos {{ $repasoAreaPercent }}%</span>
-                                            <span><i class="legend-dot examen-dot"></i> Examenes {{ $examenAreaPercent }}%</span>
-                                            <span><i class="legend-dot mensualidad-dot"></i> Mensualidades {{ $mensualidadAreaPercent }}%</span>
+                                            <span><i class="legend-dot repaso-dot"></i> Repasos {{ $money($repasoTotal) }} ({{ $repasoArancelPercent }}%)</span>
+                                            <span><i class="legend-dot examen-dot"></i> Examenes {{ $money($examenTotal) }} ({{ $examenArancelPercent }}%)</span>
                                         </div>
                                     </div>
                                 </div>
@@ -318,8 +315,8 @@
                                             <span>{{ $chartRow['count'] }} registros - {{ $money($chartRow['total']) }}</span>
                                         </div>
                                         <div class="chart-row-values">
-                                            <span class="text-success">Pagado: {{ $money($chartRow['pagado']) }} ({{ $percent($chartRow['pagado'], $chartRow['total']) }}%)</span>
-                                            <span class="text-danger">Pendiente: {{ $money($chartRow['saldo']) }} ({{ $percent($chartRow['saldo'], $chartRow['total']) }}%)</span>
+                                            <span>Total: {{ $money($chartRow['total']) }}</span>
+                                            <span>Saldo actual: {{ $money($chartRow['saldo']) }}</span>
                                         </div>
                                     </div>
                                 @endforeach
@@ -410,7 +407,7 @@
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="4" class="empty-state">No hay deudas de mensualidad para esta sucursal.</td>
+                                                <td colspan="4" class="empty-state">No hay deudas de mensualidad para este dojo.</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
@@ -594,16 +591,16 @@
             border-top: 4px solid #2563eb;
         }
 
-        .metric-paid {
-            border-top: 4px solid #059669;
+        .metric-aranceles {
+            border-top: 4px solid #2563eb;
         }
 
-        .metric-debt {
+        .metric-mensualidades {
+            border-top: 4px solid #f59e0b;
+        }
+
+        .metric-mora {
             border-top: 4px solid #dc2626;
-        }
-
-        .metric-students {
-            border-top: 4px solid #7c3aed;
         }
 
         .summary-panel .panel-title {
@@ -648,20 +645,19 @@
             box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.05);
         }
 
-        .donut-status {
+        .donut-total {
             background:
                 conic-gradient(
-                    #059669 0 var(--paid),
-                    #dc2626 var(--paid) 100%
+                    #2563eb 0 var(--aranceles),
+                    #f59e0b var(--aranceles) 100%
                 );
         }
 
-        .donut-area {
+        .donut-arancel {
             background:
                 conic-gradient(
                     #2563eb 0 var(--repasos),
-                    #7c3aed var(--repasos) var(--examenes),
-                    #f59e0b var(--examenes) 100%
+                    #7c3aed var(--repasos) 100%
                 );
         }
 
@@ -723,11 +719,11 @@
             border-radius: 50%;
         }
 
-        .paid-dot {
-            background: #059669;
+        .arancel-dot {
+            background: #2563eb;
         }
 
-        .debt-dot {
+        .mora-dot {
             background: #dc2626;
         }
 

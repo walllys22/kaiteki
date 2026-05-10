@@ -522,13 +522,15 @@ La vista principal de Voyager fue reemplazada por un panel operativo propio:
   - examenes
   - mensualidades
   - total a cobrar
-  - total pagado
-  - saldo pendiente
-  - alumnos activos
+  - total de aranceles (`repasos + examenes`)
+  - total de mensualidades
+  - total de mora acumulada en mensualidades
 - Incluye graficos tipo torta/donut hechos con CSS interno (`conic-gradient`), sin
   dependencia externa de JavaScript. Los graficos muestran:
-  - estado general de cobros: pagado vs pendiente
-  - distribucion del total por area: repasos, examenes y mensualidades
+  - distribucion del total a cobrar entre aranceles y mensualidades
+  - distribucion de aranceles entre repasos/puntas y examenes
+- El dashboard no debe mostrar una lectura principal de `total cobrado`; el foco es
+  lo que corresponde cobrar y cuanto suma la mora.
 - Incluye tablas de:
   - deudas de mensualidad por alumno
   - examenes pendientes de pago
