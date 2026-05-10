@@ -258,6 +258,23 @@ class AlumnoMensualidadController extends Controller
                 ->with(['message' => 'No se puede registrar pago sobre una mensualidad anulada.', 'alert-type' => 'error']);
         }
 
+        $montoPago = round((float) $request->monto, 2);
+        $saldoActual = round($mensualidad->saldo(), 2);
+
+        if ($saldoActual <= 0) {
+            return redirect()->back()
+                ->with(['message' => 'Esta mensualidad ya no tiene saldo pendiente.', 'alert-type' => 'error']);
+        }
+
+        if ($montoPago > $saldoActual) {
+            return redirect()->back()
+                ->withInput()
+                ->with([
+                    'message' => 'El pago no puede ser mayor al saldo pendiente. Saldo actual: Bs ' . number_format($saldoActual, 2, '.', ',') . '.',
+                    'alert-type' => 'error',
+                ]);
+        }
+
         $mensualidadAnteriorPendiente = AlumnoMensualidad::query()
             ->where('alumno_id', $mensualidad->alumno_id)
             ->whereNull('deleted_at')
@@ -273,23 +290,44 @@ class AlumnoMensualidadController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($request, $mensualidad) {
+            DB::transaction(function () use ($request, $mensualidad, $montoPago) {
+                $mensualidadBloqueada = AlumnoMensualidad::query()
+                    ->whereNull('deleted_at')
+                    ->lockForUpdate()
+                    ->findOrFail($mensualidad->id);
+
+                $saldoBloqueado = round($mensualidadBloqueada->saldo(), 2);
+
+                if ($saldoBloqueado <= 0) {
+                    throw ValidationException::withMessages([
+                        'monto' => 'Esta mensualidad ya no tiene saldo pendiente.',
+                    ]);
+                }
+
+                if ($montoPago > $saldoBloqueado) {
+                    throw ValidationException::withMessages([
+                        'monto' => 'El pago no puede ser mayor al saldo pendiente. Saldo actual: Bs ' . number_format($saldoBloqueado, 2, '.', ',') . '.',
+                    ]);
+                }
+
                 AlumnoMensualidadPago::create([
-                    'alumno_mensualidad_id' => $mensualidad->id,
-                    'alumno_id' => $mensualidad->alumno_id,
-                    'dojo_id' => $mensualidad->dojo_id,
+                    'alumno_mensualidad_id' => $mensualidadBloqueada->id,
+                    'alumno_id' => $mensualidadBloqueada->alumno_id,
+                    'dojo_id' => $mensualidadBloqueada->dojo_id,
                     'fecha' => $request->fecha,
-                    'monto' => (float) $request->monto,
+                    'monto' => $montoPago,
                     'observacion' => $request->observacion,
                 ]);
 
-                $mensualidad->monto_pagado = (float) $mensualidad->monto_pagado + (float) $request->monto;
-                $mensualidad->status = $this->resolverStatus($mensualidad);
-                $mensualidad->save();
+                $mensualidadBloqueada->monto_pagado = round((float) $mensualidadBloqueada->monto_pagado + $montoPago, 2);
+                $mensualidadBloqueada->status = $this->resolverStatus($mensualidadBloqueada);
+                $mensualidadBloqueada->save();
             });
 
             return redirect()->route('voyager.alumnos.show', ['id' => $mensualidad->alumno_id])
                 ->with(['message' => 'Pago de mensualidad registrado correctamente.', 'alert-type' => 'success']);
+        } catch (ValidationException $exception) {
+            throw $exception;
         } catch (\Throwable $th) {
             return redirect()->back()
                 ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);

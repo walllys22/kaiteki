@@ -754,8 +754,21 @@
 
             $(document).on('show.bs.modal', '#modal-pagar-mensualidad', function(event) {
                 var button = $(event.relatedTarget);
+                var saldo = button.data('saldo') || '';
                 $('#form-pagar-mensualidad').attr('action', button.data('url'));
-                $('#mensualidad-pago-monto').val(button.data('saldo') || '');
+                $('#mensualidad-pago-monto')
+                    .val(saldo)
+                    .attr('max', saldo);
+                $('#mensualidad-pago-saldo-label').text(button.data('saldo-label') || ('Bs ' + saldo));
+            });
+
+            $(document).on('input', '#mensualidad-pago-monto', function() {
+                var max = parseFloat($(this).attr('max') || 0);
+                var value = parseFloat($(this).val() || 0);
+
+                if (max > 0 && value > max) {
+                    $(this).val(max.toFixed(2));
+                }
             });
 
             $(document).on('click', '#div-asistencia-list .pagination a', function(e) {

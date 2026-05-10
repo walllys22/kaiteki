@@ -393,7 +393,8 @@
                                         data-toggle="modal"
                                         data-target="#modal-pagar-mensualidad"
                                         data-url="{{ route('alumno.mensualidades.pagar', $item->id) }}"
-                                        data-saldo="{{ number_format($item->saldo(), 2, '.', '') }}">
+                                        data-saldo="{{ number_format($item->saldo(), 2, '.', '') }}"
+                                        data-saldo-label="Bs {{ number_format($item->saldo(), 2, '.', ',') }}">
                                     <i class="fa-solid fa-money-bill"></i>
                                 </button>
                             @elseif($item->saldo() > 0)
@@ -955,6 +956,9 @@
                                 <span class="input-group-addon">Bs</span>
                                 <input type="number" name="monto" id="mensualidad-pago-monto" class="form-control" min="0.01" step="0.01" required>
                             </div>
+                            <small class="text-muted">
+                                Máximo permitido: <strong id="mensualidad-pago-saldo-label">Bs 0.00</strong>.
+                            </small>
                         </div>
                     </div>
                     <div class="form-group">
