@@ -427,6 +427,9 @@ Reglas:
 - Si se elimina la mensualidad mas reciente de un plan con `fecha_fin`, el plan debe
   sincronizar su `fecha_fin` con la ultima mensualidad que quede generada. Si no queda
   ninguna mensualidad de ese plan, el plan queda sin `fecha_fin` y pausado.
+- Al generar mensualidades, si ya existe un registro eliminado logicamente para el mismo
+  `alumno_id` y `periodo`, se restaura y actualiza en lugar de insertar otro registro,
+  para respetar el indice unico `alumno_id + periodo`.
 - Si se registra una nueva mensualidad despues de un corte, puede tener monto y fecha
   distintos. La nueva configuracion genera cobros solo desde esa nueva fecha en adelante.
 - La fecha de inicio de una nueva mensualidad debe ser posterior al fin del ultimo mes

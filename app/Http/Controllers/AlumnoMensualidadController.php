@@ -519,12 +519,12 @@ class AlumnoMensualidadController extends Controller
             $monto = round((float) $plan->monto_mensual * $factor, 2);
             $descuento = round((float) $plan->descuento * $factor, 2);
 
-            $exists = AlumnoMensualidad::query()
+            $mensualidadExistente = AlumnoMensualidad::withTrashed()
                 ->where('alumno_id', $alumno->id)
                 ->whereDate('periodo', $periodo->toDateString())
-                ->exists();
+                ->first();
 
-            if (!$exists) {
+            if (!$mensualidadExistente) {
                 $mensualidad = new AlumnoMensualidad([
                     'alumno_id' => $alumno->id,
                     'dojo_id' => $alumno->dojo_id,
@@ -540,6 +540,24 @@ class AlumnoMensualidadController extends Controller
                 ]);
                 $mensualidad->status = $this->resolverStatus($mensualidad);
                 $mensualidad->save();
+            } elseif ($mensualidadExistente->trashed()) {
+                $mensualidadExistente->fill([
+                    'dojo_id' => $alumno->dojo_id,
+                    'alumno_mensualidad_plan_id' => $plan->id,
+                    'fecha_fin' => $fechaFinMensualidad->toDateString(),
+                    'monto' => $monto,
+                    'descuento' => $descuento,
+                    'mora' => 0,
+                    'monto_pagado' => 0,
+                    'observacion' => $plan->observacion,
+                    'status' => 'pendiente',
+                    'deleteUser_id' => null,
+                    'deleteRole' => null,
+                    'deleteObservation' => null,
+                ]);
+                $mensualidadExistente->restore();
+                $mensualidadExistente->status = $this->resolverStatus($mensualidadExistente);
+                $mensualidadExistente->save();
             }
 
             $periodo->addMonthNoOverflow();
