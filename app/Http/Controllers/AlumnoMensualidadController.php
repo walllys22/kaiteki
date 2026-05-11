@@ -63,7 +63,6 @@ class AlumnoMensualidadController extends Controller
         $resumen = [
             'total' => $mensualidadesResumen->sum(fn($item) => $item->total()),
             'pagado' => $mensualidadesResumen->sum('monto_pagado'),
-            'mora' => $mensualidadesResumen->sum('mora'),
             'descuento' => $mensualidadesResumen->sum('descuento'),
             'pendientes' => $mensualidadesResumen->filter(fn($item) => $item->estadoPago() === 'Pendiente')->count(),
             'parciales' => $mensualidadesResumen->filter(fn($item) => $item->estadoPago() === 'Parcial')->count(),
@@ -71,10 +70,6 @@ class AlumnoMensualidadController extends Controller
             'total_meses' => $mensualidadesResumen->count(),
         ];
         $resumen['saldo'] = max(0, $resumen['total'] - $resumen['pagado']);
-        $resumen['deuda_mensualidad'] = $mensualidadesResumen->sum(function ($item) {
-            return max(0, (float) $item->monto - (float) $item->descuento - (float) $item->monto_pagado);
-        });
-        $resumen['mora_pendiente'] = max(0, $resumen['saldo'] - $resumen['deuda_mensualidad']);
 
         $data = $mensualidadesQuery
             ->orderByDesc('periodo')
@@ -369,40 +364,6 @@ class AlumnoMensualidadController extends Controller
             ->with(['message' => 'Mensualidad pausada correctamente. No se generarán nuevos meses hasta configurar una nueva mensualidad.', 'alert-type' => 'success']);
     }
 
-    public function mora(Request $request, int $id)
-    {
-        $this->custom_authorize('edit_alumnos');
-
-        $request->validate([
-            'mora' => 'required|numeric|min:0|max:99999999.99',
-            'observacion' => 'nullable|string|max:500',
-        ]);
-
-        $mensualidad = $this->findMensualidad($id);
-        $mensualidad->loadMissing('alumno');
-        $this->ensureAlumnoActivo($mensualidad->alumno, 'El alumno esta inactivo. No se puede agregar ni editar mora.');
-
-        if ($mensualidad->status === 'anulado') {
-            return redirect()->back()
-                ->with(['message' => 'No se puede editar mora en una mensualidad anulada.', 'alert-type' => 'error']);
-        }
-
-        if ($mensualidad->saldo() <= 0) {
-            return redirect()->back()
-                ->with(['message' => 'No se puede editar mora en una mensualidad que ya está pagada.', 'alert-type' => 'error']);
-        }
-
-        $mensualidad->mora = (float) $request->mora;
-        if ($request->observacion) {
-            $mensualidad->observacion = trim(($mensualidad->observacion ? $mensualidad->observacion . "\n" : '') . $request->observacion);
-        }
-        $mensualidad->status = $this->resolverStatus($mensualidad);
-        $mensualidad->save();
-
-        return redirect()->route('voyager.alumnos.show', ['id' => $mensualidad->alumno_id])
-            ->with(['message' => 'Mora actualizada correctamente.', 'alert-type' => 'success']);
-    }
-
     public function comprobantePago(int $id)
     {
         $this->custom_authorize('read_alumnos');
@@ -541,7 +502,6 @@ class AlumnoMensualidadController extends Controller
                     'fecha_fin' => $fechaFinMensualidad->toDateString(),
                     'monto' => $monto,
                     'descuento' => $descuento,
-                    'mora' => 0,
                     'monto_pagado' => 0,
                     'observacion' => $plan->observacion,
                     'status' => 'pendiente',
@@ -555,7 +515,6 @@ class AlumnoMensualidadController extends Controller
                     'fecha_fin' => $fechaFinMensualidad->toDateString(),
                     'monto' => $monto,
                     'descuento' => $descuento,
-                    'mora' => 0,
                     'monto_pagado' => 0,
                     'observacion' => $plan->observacion,
                     'status' => 'pendiente',

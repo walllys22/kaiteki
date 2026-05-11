@@ -215,10 +215,6 @@
                     <td class="right">Bs {{ number_format((float) optional($mensualidad)->descuento, 2, '.', ',') }}</td>
                 </tr>
                 <tr>
-                    <td>Mora</td>
-                    <td class="right">Bs {{ number_format((float) optional($mensualidad)->mora, 2, '.', ',') }}</td>
-                </tr>
-                <tr>
                     <th>Total a cobrar</th>
                     <th class="right">Bs {{ number_format($total, 2, '.', ',') }}</th>
                 </tr>

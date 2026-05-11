@@ -2,9 +2,6 @@
     $total = (float) ($resumen['total'] ?? 0);
     $pagado = (float) ($resumen['pagado'] ?? 0);
     $saldo = (float) ($resumen['saldo'] ?? 0);
-    $moraTotal = (float) ($resumen['mora'] ?? 0);
-    $moraPendiente = (float) ($resumen['mora_pendiente'] ?? 0);
-    $deudaMensualidad = (float) ($resumen['deuda_mensualidad'] ?? 0);
     $descuentoTotal = (float) ($resumen['descuento'] ?? 0);
     $planActivo = $plan && (int) $plan->status === 1;
     $ultimaInicio = $ultimaMensualidad ? \Carbon\Carbon::parse($ultimaMensualidad->periodo)->startOfDay() : null;
@@ -30,7 +27,7 @@
         @if(!$alumnoActivo)
             <div class="alert alert-warning" style="font-size:12px; padding:8px 10px; margin-bottom:8px;">
                 <i class="fa-solid fa-lock"></i>
-                Alumno inactivo: mensualidades en modo solo visualizacion. No se pueden configurar, pausar, pagar, agregar mora ni eliminar registros.
+                Alumno inactivo: mensualidades en modo solo visualizacion. No se pueden configurar, pausar, pagar ni eliminar registros.
             </div>
         @endif
         @if($planActivo)
@@ -89,32 +86,25 @@
 </div>
 
 <div class="row" style="margin-bottom:12px;">
-    <div class="col-md-3 col-sm-6">
+    <div class="col-md-4 col-sm-6">
         <div class="mensualidad-summary-card deuda">
             <div class="summary-label">Deuda total</div>
             <div class="summary-value">Bs {{ number_format($saldo, 2, '.', ',') }}</div>
-            <div class="summary-help">Mensualidades pendientes + mora.</div>
+            <div class="summary-help">Mensualidades pendientes.</div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6">
-        <div class="mensualidad-summary-card mora">
-            <div class="summary-label">Mora acumulada</div>
-            <div class="summary-value">Bs {{ number_format($moraTotal, 2, '.', ',') }}</div>
-            <div class="summary-help">Monto agregado como mora.</div>
-        </div>
-    </div>
-    <div class="col-md-3 col-sm-6">
+    <div class="col-md-4 col-sm-6">
         <div class="mensualidad-summary-card cobrado">
             <div class="summary-label">Cobrado</div>
             <div class="summary-value">Bs {{ number_format($pagado, 2, '.', ',') }}</div>
             <div class="summary-help">Pagos registrados del alumno.</div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6">
+    <div class="col-md-4 col-sm-6">
         <div class="mensualidad-summary-card total">
             <div class="summary-label">Total a cobrar</div>
             <div class="summary-value">Bs {{ number_format($total, 2, '.', ',') }}</div>
-            <div class="summary-help">Mensualidad - descuentos + mora.</div>
+            <div class="summary-help">Mensualidad - descuentos.</div>
         </div>
     </div>
 </div>
@@ -123,8 +113,6 @@
     <strong>Estado económico:</strong>
     @if($saldo > 0)
         el alumno debe <strong>Bs {{ number_format($saldo, 2, '.', ',') }}</strong>.
-        De ese total, <strong>Bs {{ number_format($moraPendiente, 2, '.', ',') }}</strong> corresponde a mora pendiente
-        y <strong>Bs {{ number_format($deudaMensualidad, 2, '.', ',') }}</strong> a mensualidades pendientes.
     @else
         el alumno no tiene deuda pendiente por mensualidades.
     @endif
@@ -146,7 +134,6 @@
         padding: 10px 12px;
     }
     .mensualidad-summary-card.deuda { border-left-color: #e74c3c; }
-    .mensualidad-summary-card.mora { border-left-color: #f39c12; }
     .mensualidad-summary-card.cobrado { border-left-color: #27ae60; }
     .mensualidad-summary-card.total { border-left-color: #3498db; }
     .summary-label {
@@ -233,12 +220,11 @@
                 <th style="width:170px;">Período</th>
                 <th style="width:95px; text-align:right;">Monto</th>
                 <th style="width:95px; text-align:right;">Desc.</th>
-                <th style="width:95px; text-align:right;">Mora</th>
                 <th style="width:95px; text-align:right;">Total</th>
                 <th style="width:95px; text-align:right;">Pagado</th>
                 <th style="width:95px; text-align:right;">Saldo</th>
                 <th style="width:140px; text-align:center;">Estado</th>
-                <th style="width:210px; min-width:210px; text-align:center;">Acciones</th>
+                <th style="width:160px; min-width:160px; text-align:center;">Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -301,7 +287,6 @@
                     </td>
                     <td style="text-align:right;">Bs {{ number_format((float) $item->monto, 2, '.', ',') }}</td>
                     <td style="text-align:right;">Bs {{ number_format((float) $item->descuento, 2, '.', ',') }}</td>
-                    <td style="text-align:right;">Bs {{ number_format((float) $item->mora, 2, '.', ',') }}</td>
                     <td style="text-align:right;">Bs {{ number_format($item->total(), 2, '.', ',') }}</td>
                     <td style="text-align:right;">Bs {{ number_format((float) $item->monto_pagado, 2, '.', ',') }}</td>
                     <td style="text-align:right;">Bs {{ number_format($item->saldo(), 2, '.', ',') }}</td>
@@ -318,7 +303,7 @@
                             <span class="mensualidad-status-help">{{ $estadoPeriodoAyuda }}</span>
                         </span>
                     </td>
-                    <td style="width:210px; min-width:210px;" class="no-sort no-click bread-actions text-right">
+                    <td style="width:160px; min-width:160px;" class="no-sort no-click bread-actions text-right">
                         @if(auth()->user()->hasPermission('edit_alumnos') && $alumnoActivo && $item->status !== 'anulado')
                             @if($item->saldo() > 0 && $puedePagarMensualidad)
                                 <button type="button"
@@ -338,16 +323,6 @@
                                     <i class="fa-solid fa-lock"></i>
                                 </button>
                             @endif
-                            @if($item->saldo() > 0)
-                                <button type="button"
-                                        class="btn btn-warning btn-sm btn-mora-mensualidad"
-                                        title="{{ (float) $item->mora > 0 ? 'Editar mora' : 'Agregar mora' }}"
-                                        data-url="{{ route('alumno.mensualidades.mora', $item->id) }}"
-                                        data-mora="{{ number_format((float) $item->mora, 2, '.', '') }}">
-                                    <i class="fa-solid fa-triangle-exclamation"></i>
-                                    {{ (float) $item->mora > 0 ? 'Editar mora' : 'Agregar mora' }}
-                                </button>
-                            @endif
                             @if($esUltimaMensualidad && $item->pagos->isEmpty())
                                 <a href="#" onclick="deleteItem('{{ route('alumno.mensualidades.destroy', $item->id) }}')"
                                    data-toggle="modal" data-target="#modal-delete"
@@ -362,7 +337,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <td colspan="9" style="padding:0; border-top:0;">
+                    <td colspan="8" style="padding:0; border-top:0;">
                         <div id="detalle-mensualidad-{{ $item->id }}" class="collapse">
                             <div style="background:#f8fafc; border-top:1px solid #e5edf4; padding:10px 12px;">
                                 <strong style="font-size:12px;">Pagos / facturas</strong>
@@ -395,7 +370,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="9" class="text-center text-muted">Sin mensualidades generadas.</td>
+                    <td colspan="8" class="text-center text-muted">Sin mensualidades generadas.</td>
                 </tr>
             @endforelse
         </tbody>
@@ -524,7 +499,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-warning" style="font-size:12px;">
-                        Al pausar o finalizar, no se generarán nuevas mensualidades. Los meses ya generados conservarán sus saldos, pagos y mora.
+                        Al pausar o finalizar, no se generarán nuevas mensualidades. Los meses ya generados conservarán sus saldos y pagos.
                         @if($ultimaMensualidad)
                             <br>
                             Último período generado:
@@ -557,7 +532,6 @@
                                data-fin="{{ $ultimaFin->format('Y-m-d') }}"
                                data-monto="{{ number_format((float) $ultimaMensualidad->monto, 2, '.', '') }}"
                                data-descuento="{{ number_format((float) $ultimaMensualidad->descuento, 2, '.', '') }}"
-                               data-mora="{{ number_format((float) $ultimaMensualidad->mora, 2, '.', '') }}"
                                data-pagado="{{ number_format((float) $ultimaMensualidad->monto_pagado, 2, '.', '') }}"
                                value="{{ date('Y-m-d') >= $ultimaInicio->format('Y-m-d') && date('Y-m-d') <= $ultimaFin->format('Y-m-d') ? date('Y-m-d') : $ultimaFin->format('Y-m-d') }}">
                         <small class="text-muted">
@@ -567,7 +541,6 @@
                             <div><strong>Días a cobrar:</strong> <span data-field="dias"></span></div>
                             <div><strong>Monto proporcional:</strong> Bs <span data-field="monto"></span></div>
                             <div><strong>Descuento proporcional:</strong> Bs <span data-field="descuento"></span></div>
-                            <div><strong>Mora conservada:</strong> Bs <span data-field="mora"></span></div>
                             <div style="background:#fff8e1; border:1px solid #f1c40f; border-radius:4px; color:#7a4f01; font-size:15px; font-weight:800; margin:8px 0; padding:8px 10px;">
                                 Total a cobrar: Bs <span data-field="total"></span>
                             </div>
@@ -801,15 +774,13 @@
             var factor = diasPeriodo > 0 ? diasCobrados / diasPeriodo : 1;
             var monto = Number($fechaCorte.data('monto') || 0) * factor;
             var descuento = Number($fechaCorte.data('descuento') || 0) * factor;
-            var mora = Number($fechaCorte.data('mora') || 0);
             var pagado = Number($fechaCorte.data('pagado') || 0);
-            var total = Math.max(0, monto - descuento + mora);
+            var total = Math.max(0, monto - descuento);
             var saldo = Math.max(0, total - pagado);
 
             $resumen.find('[data-field="dias"]').text(diasCobrados + ' de ' + diasPeriodo);
             $resumen.find('[data-field="monto"]').text(money(monto));
             $resumen.find('[data-field="descuento"]').text(money(descuento));
-            $resumen.find('[data-field="mora"]').text(money(mora));
             $resumen.find('[data-field="total"]').text(money(total));
             $resumen.find('[data-field="pagado"]').text(money(pagado));
             $resumen.find('[data-field="saldo"]').text(money(saldo));
@@ -867,36 +838,4 @@
     </div>
 </form>
 
-<form id="form-mora-mensualidad" action="#" method="POST" class="form-edit-add">
-    @csrf
-    @method('PUT')
-    <div class="modal fade" tabindex="-1" id="modal-mora-mensualidad" role="dialog">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-                    <h4 class="modal-title"><i class="fa-solid fa-triangle-exclamation"></i> Editar Mora</h4>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Monto de mora <span class="text-danger">*</span></label>
-                        <div class="input-group">
-                            <span class="input-group-addon">Bs</span>
-                            <input type="number" name="mora" id="mensualidad-mora-monto" class="form-control" min="0" step="0.01" required>
-                        </div>
-                        <small class="text-muted">Este monto reemplaza la mora actual; no se suma encima.</small>
-                    </div>
-                    <div class="form-group">
-                        <label>Observación</label>
-                        <textarea name="observacion" class="form-control" rows="2" placeholder="Motivo del ajuste de mora..."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-warning btn-submit">Guardar Mora</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</form>
 @endif

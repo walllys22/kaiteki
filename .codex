@@ -182,7 +182,7 @@ con `person_id` y `dojo_id` vinculados.
 - El cambio de estado de alumno se hace solo sobre `Alumno.status`
   desde modal/listado, sin depender de historial para habilitar o deshabilitar.
 - Cuando `Alumno.status = 0`, el sistema bloquea operaciones sobre ese alumno:
-  - configurar, pausar, pagar, eliminar mensualidades o agregar/editar mora
+  - configurar, pausar, pagar o eliminar mensualidades
   - registrar nuevos grados
   - registrar, pagar o eliminar repasos/puntas
   - registrar, pagar o eliminar examenes
@@ -339,7 +339,6 @@ El objetivo de aranceles, montos y pagos es llevar control economico por alumno,
 - cuanto se cobro realmente
 - cuanto queda pendiente
 - que alumno debe
-- cuanto suma la deuda o mora
 - que pagos ya tienen comprobante
 
 Reglas actuales:
@@ -349,12 +348,12 @@ Reglas actuales:
 - `monto` queda como historico del cobro esperado para ese repaso o examen.
 - `monto_pagado` registra cuanto se pago.
 - Si `monto_pagado >= monto`, el registro queda pagado.
-- Si `monto_pagado < monto`, el registro queda pendiente y representa deuda/mora.
+- Si `monto_pagado < monto`, el registro queda pendiente y representa deuda.
 - Los comprobantes solo se habilitan cuando el registro esta pagado.
 - Para grados `Kyu`, el control puede generar deuda por repasos y por examen.
 - Para grados `Dan`, el control solo genera deuda por examen final.
 
-Cualquier integracion futura de caja, reportes, cuentas por cobrar, mora o historial economico
+Cualquier integracion futura de caja, reportes, cuentas por cobrar o historial economico
 debe respetar esta base y documentarse en `.codex`.
 
 #### Mensualidades de alumnos
@@ -371,7 +370,6 @@ Objetivo:
 - controlar saldo pendiente
 - permitir pagos parciales
 - permitir descuentos
-- permitir agregar mora
 - cortar la generacion de nuevos meses cuando el alumno queda inactivo
 
 Modelos:
@@ -433,11 +431,11 @@ Reglas:
   con la fecha de corte seleccionada.
 - Al seleccionar corte por fecha especifica, el modal debe mostrar antes de guardar:
   dias cobrados sobre dias del periodo, monto proporcional, descuento proporcional,
-  mora conservada, total a cobrar, pagado y saldo estimado.
+  total a cobrar, pagado y saldo estimado.
 - El total a cobrar del corte por fecha especifica no es editable, pero debe mostrarse
   de forma destacada para que el usuario lo identifique antes de pausar.
 - El recorte proporcional ajusta `monto` y `descuento` de la ultima mensualidad.
-  La mora y los pagos registrados se conservan.
+  Los pagos registrados se conservan.
 - Se puede eliminar solo la mensualidad generada mas reciente.
 - No se puede eliminar una mensualidad si ya tiene pagos registrados.
 - Si se elimina la mensualidad mas reciente de un plan con `fecha_fin`, el plan debe
@@ -458,10 +456,10 @@ Reglas:
 - Cuando una mensualidad esta vigente, puede pausarse o finalizarse aunque el plan ya no
   este activo, siempre que exista el plan asociado a esa mensualidad. El modal permite
   cortar por fecha especifica dentro del rango `periodo` - `fecha_fin` del mes vigente.
-- Los meses ya generados antes del corte conservan su monto, descuento, mora,
+- Los meses ya generados antes del corte conservan su monto, descuento,
   pagos y saldo historico; no se recalculan con la nueva mensualidad.
 - Cada mensualidad generada conserva historicamente:
-  `periodo`, `fecha_fin`, `monto`, `descuento`, `mora`, `monto_pagado`.
+  `periodo`, `fecha_fin`, `monto`, `descuento`, `monto_pagado`.
 - La lista de mensualidades muestra el periodo completo de cada cobro:
   fecha de inicio y fecha de fin guardada en `fecha_fin`.
 - La columna `Estado` muestra dos lecturas: estado financiero
@@ -469,17 +467,17 @@ Reglas:
   (`Programada`, `Vigente`, `Concluida`) segun la fecha actual comparada contra
   `periodo` y `fecha_fin`. Ambos estados usan iconos pequenos para lectura rapida.
 - El total a cobrar se calcula como:
-  `monto - descuento + mora`, nunca menor a cero.
+  `monto - descuento`, nunca menor a cero.
 - El saldo se calcula como:
   `total - monto_pagado`, nunca menor a cero.
 - La pestaña `Mensualidades` muestra resumen economico del alumno:
-  deuda total, mora acumulada, mora pendiente estimada, cobrado, total a cobrar,
+  deuda total, cobrado, total a cobrar,
   cantidad de meses pendientes/parciales/pagados y descuentos acumulados.
 - Los pagos pueden ser parciales y se registran en `alumno_mensualidad_pagos`.
 - Cada pago suma a `alumno_mensualidades.monto_pagado`.
 - Cada pago de mensualidad, parcial o completo, tiene comprobante imprimible.
 - El comprobante de pago parcial solo muestra el monto pagado.
-- El comprobante de pago completo muestra detalle de mensualidad, descuento, mora
+- El comprobante de pago completo muestra detalle de mensualidad, descuento
   y pago total.
 - El comprobante de mensualidad incluye QR. El QR no apunta a URL; contiene texto con
   numero de comprobante, alumno, documento, mensualidad, monto pagado y fecha de pago.
@@ -487,17 +485,6 @@ Reglas:
   que registro el cobro (`alumno_mensualidad_pagos.registerUser_id`).
 - No se puede pagar una mensualidad nueva si existe una mensualidad anterior con saldo.
 - El pago debe seguir orden cronologico: primero se pagan las deudas mas antiguas.
-- La mora se edita manualmente en una mensualidad especifica solo mientras tenga saldo pendiente.
-- Si la mensualidad ya esta pagada o exonerada (`saldo() <= 0`), no se muestra la accion
-  de agregar mora y el backend tambien bloquea el registro.
-- En el listado de mensualidades, la accion de mora debe mostrarse como boton textual
-  `Agregar mora` o `Editar mora` cuando el registro tenga saldo pendiente.
-- Al guardar mora, el valor enviado reemplaza la mora actual; no se suma encima de la anterior.
-- El modal de mora se abre desde un handler JS delegado sobre `.btn-mora-mensualidad`,
-  porque la lista de mensualidades se carga por AJAX. El handler debe setear `action`,
-  precargar `data-mora` y abrir `#modal-mora-mensualidad` manualmente.
-- La columna `Acciones` del listado de mensualidades debe ser suficientemente ancha para
-  mostrar botones textuales sin quebrarlos.
 - El listado de mensualidades no debe tener una columna separada de `Pagos / Observacion`.
 - Cada fila muestra una pestaña/enlace limpio `Ver pagos (n)` dentro del periodo. Al desplegarla,
   se abre una fila de detalle con los pagos/facturas y la observacion de esa mensualidad.
@@ -516,7 +503,6 @@ GET  admin/alumnos/{id}/mensualidades/list        alumno.mensualidades.list
 POST admin/alumnos/mensualidades/plan/store       alumno.mensualidades.plan.store
 PUT  admin/alumnos/mensualidades/plan/{id}/pausar alumno.mensualidades.plan.pausar
 PUT  admin/alumnos/mensualidades/{id}/pagar       alumno.mensualidades.pagar
-PUT  admin/alumnos/mensualidades/{id}/mora        alumno.mensualidades.mora
 DELETE admin/alumnos/mensualidades/{id}/delete    alumno.mensualidades.destroy
 GET  admin/alumnos/mensualidades/pagos/{id}/comprobante  alumno.mensualidades.pago.comprobante
 GET  comprobantes/mensualidades/pagos/{id}  alumno.mensualidades.pago.comprobante.public
@@ -540,13 +526,12 @@ La vista principal de Voyager fue reemplazada por un panel operativo propio:
   - total a cobrar
   - total de aranceles (`repasos + examenes`)
   - total de mensualidades
-  - total de mora acumulada en mensualidades
 - Incluye graficos tipo torta/donut hechos con CSS interno (`conic-gradient`), sin
   dependencia externa de JavaScript. Los graficos muestran:
   - distribucion del total a cobrar entre aranceles y mensualidades
   - distribucion de aranceles entre repasos/puntas y examenes
 - El dashboard no debe mostrar una lectura principal de `total cobrado`; el foco es
-  lo que corresponde cobrar y cuanto suma la mora.
+  lo que corresponde cobrar.
 - Incluye tablas de:
   - deudas de mensualidad por alumno
   - examenes pendientes de pago
@@ -844,5 +829,5 @@ Los select con clase `select2` dentro de modales deben reinicializarse con `drop
 - Comprobante de punta solo se imprime si esta pagado
 - Las mensualidades son independientes de grados y pertenecen al alumno
 - Las mensualidades se generan automaticamente desde la fecha de inicio hasta la fecha actual si el alumno esta activo
-- Las mensualidades permiten pagos parciales, descuento y mora
+- Las mensualidades permiten pagos parciales y descuento
 - `.codex` = documento central del proyecto

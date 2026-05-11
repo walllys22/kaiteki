@@ -17,7 +17,6 @@ return new class extends Migration
             $table->date('fecha_fin')->nullable();
             $table->decimal('monto', 10, 2)->default(0);
             $table->decimal('descuento', 10, 2)->default(0);
-            $table->decimal('mora', 10, 2)->default(0);
             $table->decimal('monto_pagado', 10, 2)->default(0);
             $table->text('observacion')->nullable();
             $table->string('status', 30)->default('pendiente');

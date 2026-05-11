@@ -102,7 +102,6 @@
     $mensualidadTotal = $mensualidades->sum(fn($item) => $item->total());
     $mensualidadPagado = $mensualidades->sum('monto_pagado');
     $mensualidadSaldo = $mensualidades->sum(fn($item) => $item->saldo());
-    $mensualidadMora = $mensualidades->sum('mora');
     $arancelTotal = $repasoTotal + $examenTotal;
 
     $totalCobrar = $repasoTotal + $examenTotal + $mensualidadTotal;
@@ -221,7 +220,7 @@
             </div>
         @else
             <div class="row">
-                <div class="col-md-3 col-sm-6">
+                <div class="col-md-4 col-sm-6">
                     <div class="panel panel-bordered metric-card metric-total">
                         <div class="panel-body">
                             <span class="metric-label">Total a cobrar</span>
@@ -230,7 +229,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 col-sm-6">
+                <div class="col-md-4 col-sm-6">
                     <div class="panel panel-bordered metric-card metric-aranceles">
                         <div class="panel-body">
                             <span class="metric-label">Total aranceles</span>
@@ -239,21 +238,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 col-sm-6">
+                <div class="col-md-4 col-sm-6">
                     <div class="panel panel-bordered metric-card metric-mensualidades">
                         <div class="panel-body">
                             <span class="metric-label">Total mensualidades</span>
                             <strong class="metric-value">{{ $money($mensualidadTotal) }}</strong>
-                            <span class="metric-help">Incluye descuentos y mora</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <div class="panel panel-bordered metric-card metric-mora">
-                        <div class="panel-body">
-                            <span class="metric-label">Total mora</span>
-                            <strong class="metric-value">{{ $money($mensualidadMora) }}</strong>
-                            <span class="metric-help">Mora acumulada en mensualidades</span>
+                            <span class="metric-help">Incluye descuentos</span>
                         </div>
                     </div>
                 </div>
@@ -282,7 +272,6 @@
                                         <div class="donut-legend">
                                             <span><i class="legend-dot arancel-dot"></i> Aranceles {{ $money($arancelTotal) }} ({{ $arancelAreaPercent }}%)</span>
                                             <span><i class="legend-dot mensualidad-dot"></i> Mensualidades {{ $money($mensualidadTotal) }} ({{ $mensualidadAreaPercent }}%)</span>
-                                            <span><i class="legend-dot mora-dot"></i> Mora incluida {{ $money($mensualidadMora) }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -599,10 +588,6 @@
             border-top: 4px solid #f59e0b;
         }
 
-        .metric-mora {
-            border-top: 4px solid #dc2626;
-        }
-
         .summary-panel .panel-title {
             font-weight: 600;
         }
@@ -721,10 +706,6 @@
 
         .arancel-dot {
             background: #2563eb;
-        }
-
-        .mora-dot {
-            background: #dc2626;
         }
 
         .repaso-dot {
