@@ -220,153 +220,9 @@
             </div>
         @else
             <div class="row">
-                <div class="col-md-4 col-sm-6">
-                    <div class="panel panel-bordered metric-card metric-total">
-                        <div class="panel-body">
-                            <span class="metric-label">Total a cobrar</span>
-                            <strong class="metric-value">{{ $money($totalCobrar) }}</strong>
-                            <span class="metric-help">Repasos, examenes y mensualidades</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 col-sm-6">
-                    <div class="panel panel-bordered metric-card metric-aranceles">
-                        <div class="panel-body">
-                            <span class="metric-label">Total aranceles</span>
-                            <strong class="metric-value">{{ $money($arancelTotal) }}</strong>
-                            <span class="metric-help">Repasos y examenes</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 col-sm-6">
-                    <div class="panel panel-bordered metric-card metric-mensualidades">
-                        <div class="panel-body">
-                            <span class="metric-label">Total mensualidades</span>
-                            <strong class="metric-value">{{ $money($mensualidadTotal) }}</strong>
-                            <span class="metric-help">Incluye descuentos</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="panel panel-bordered chart-panel">
-                        <div class="panel-heading">
-                            <h3 class="panel-title"><i class="voyager-pie-chart"></i> Grafico economico</h3>
-                        </div>
-                        <div class="panel-body">
-                            <div class="donut-grid">
-                                <div class="donut-card">
-                                    <div class="donut-chart donut-total {{ $totalCobrar > 0 ? '' : 'donut-empty' }}"
-                                         style="--aranceles: {{ $arancelAreaPercent }}%;"
-                                         aria-label="Aranceles {{ $arancelAreaPercent }} por ciento, mensualidades {{ $mensualidadAreaPercent }} por ciento">
-                                        <div class="donut-hole">
-                                            <span>Total</span>
-                                            <strong>{{ $money($totalCobrar) }}</strong>
-                                        </div>
-                                    </div>
-                                    <div class="donut-copy">
-                                        <h4>Total a cobrar</h4>
-                                        <p>Suma de aranceles y mensualidades del dojo.</p>
-                                        <div class="donut-legend">
-                                            <span><i class="legend-dot arancel-dot"></i> Aranceles {{ $money($arancelTotal) }} ({{ $arancelAreaPercent }}%)</span>
-                                            <span><i class="legend-dot mensualidad-dot"></i> Mensualidades {{ $money($mensualidadTotal) }} ({{ $mensualidadAreaPercent }}%)</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="donut-card">
-                                    <div class="donut-chart donut-arancel {{ $arancelTotal > 0 ? '' : 'donut-empty' }}"
-                                         style="--repasos: {{ $repasoArancelPercent }}%;"
-                                         aria-label="Repasos {{ $repasoArancelPercent }} por ciento, examenes {{ $examenArancelPercent }} por ciento">
-                                        <div class="donut-hole">
-                                            <span>Aranceles</span>
-                                            <strong>{{ $money($arancelTotal) }}</strong>
-                                        </div>
-                                    </div>
-                                    <div class="donut-copy">
-                                        <h4>Detalle de aranceles</h4>
-                                        <p>Distribucion entre repasos/puntas y examenes.</p>
-                                        <div class="donut-legend">
-                                            <span><i class="legend-dot repaso-dot"></i> Repasos {{ $money($repasoTotal) }} ({{ $repasoArancelPercent }}%)</span>
-                                            <span><i class="legend-dot examen-dot"></i> Examenes {{ $money($examenTotal) }} ({{ $examenArancelPercent }}%)</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="chart-bars">
-                                @foreach ($dashboardCharts as $chartRow)
-                                    <div class="chart-row">
-                                        <div class="chart-row-header">
-                                            <strong>{{ $chartRow['label'] }}</strong>
-                                            <span>{{ $chartRow['count'] }} registros - {{ $money($chartRow['total']) }}</span>
-                                        </div>
-                                        <div class="chart-row-values">
-                                            <span>Total: {{ $money($chartRow['total']) }}</span>
-                                            <span>Saldo actual: {{ $money($chartRow['saldo']) }}</span>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="panel panel-bordered summary-panel">
-                        <div class="panel-heading">
-                            <h3 class="panel-title"><i class="voyager-star"></i> Repasos / Puntas</h3>
-                        </div>
-                        <div class="panel-body">
-                            <div class="summary-row"><span>Registros</span><strong>{{ $repasos->count() }}</strong></div>
-                            <div class="summary-row"><span>Aprobados</span><strong>{{ $repasos->where('aprobado', 1)->count() }}</strong></div>
-                            <div class="summary-row"><span>Total</span><strong>{{ $money($repasoTotal) }}</strong></div>
-                            <div class="summary-row"><span>Pagado</span><strong class="text-success">{{ $money($repasoPagado) }}</strong></div>
-                            <div class="summary-row"><span>Pendiente</span><strong class="text-danger">{{ $money($repasoSaldo) }}</strong></div>
-                            <div class="summary-footer">Este mes: {{ $repasosMes->count() }} registros, {{ $money($repasosMes->sum('monto_pagado')) }} pagado</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="panel panel-bordered summary-panel">
-                        <div class="panel-heading">
-                            <h3 class="panel-title"><i class="voyager-certificate"></i> Examenes</h3>
-                        </div>
-                        <div class="panel-body">
-                            <div class="summary-row"><span>Registros</span><strong>{{ $examenes->count() }}</strong></div>
-                            <div class="summary-row"><span>Aprobados</span><strong>{{ $examenes->where('aprobado', 1)->count() }}</strong></div>
-                            <div class="summary-row"><span>Total</span><strong>{{ $money($examenTotal) }}</strong></div>
-                            <div class="summary-row"><span>Pagado</span><strong class="text-success">{{ $money($examenPagado) }}</strong></div>
-                            <div class="summary-row"><span>Pendiente</span><strong class="text-danger">{{ $money($examenSaldo) }}</strong></div>
-                            <div class="summary-footer">Este mes: {{ $examenesMes->count() }} registros, {{ $money($examenesMes->sum('monto_pagado')) }} pagado</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="panel panel-bordered summary-panel">
-                        <div class="panel-heading">
-                            <h3 class="panel-title"><i class="voyager-calendar"></i> Mensualidades</h3>
-                        </div>
-                        <div class="panel-body">
-                            <div class="summary-row"><span>Registros</span><strong>{{ $mensualidades->count() }}</strong></div>
-                            <div class="summary-row"><span>Pendientes/parciales</span><strong>{{ $mensualidades->filter(fn($item) => in_array($item->estadoPago(), ['Pendiente', 'Parcial']))->count() }}</strong></div>
-                            <div class="summary-row"><span>Total</span><strong>{{ $money($mensualidadTotal) }}</strong></div>
-                            <div class="summary-row"><span>Pagado</span><strong class="text-success">{{ $money($mensualidadPagado) }}</strong></div>
-                            <div class="summary-row"><span>Pendiente</span><strong class="text-danger">{{ $money($mensualidadSaldo) }}</strong></div>
-                            <div class="summary-footer">Este mes: {{ $mensualidadesMes->count() }} cobros, {{ $money($mensualidadesMes->sum('monto_pagado')) }} pagado</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
                 <div class="col-md-12">
                     <div class="panel panel-bordered">
-                        <div class="panel-heading">
+                        <div class="panel-heading bg-primary text-white">
                             <h3 class="panel-title"><i class="voyager-dollar"></i> Deudas de mensualidad por alumno</h3>
                         </div>
                         <div class="panel-body no-padding">
@@ -410,7 +266,7 @@
             <div class="row">
                 <div class="col-md-12">
                     <div class="panel panel-bordered">
-                        <div class="panel-heading">
+                        <div class="panel-heading bg-info text-white">
                             <h3 class="panel-title"><i class="voyager-warning"></i> Examenes pendientes de pago</h3>
                         </div>
                         <div class="panel-body no-padding">
@@ -448,7 +304,7 @@
             <div class="row">
                 <div class="col-md-7">
                     <div class="panel panel-bordered">
-                        <div class="panel-heading">
+                        <div class="panel-heading bg-warning text-white">
                             <h3 class="panel-title"><i class="voyager-calendar"></i> Mensualidades pendientes</h3>
                         </div>
                         <div class="panel-body no-padding">
@@ -492,7 +348,7 @@
                 </div>
                 <div class="col-md-5">
                     <div class="panel panel-bordered">
-                        <div class="panel-heading">
+                        <div class="panel-heading bg-success text-white">
                             <h3 class="panel-title"><i class="voyager-receipt"></i> Ultimos pagos de mensualidad</h3>
                         </div>
                         <div class="panel-body no-padding">
