@@ -231,8 +231,6 @@
         <div class="certificate-footer">
             <div class="qr-box">
                 {!! $qrSvg !!}
-                <div class="qr-label">{{ $alumnoNombre }}
-{{ $dojoNombre }}</div>
             </div>
             <div style="text-align:center;">
                 @if($gradoImage)
