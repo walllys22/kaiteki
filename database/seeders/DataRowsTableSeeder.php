@@ -26,7 +26,7 @@ class DataRowsTableSeeder extends Seeder
                 'field' => 'id',
                 'type' => 'text',
                 'display_name' => 'Id',
-                'required' => 0,
+                'required' => 1,
                 'browse' => 0,
                 'read' => 0,
                 'edit' => 0,
@@ -112,7 +112,7 @@ class DataRowsTableSeeder extends Seeder
                 'edit' => 1,
                 'add' => 1,
                 'delete' => 0,
-            'details' => '{"options":{"orh(+)":"orh(+)","orh(-)":"orh(-)"},"display":{"width":3},"validation":{"rule":"required"}}',
+            'details' => '{"options":{"Grupo A - Rh positivo (+)":"Grupo A - Rh positivo (+)","Grupo A - Rh positivo (-)":"Grupo A - Rh positivo (-)","Grupo B - Rh positivo (+)":"Grupo B - Rh positivo (+)","Grupo B - Rh positivo (-)":"Grupo B - Rh positivo (-)","Grupo AB - Rh positivo (+)":"Grupo AB - Rh positivo (+)","Grupo AB - Rh positivo (-)":"Grupo AB - Rh positivo (-)","Grupo O - Rh positivo (+)":"Grupo O - Rh positivo (+)","Grupo O - Rh positivo (-)":"Grupo O - Rh positivo (-)"},"display":{"width":3},"validation":{"rule":"required"}}',
                 'order' => 6,
             ),
             6 => 

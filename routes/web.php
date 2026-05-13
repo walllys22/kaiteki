@@ -152,6 +152,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
 
     // Users
     Route::get('users/ajax/list', [UserController::class, 'list']);
+    Route::get('users/{id}', [UserController::class, 'show'])->name('voyager.users.show');
     Route::post('users/store', [UserController::class, 'store'])->name('voyager.users.store');
     Route::put('users/{id}', [UserController::class, 'update'])->name('voyager.users.update');
     Route::delete('users/{id}/deleted', [UserController::class, 'destroy'])->name('voyager.users.destroy');

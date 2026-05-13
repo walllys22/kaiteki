@@ -18,6 +18,19 @@ class UserController extends Controller
         $this->storageController = new StorageController();
     }
 
+    public function show($id)
+    {
+        $this->custom_authorize('read_users');
+
+        $userDojoId = Auth::user()->dojo_id;
+
+        $user = User::with(['person', 'dojo', 'role'])
+            ->when($userDojoId, fn($q) => $q->where('dojo_id', $userDojoId))
+            ->findOrFail($id);
+
+        return view('vendor.voyager.users.read', compact('user'));
+    }
+
     public function list()
     {
         $roleId     = Auth::user()->role->id;
