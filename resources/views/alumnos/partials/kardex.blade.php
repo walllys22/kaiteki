@@ -258,12 +258,15 @@
                 <td class="alumno-col">
                     <div style="font-size:10px; font-weight:bold; color:#777; text-transform:uppercase; margin-bottom:6px;">Alumno</div>
                     <div class="alumno-name-row">
-                        <div class="alumno-name">{{ $nombre }}</div>
-                        @if($activo)
-                            <span class="badge-activo">Activo</span>
-                        @else
-                            <span class="badge-inactivo">Inactivo</span>
-                        @endif
+                        <div class="alumno-name">
+                            {{ $nombre }} - 
+                            @if($activo)
+                                Activo
+                            @else
+                                Inactivo
+                            @endif
+                        </div>
+                        
                     </div>
 
                     <div class="info-grid">
