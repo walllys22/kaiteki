@@ -17,6 +17,9 @@
                             <a href="{{ route('alumnos.kardex', $dataTypeContent->id) }}" target="_blank" class="btn btn-default btn-sm">
                                 <i class="fa-solid fa-print"></i> Kardex
                             </a>
+                            <a href="{{ route('alumnos.historial.grados', $dataTypeContent->id) }}" target="_blank" class="btn btn-default btn-sm">
+                                <i class="fa-solid fa-scroll"></i> Historial de Grados
+                            </a>
                             <a href="{{ route('voyager.alumnos.index') }}" class="btn btn-warning btn-sm">
                                 <i class="voyager-list"></i> <span>Volver</span>
                             </a>

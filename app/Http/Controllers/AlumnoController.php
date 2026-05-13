@@ -352,6 +352,24 @@ class AlumnoController extends Controller
         return view('alumnos.partials.kardex', compact('alumno', 'tutores', 'enfermedades'));
     }
 
+    public function historialGrados($id)
+    {
+        $this->custom_authorize('read_alumnos');
+        $userDojoId = auth()->user()->dojo_id;
+
+        $alumno = Alumno::with(['person', 'dojo'])
+            ->when($userDojoId, fn($q) => $q->where('dojo_id', $userDojoId))
+            ->findOrFail($id);
+
+        $grados = AlumnoGrado::with(['grado', 'repasos', 'examenes'])
+            ->where('alumno_id', $id)
+            ->whereNull('deleted_at')
+            ->orderBy('fecha')
+            ->get();
+
+        return view('alumnos.partials.historial-grados', compact('alumno', 'grados'));
+    }
+
     public function updateStatus($id)
     {
         $this->custom_authorize('edit_alumnos');

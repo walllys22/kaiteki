@@ -222,7 +222,7 @@
 
 <div class="actions">
     <button onclick="window.print()">&#128438; Imprimir</button>
-    <a href="{{ route('voyager.alumnos.show', $alumno->id) }}">&#8592; Volver</a>
+    <a href="#" onclick="window.close(); return false;">&#8592; Cerrar</a>
 </div>
 
 <div class="sheet">
