@@ -224,12 +224,12 @@
                     A: <strong>{{ optional($person)->first_name ?: 'Alumno no registrado' }}</strong>, por haber vencido las pruebas fisicas y teoricas, se lo promueve al grado <span class="belt">{{ $gradoCertificado }}</span>, es dado a los {{ $dia }} dias del mes de {{ $mes }} del Año {{ $anio }}, en la ciudad de la Santisima Trinidad, Departamento del Beni, Bolivia.
                 @endif
             </span>
+            <br>
             <div class="certificate-footer">
                 {{-- Columna izquierda: QR --}}
                 <div class="qr-box">
                     {!! $qrSvg !!}
-                    <div class="qr-label">{{ $alumnoNombre }}
-{{ $dojoNombre }}</div>
+                   
                 </div>
                 {{-- Columna central: imagen del grado --}}
                 <div style="text-align:center;">
