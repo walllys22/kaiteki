@@ -4,6 +4,10 @@
     $person      = optional($alumno)->person;
     $responsable = optional($dojo)->person;
     $grado       = $alumnoGrado->grado;
+    $dojoNombre   = trim((string) optional($dojo)->nombre) ?: 'Dojo';
+    $alumnoNombre = trim((string) optional($person)->first_name) ?: 'Alumno no registrado';
+    $qrTexto      = "Alumno: {$alumnoNombre}\nDojo: {$dojoNombre}";
+    $qrSvg        = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(110)->generate($qrTexto);
 
     $gradoNumero = trim((string) optional($grado)->numero);
     $gradoTipo   = trim((string) optional($grado)->tipo);
@@ -114,36 +118,52 @@
             text-align: justify;
             text-align-last: left;
         }
-        .grade-image {
-            display: block;
-            margin: 0;
-            max-height: 135px;
-            max-width: 260px;
-            object-fit: contain;
-        }
         .certificate-footer {
             align-items: flex-end;
-            display: flex;
-            gap: 70px;
-            justify-content: center;
-            margin: 50px auto 0;
-            width: 72%;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            margin: 40px auto 0;
+            width: 80%;
         }
         .signature-box {
             color: #000;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
-            min-width: 285px;
             text-align: center;
         }
         .signature-line {
             border-top: 2px solid #000;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             width: 100%;
         }
         .signature-name  { line-height: 1.2; }
-        .signature-grade { font-size: 18px; font-weight: 700; line-height: 1.2; margin-top: 4px; }
-        .signature-label { font-size: 16px; font-weight: 600; margin-top: 4px; }
+        .signature-grade { font-size: 16px; font-weight: 700; line-height: 1.2; margin-top: 4px; }
+        .signature-label { font-size: 14px; font-weight: 600; margin-top: 4px; }
+        .grade-image {
+            display: block;
+            margin: 0 auto;
+            max-height: 110px;
+            max-width: 110px;
+            object-fit: contain;
+        }
+        .qr-box {
+            align-items: center;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            text-align: center;
+        }
+        .qr-box canvas,
+        .qr-box img,
+        .qr-box svg { display: block; height: 110px; margin: 0 auto; width: 110px; }
+        .qr-label {
+            color: #000;
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 1.3;
+            margin-top: 3px;
+            white-space: pre-line;
+        }
         @media print {
             body { background: #fff; padding: 0; }
             .actions { display: none; }
@@ -170,10 +190,19 @@
                 en la ciudad de la Santisima Trinidad, Departamento del Beni, Bolivia.
             </span>
             <div class="certificate-footer">
-                <div class="signature-box"></div>
-                @if($gradoImage)
-                    <img src="{{ $gradoImage }}" class="grade-image" alt="Imagen del grado" onerror="this.style.display='none';">
-                @endif
+                {{-- Columna izquierda: QR --}}
+                <div class="qr-box">
+                    {!! $qrSvg !!}
+                    <div class="qr-label">{{ $alumnoNombre }}
+{{ $dojoNombre }}</div>
+                </div>
+                {{-- Columna central: imagen del grado --}}
+                <div style="text-align:center;">
+                    @if($gradoImage)
+                        <img src="{{ $gradoImage }}" class="grade-image" alt="Imagen del grado" onerror="this.style.display='none';">
+                    @endif
+                </div>
+                {{-- Columna derecha: firma --}}
                 <div class="signature-box">
                     <div class="signature-line"></div>
                     <div class="signature-name">{{ $responsableNombre }}</div>

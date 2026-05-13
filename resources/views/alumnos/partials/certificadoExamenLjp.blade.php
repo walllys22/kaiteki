@@ -19,6 +19,11 @@
     $responsableNombre = trim((string) optional($responsable)->first_name) ?: 'Responsable';
     $responsableGrado = trim((string) optional($dojo)->grado_responsable);
 
+    $dojoNombre   = trim((string) optional($dojo)->nombre) ?: 'Dojo';
+    $alumnoNombre = trim((string) optional($person)->first_name) ?: 'Alumno no registrado';
+    $qrTexto      = "Alumno: {$alumnoNombre}\nDojo: {$dojoNombre}";
+    $qrSvg        = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(110)->generate($qrTexto);
+
     $template = asset('images/dojos/ljp/certificados/examen.png');
     $photo = asset('images/default.jpg');
     if (optional($person)->image) {
@@ -114,27 +119,41 @@
             text-align: justify;
             text-align-last: left;
         }
-        .grade-image {
-            display: block;
-            margin: 0;
-            max-height: 135px;
-            max-width: 260px;
-            object-fit: contain;
-        }
         .certificate-footer {
             align-items: flex-end;
-            display: flex;
-            gap: 70px;
-            justify-content: center;
-            margin: 50px auto 0;
-            width: 72%;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            margin: 40px auto 0;
+            width: 80%;
+        }
+        .grade-image {
+            display: block;
+            margin: 0 auto;
+            max-height: 110px;
+            max-width: 110px;
+            object-fit: contain;
         }
         .signature-box {
             color: #000;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
-            min-width: 285px;
             text-align: center;
+        }
+        .qr-box {
+            align-items: center;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            text-align: center;
+        }
+        .qr-box svg { display: block; height: 110px; margin: 0 auto; width: 110px; }
+        .qr-label {
+            color: #000;
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 1.3;
+            margin-top: 3px;
+            white-space: pre-line;
         }
         .signature-line {
             border-top: 2px solid #000;
@@ -183,11 +202,19 @@
                 A: <strong>{{ optional($person)->first_name ?: 'Alumno no registrado' }}</strong>, por haber vencido las pruebas fisicas y teoricas, se lo promueve al grado <span class="belt">{{ $gradoCertificado }}</span>, es dado a los {{ $dia }} dias del mes de {{ $mes }} del Año {{ $anio }}, en la ciudad de la Santisima Trinidad, Departamento del Beni, Bolivia.
             </span>
             <div class="certificate-footer">
-                <div class="signature-box">
+                {{-- Columna izquierda: QR --}}
+                <div class="qr-box">
+                    {!! $qrSvg !!}
+                    <div class="qr-label">{{ $alumnoNombre }}
+{{ $dojoNombre }}</div>
                 </div>
-                @if($gradoImage)
-                    <img src="{{ $gradoImage }}" class="grade-image" alt="Imagen del grado" onerror="this.style.display='none';">
-                @endif
+                {{-- Columna central: imagen del grado --}}
+                <div style="text-align:center;">
+                    @if($gradoImage)
+                        <img src="{{ $gradoImage }}" class="grade-image" alt="Imagen del grado" onerror="this.style.display='none';">
+                    @endif
+                </div>
+                {{-- Columna derecha: firma --}}
                 <div class="signature-box">
                     <div class="signature-line"></div>
                     <div class="signature-name">{{ $responsableNombre }}</div>

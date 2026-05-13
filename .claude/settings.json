@@ -3,7 +3,9 @@
     "allow": [
       "Bash(php artisan *)",
       "Bash(grep -n 'syncNextFecha\\\\|fechaExamen\\\\|$nextFecha\\\\|shown.bs.modal' /home/user/Escritorio/projects/kaiteki/resources/views/alumnos/grados/list.blade.php)",
-      "Bash(grep -n 'gradoList\\\\|primerGrado\\\\|historial\\\\|$data\\\\b' /home/user/Escritorio/projects/kaiteki/app/Http/Controllers/AlumnoController.php)"
+      "Bash(grep -n 'gradoList\\\\|primerGrado\\\\|historial\\\\|$data\\\\b' /home/user/Escritorio/projects/kaiteki/app/Http/Controllers/AlumnoController.php)",
+      "Bash(xargs ls)",
+      "Bash(composer require *)"
     ]
   }
 }

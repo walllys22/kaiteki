@@ -12,6 +12,7 @@
         "laravel/sanctum": "^3.0",
         "laravel/tinker": "^2.7",
         "orangehill/iseed": "^3.0",
+        "simplesoftwareio/simple-qrcode": "^4.2",
         "tcg/voyager": "^1.7"
     },
     "require-dev": {
