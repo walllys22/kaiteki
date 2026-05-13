@@ -1,23 +1,38 @@
 @php
-    $alumnoGrado = $examen->alumnoGrado;
-    $alumno = optional($alumnoGrado)->alumno;
-    $dojo = optional($alumno)->dojo;
-    $person = optional($alumno)->person;
-    $responsable = optional($dojo)->person;
-    $grado = optional($alumnoGrado)->grado;
+    $isCursando  = $isCursando ?? false;
 
-    $gradoNumero = trim((string) optional($grado)->numero);
-    $gradoTipo = trim((string) optional($grado)->tipo);
-    $gradoNombre = trim((string) optional($grado)->nombre);
-    $cinta = trim(str_ireplace('Cinturon', '', $gradoNombre));
+    // Normalizar fuente de datos según el modo
+    if ($isCursando) {
+        // Viene del controlador certificadoCursando() con $alumnoGrado directo
+        $alumno      = optional($alumnoGrado)->alumno;
+        $fechaRaw    = $alumnoGrado->fecha;
+        $regId       = $alumnoGrado->id;
+    } else {
+        // Viene del controlador certificadoExamen() con $examen
+        $alumnoGrado = $examen->alumnoGrado;
+        $alumno      = optional($alumnoGrado)->alumno;
+        $fechaRaw    = $examen->fecha;
+        $regId       = optional($alumnoGrado)->id;
+    }
+
+    $dojo        = optional($alumno)->dojo;
+    $person      = optional($alumno)->person;
+    $responsable = optional($dojo)->person;
+    $grado       = optional($alumnoGrado)->grado;
+
+    $gradoNumero      = trim((string) optional($grado)->numero);
+    $gradoTipo        = trim((string) optional($grado)->tipo);
+    $gradoNombre      = trim((string) optional($grado)->nombre);
+    $cinta            = trim(str_ireplace('Cinturon', '', $gradoNombre));
     $gradoCertificado = trim($gradoNumero . ' ' . $gradoTipo . ' - CINTA ' . mb_strtoupper($cinta ?: $gradoNombre, 'UTF-8'));
 
-    $fecha = \Carbon\Carbon::parse($examen->fecha)->locale('es');
-    $dia = $fecha->format('d');
-    $mes = ucfirst($fecha->translatedFormat('F'));
-    $anio = $fecha->format('Y');
+    $fecha = \Carbon\Carbon::parse($fechaRaw)->locale('es');
+    $dia   = $fecha->format('d');
+    $mes   = ucfirst($fecha->translatedFormat('F'));
+    $anio  = $fecha->format('Y');
+
     $responsableNombre = trim((string) optional($responsable)->first_name) ?: 'Responsable';
-    $responsableGrado = trim((string) optional($dojo)->grado_responsable);
+    $responsableGrado  = trim((string) optional($dojo)->grado_responsable);
 
     $dojoNombre   = trim((string) optional($dojo)->nombre) ?: 'Dojo';
     $alumnoNombre = trim((string) optional($person)->first_name) ?: 'Alumno no registrado';
@@ -25,14 +40,14 @@
     $qrSvg        = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(110)->generate($qrTexto);
 
     $template = asset('images/dojos/ljp/certificados/examen.png');
-    $photo = asset('images/default.jpg');
+    $photo    = asset('images/default.jpg');
     if (optional($person)->image) {
         $photo = asset('storage/' . str_replace('.avif', '', $person->image) . '-cropped.webp');
     }
 
     $gradoImage = null;
     if (optional($grado)->image) {
-        $gradoImage = asset('storage/' .$grado->image);
+        $gradoImage = asset('storage/' . $grado->image);
     }
 @endphp
 
@@ -195,11 +210,19 @@
 
     <div class="certificate">
         <img src="{{ $photo }}" class="student-photo" alt="Foto alumno" onerror="this.style.display='none';">
-        <div class="reg">Reg: {{ optional($alumnoGrado)->id }}</div>
+        <div class="reg">Reg: {{ $regId }}</div>
 
         <div class="certificate-text">
             <span class="line" style="font-size: 28px">
-                A: <strong>{{ optional($person)->first_name ?: 'Alumno no registrado' }}</strong>, por haber vencido las pruebas fisicas y teoricas, se lo promueve al grado <span class="belt">{{ $gradoCertificado }}</span>, es dado a los {{ $dia }} dias del mes de {{ $mes }} del Año {{ $anio }}, en la ciudad de la Santisima Trinidad, Departamento del Beni, Bolivia.
+                @if($isCursando)
+                    A: <strong>{{ $alumnoNombre }}</strong>,
+                    se certifica que actualmente se encuentra cursando el grado
+                    <span class="belt">{{ $gradoCertificado }}</span>,
+                    a partir de los {{ $dia }} dias del mes de {{ $mes }} del Año {{ $anio }},
+                    en la ciudad de la Santisima Trinidad, Departamento del Beni, Bolivia.
+                @else
+                    A: <strong>{{ optional($person)->first_name ?: 'Alumno no registrado' }}</strong>, por haber vencido las pruebas fisicas y teoricas, se lo promueve al grado <span class="belt">{{ $gradoCertificado }}</span>, es dado a los {{ $dia }} dias del mes de {{ $mes }} del Año {{ $anio }}, en la ciudad de la Santisima Trinidad, Departamento del Beni, Bolivia.
+                @endif
             </span>
             <div class="certificate-footer">
                 {{-- Columna izquierda: QR --}}

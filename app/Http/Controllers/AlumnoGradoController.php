@@ -621,6 +621,31 @@ class AlumnoGradoController extends Controller
         return view('alumnos.partials.certificadoExamenLjp', compact('examen'));
     }
 
+    public function certificadoCursando(int $id)
+    {
+        $this->custom_authorize('read_alumnos');
+
+        $userDojoId = auth()->user()->dojo_id;
+
+        $alumnoGrado = AlumnoGrado::with(['grado', 'alumno.person', 'alumno.dojo.person'])
+            ->whereNull('deleted_at')
+            ->where(function ($q) { $q->whereNull('status')->orWhere('status', '0'); })
+            ->when($userDojoId, fn($q) => $q->whereHas('alumno', fn($aq) => $aq->where('dojo_id', $userDojoId)))
+            ->findOrFail($id);
+
+        $tieneCompletados = AlumnoGrado::where('alumno_id', $alumnoGrado->alumno_id)
+            ->where('status', '1')
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if (!$tieneCompletados) {
+            return redirect()->route('voyager.alumnos.show', ['id' => $alumnoGrado->alumno_id])
+                ->with(['message' => 'El certificado de grado en proceso solo está disponible a partir del segundo grado.', 'alert-type' => 'warning']);
+        }
+
+        $isCursando = true;
+        return view('alumnos.partials.certificadoExamenLjp', compact('alumnoGrado', 'isCursando'));
+    }
 
     public function destroyExamen(int $id)
     {
