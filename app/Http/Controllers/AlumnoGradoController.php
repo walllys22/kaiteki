@@ -377,17 +377,33 @@ class AlumnoGradoController extends Controller
             'estado_pago'     => 'required|in:pendiente,pagado',
             'observacion'     => 'nullable|string|max:500',
             'next_grado_id'   => 'nullable|exists:grados,id',
-            'next_fecha'      => 'nullable|date|required_with:next_grado_id',
         ]);
-
-        if ((int) $request->aprobado === 1 && !$request->filled('next_grado_id')) {
-            return redirect()->back()
-                ->withInput()
-                ->with(['message' => 'Debe seleccionar el siguiente grado cuando el examen es aprobado.', 'alert-type' => 'error']);
-        }
 
         $alumnoGrado = AlumnoGrado::with(['alumno', 'grado', 'repasos', 'examenes'])->findOrFail($request->alumno_grado_id);
         $this->ensureAlumnoActivo($alumnoGrado->alumno);
+
+        // Verificar si existe algún grado superior al actual para saber si el siguiente es obligatorio
+        if ((int) $request->aprobado === 1 && !$request->filled('next_grado_id')) {
+            $gradosUsados = AlumnoGrado::where('alumno_id', $alumnoGrado->alumno_id)
+                ->whereNull('deleted_at')
+                ->pluck('grado_id')
+                ->toArray();
+
+            $hayGradosSiguientes = \App\Models\Grado::whereNull('deleted_at')
+                ->where('status', 1)
+                ->whereNotIn('id', $gradosUsados)
+                ->where(function ($q) use ($alumnoGrado) {
+                    $orden = optional($alumnoGrado->grado)->orden;
+                    $q->whereNull('orden')->orWhere('orden', '>', $orden ?? 0);
+                })
+                ->exists();
+
+            if ($hayGradosSiguientes) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with(['message' => 'Debe seleccionar el siguiente grado cuando el examen es aprobado.', 'alert-type' => 'error']);
+            }
+        }
 
         if ($alumnoGrado->isCompletado()) {
             return redirect()->back()
@@ -473,18 +489,17 @@ class AlumnoGradoController extends Controller
                 if ($request->filled('next_grado_id')) {
                     $alumnoId    = $alumnoGrado->alumno_id;
                     $nextGradoId = (int) $request->next_grado_id;
-                    $nextFecha   = $request->next_fecha;
 
                     $yaRegistrado = AlumnoGrado::where('alumno_id', $alumnoId)
                         ->where('grado_id', $nextGradoId)
                         ->whereNull('deleted_at')
                         ->exists();
 
-                    if (!$yaRegistrado && $nextFecha >= $request->fecha) {
+                    if (!$yaRegistrado) {
                         AlumnoGrado::create([
                             'alumno_id'  => $alumnoId,
                             'grado_id'   => $nextGradoId,
-                            'fecha'      => $nextFecha,
+                            'fecha'      => $request->fecha,
                             'status'     => '0',
                         ]);
                         $nextGrado = \App\Models\Grado::find($nextGradoId);

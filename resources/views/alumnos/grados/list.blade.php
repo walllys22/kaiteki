@@ -534,38 +534,42 @@
                         {{-- Sección siguiente grado: solo visible cuando resultado = Aprobado --}}
                         <div id="seccion-siguiente-grado" style="display:none;">
                             <hr style="margin: 8px 0 14px;">
-                            <p style="font-weight:600; margin-bottom:10px;">
-                                <i class="fa-solid fa-circle-chevron-right" style="color:#5cb85c;"></i>
-                                Registrar siguiente grado
-                                <small class="text-muted" style="font-weight:normal;">(opcional)</small>
-                            </p>
-                            <div class="row">
-                                <div class="form-group col-md-7">
-                                    <label>Siguiente grado</label>
-                                    <select name="next_grado_id" id="select-next-grado" class="form-control select2" required>
-                                        <option value="" disabled selected>Seleccione el siguiente grado</option>
-                                        @foreach ($grados as $g)
-                                            <option value="{{ $g->id }}">
-                                                #{{ $g->orden ?? '?' }} —
-                                                {{ trim(($g->tipo ?? '').' '.($g->numero ?? '').' '.($g->nombre ?? '')) }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+                            @if ($grados->isNotEmpty())
+                                <p style="font-weight:600; margin-bottom:10px;">
+                                    <i class="fa-solid fa-circle-chevron-right" style="color:#5cb85c;"></i>
+                                    Registrar siguiente grado
+                                </p>
+                                <div class="row">
+                                    <div class="form-group col-md-7">
+                                        <label>Siguiente grado <span class="text-danger">*</span></label>
+                                        <select name="next_grado_id" id="select-next-grado" class="form-control select2" required>
+                                            <option value="" disabled selected>Seleccione el siguiente grado</option>
+                                            @foreach ($grados as $g)
+                                                <option value="{{ $g->id }}">
+                                                    {{ trim(($g->tipo ?? '').' '.($g->numero ?? '').' '.($g->nombre ?? '')) }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                 </div>
-                                <div class="form-group col-md-5">
-                                    <label>Fecha de inicio</label>
-                                    <input type="date" name="next_fecha" id="input-next-fecha"
-                                           class="form-control"
-                                           value="{{ $defaultFechaExamen }}"
-                                           min="{{ $minFechaExamen }}">
-                                    <small class="text-muted">Debe ser igual o posterior al examen.</small>
+                            @else
+                                <div class="alert alert-success" style="margin:0;">
+                                    <i class="fa-solid fa-trophy"></i>
+                                    <strong>¡Último grado alcanzado!</strong>
+                                    Este es el grado más alto registrado en el sistema. No hay siguiente grado para asignar.
                                 </div>
-                            </div>
+                            @endif
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-warning btn-submit">Registrar Examen</button>
+                    <div class="modal-footer" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                        <label style="margin:0; font-weight:normal; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" id="check-confirmar-examen" style="width:16px; height:16px; cursor:pointer;">
+                            <span>Confirmo que los datos son correctos</span>
+                        </label>
+                        <div>
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                            <button type="submit" id="btn-registrar-examen" class="btn btn-warning btn-submit" disabled>Registrar Examen</button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -948,44 +952,43 @@
     // ── Modal examen final: mostrar/ocultar sección siguiente grado ──
     var $selectAprobado   = $('#select-aprobado-examen');
     var $seccionSiguiente = $('#seccion-siguiente-grado');
-    var $fechaExamen      = $('#modal-add-examen input[name="fecha"]');
-    var $nextFecha        = $('#input-next-fecha');
     var $selectNextGrado  = $('#select-next-grado');
+
+    var hayGradosSiguientes = {{ $grados->isNotEmpty() ? 'true' : 'false' }};
 
     function toggleSiguienteGrado() {
         if ($selectAprobado.val() === '1') {
             $seccionSiguiente.slideDown(150);
-            $selectNextGrado.prop('required', true);
-            if ($selectNextGrado.data('select2')) {
-                $selectNextGrado.select2('destroy');
+            if (hayGradosSiguientes) {
+                $selectNextGrado.prop('required', true);
+                if ($selectNextGrado.data('select2')) {
+                    $selectNextGrado.select2('destroy');
+                }
+                $selectNextGrado.select2({ dropdownParent: $('#modal-add-examen'), width: '100%' });
             }
-            $selectNextGrado.select2({ dropdownParent: $('#modal-add-examen'), width: '100%' });
         } else {
             $seccionSiguiente.slideUp(150);
-            $selectNextGrado.prop('required', false);
-            if ($selectNextGrado.data('select2')) {
-                $selectNextGrado.select2('destroy');
-            }
-            $selectNextGrado.val('').trigger('change');
-        }
-    }
-
-    function syncNextFechaMin() {
-        var examDate = $fechaExamen.val();
-        if (examDate) {
-            $nextFecha.attr('min', examDate);
-            if (!$nextFecha.val() || $nextFecha.val() < examDate) {
-                $nextFecha.val(examDate);
+            if (hayGradosSiguientes) {
+                $selectNextGrado.prop('required', false);
+                if ($selectNextGrado.data('select2')) {
+                    $selectNextGrado.select2('destroy');
+                }
+                $selectNextGrado.val('').trigger('change');
             }
         }
     }
 
     $selectAprobado.on('change', toggleSiguienteGrado);
-    $fechaExamen.on('change', syncNextFechaMin);
+
+    var $checkConfirmar  = $('#check-confirmar-examen');
+    var $btnRegistrar    = $('#btn-registrar-examen');
+
+    $checkConfirmar.on('change', function () {
+        $btnRegistrar.prop('disabled', !this.checked);
+    });
 
     $('#modal-add-examen').on('shown.bs.modal', function () {
         toggleSiguienteGrado();
-        syncNextFechaMin();
     }).on('hidden.bs.modal', function () {
         $seccionSiguiente.hide();
         $selectAprobado.val('').trigger('change');
@@ -994,6 +997,8 @@
             $selectNextGrado.select2('destroy');
         }
         $selectNextGrado.val('');
+        $checkConfirmar.prop('checked', false);
+        $btnRegistrar.prop('disabled', true);
     });
 })();
 </script>

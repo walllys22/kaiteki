@@ -146,7 +146,7 @@
                                 </div>
 
                                 <div class="row">
-                                    <div class="col-md-3">
+                                    <div class="col-md-12">
                                         <div class="alumno-data-card">
                                             <div class="alumno-label">Dirección</div>
                                             <div class="alumno-value">{{ optional($person)->address ?: 'No registrada' }}</div>
