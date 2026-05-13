@@ -17,15 +17,9 @@
                             </h1>
                         </div>
                         <div class="col-md-6 text-right" style="margin-top:30px;">
-                            @if($editing)
-                                <a href="{{ route('voyager.horarios.show', $horario->id) }}" class="btn btn-warning btn-sm">
-                                    <i class="voyager-eye"></i> Volver al Horario
-                                </a>
-                            @else
-                                <a href="{{ route('voyager.horarios.index') }}" class="btn btn-warning btn-sm">
-                                    <i class="voyager-list"></i> Volver
-                                </a>
-                            @endif
+                            <a href="{{ route('voyager.horarios.index') }}" class="btn btn-warning btn-sm">
+                                <i class="voyager-list"></i> Volver
+                            </a>
                         </div>
                     </div>
                 </div>
