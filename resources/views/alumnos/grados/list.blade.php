@@ -494,7 +494,8 @@
                             </div>
                             <div class="form-group col-md-6">
                                 <label>Resultado <span class="text-danger">*</span></label>
-                                <select name="aprobado" class="form-control" required>
+                                <select name="aprobado" id="select-aprobado-examen" class="form-control" required>
+                                    <option value="" disabled selected>Seleccione una opción</option>
                                     <option value="1">✅ Aprobado</option>
                                     <option value="0">❌ Aplazado</option>
                                 </select>
@@ -527,6 +528,38 @@
                                     <option value="pendiente" {{ old('estado_pago', 'pendiente') === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
                                     <option value="pagado" {{ old('estado_pago') === 'pagado' ? 'selected' : '' }}>Pagado</option>
                                 </select>
+                            </div>
+                        </div>
+
+                        {{-- Sección siguiente grado: solo visible cuando resultado = Aprobado --}}
+                        <div id="seccion-siguiente-grado" style="display:none;">
+                            <hr style="margin: 8px 0 14px;">
+                            <p style="font-weight:600; margin-bottom:10px;">
+                                <i class="fa-solid fa-circle-chevron-right" style="color:#5cb85c;"></i>
+                                Registrar siguiente grado
+                                <small class="text-muted" style="font-weight:normal;">(opcional)</small>
+                            </p>
+                            <div class="row">
+                                <div class="form-group col-md-7">
+                                    <label>Siguiente grado</label>
+                                    <select name="next_grado_id" id="select-next-grado" class="form-control select2" required>
+                                        <option value="" disabled selected>Seleccione el siguiente grado</option>
+                                        @foreach ($grados as $g)
+                                            <option value="{{ $g->id }}">
+                                                #{{ $g->orden ?? '?' }} —
+                                                {{ trim(($g->tipo ?? '').' '.($g->numero ?? '').' '.($g->nombre ?? '')) }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-5">
+                                    <label>Fecha de inicio</label>
+                                    <input type="date" name="next_fecha" id="input-next-fecha"
+                                           class="form-control"
+                                           value="{{ $defaultFechaExamen }}"
+                                           min="{{ $minFechaExamen }}">
+                                    <small class="text-muted">Debe ser igual o posterior al examen.</small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -910,6 +943,57 @@
         var button = $(event.relatedTarget);
         $('#form-pagar-examen').attr('action', button.data('url'));
         $('#pagar-examen-monto').val(button.data('monto') || '');
+    });
+
+    // ── Modal examen final: mostrar/ocultar sección siguiente grado ──
+    var $selectAprobado   = $('#select-aprobado-examen');
+    var $seccionSiguiente = $('#seccion-siguiente-grado');
+    var $fechaExamen      = $('#modal-add-examen input[name="fecha"]');
+    var $nextFecha        = $('#input-next-fecha');
+    var $selectNextGrado  = $('#select-next-grado');
+
+    function toggleSiguienteGrado() {
+        if ($selectAprobado.val() === '1') {
+            $seccionSiguiente.slideDown(150);
+            $selectNextGrado.prop('required', true);
+            if ($selectNextGrado.data('select2')) {
+                $selectNextGrado.select2('destroy');
+            }
+            $selectNextGrado.select2({ dropdownParent: $('#modal-add-examen'), width: '100%' });
+        } else {
+            $seccionSiguiente.slideUp(150);
+            $selectNextGrado.prop('required', false);
+            if ($selectNextGrado.data('select2')) {
+                $selectNextGrado.select2('destroy');
+            }
+            $selectNextGrado.val('').trigger('change');
+        }
+    }
+
+    function syncNextFechaMin() {
+        var examDate = $fechaExamen.val();
+        if (examDate) {
+            $nextFecha.attr('min', examDate);
+            if (!$nextFecha.val() || $nextFecha.val() < examDate) {
+                $nextFecha.val(examDate);
+            }
+        }
+    }
+
+    $selectAprobado.on('change', toggleSiguienteGrado);
+    $fechaExamen.on('change', syncNextFechaMin);
+
+    $('#modal-add-examen').on('shown.bs.modal', function () {
+        toggleSiguienteGrado();
+        syncNextFechaMin();
+    }).on('hidden.bs.modal', function () {
+        $seccionSiguiente.hide();
+        $selectAprobado.val('').trigger('change');
+        $selectNextGrado.prop('required', false);
+        if ($selectNextGrado.data('select2')) {
+            $selectNextGrado.select2('destroy');
+        }
+        $selectNextGrado.val('');
     });
 })();
 </script>

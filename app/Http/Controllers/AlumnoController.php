@@ -620,16 +620,26 @@ class AlumnoController extends Controller
                 ->value('fecha');
         }
 
-        // Grados disponibles: excluir los que el alumno ya tiene registrados
+        // Grados disponibles: excluir los ya registrados y los de orden inferior al máximo alcanzado
         $gradosUsados = AlumnoGrado::where('alumno_id', $alumno_id)
             ->whereNotNull('grado_id')
             ->whereNull('deleted_at')
             ->pluck('grado_id')
             ->toArray();
 
+        $maxOrden = \DB::table('alumno_grados')
+            ->join('grados', 'alumno_grados.grado_id', '=', 'grados.id')
+            ->where('alumno_grados.alumno_id', $alumno_id)
+            ->whereNull('alumno_grados.deleted_at')
+            ->whereNotNull('grados.orden')
+            ->max('grados.orden');
+
         $grados = Grado::whereNull('deleted_at')
             ->where('status', 1)
             ->whereNotIn('id', $gradosUsados)
+            ->when($maxOrden, fn($q) => $q->where(fn($inner) =>
+                $inner->whereNull('orden')->orWhere('orden', '>', $maxOrden)
+            ))
             ->ordenado()
             ->get();
 

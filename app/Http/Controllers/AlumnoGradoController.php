@@ -237,7 +237,7 @@ class AlumnoGradoController extends Controller
         try {
             $monto = (float) $request->monto;
 
-            $repaso = AlumnoGradoRepaso::create([
+            AlumnoGradoRepaso::create([
                 'alumno_grado_id' => $request->alumno_grado_id,
                 'arancel_id'      => $arancelRepaso->id,
                 'fecha'           => $request->fecha,
@@ -376,7 +376,15 @@ class AlumnoGradoController extends Controller
             'monto'           => 'required|numeric|min:0|max:99999999.99',
             'estado_pago'     => 'required|in:pendiente,pagado',
             'observacion'     => 'nullable|string|max:500',
+            'next_grado_id'   => 'nullable|exists:grados,id',
+            'next_fecha'      => 'nullable|date|required_with:next_grado_id',
         ]);
+
+        if ((int) $request->aprobado === 1 && !$request->filled('next_grado_id')) {
+            return redirect()->back()
+                ->withInput()
+                ->with(['message' => 'Debe seleccionar el siguiente grado cuando el examen es aprobado.', 'alert-type' => 'error']);
+        }
 
         $alumnoGrado = AlumnoGrado::with(['alumno', 'grado', 'repasos', 'examenes'])->findOrFail($request->alumno_grado_id);
         $this->ensureAlumnoActivo($alumnoGrado->alumno);
@@ -460,6 +468,32 @@ class AlumnoGradoController extends Controller
 
                 $msg = 'Examen aprobado. El grado ha sido completado.';
                 $type = 'success';
+
+                // Registrar automáticamente el siguiente grado si el usuario lo seleccionó
+                if ($request->filled('next_grado_id')) {
+                    $alumnoId    = $alumnoGrado->alumno_id;
+                    $nextGradoId = (int) $request->next_grado_id;
+                    $nextFecha   = $request->next_fecha;
+
+                    $yaRegistrado = AlumnoGrado::where('alumno_id', $alumnoId)
+                        ->where('grado_id', $nextGradoId)
+                        ->whereNull('deleted_at')
+                        ->exists();
+
+                    if (!$yaRegistrado && $nextFecha >= $request->fecha) {
+                        AlumnoGrado::create([
+                            'alumno_id'  => $alumnoId,
+                            'grado_id'   => $nextGradoId,
+                            'fecha'      => $nextFecha,
+                            'status'     => '0',
+                        ]);
+                        $nextGrado = \App\Models\Grado::find($nextGradoId);
+                        $gradoNombre = $nextGrado
+                            ? trim(($nextGrado->tipo ?? '').' '.($nextGrado->numero ?? '').' '.($nextGrado->nombre ?? ''))
+                            : 'siguiente grado';
+                        $msg .= " Siguiente grado ({$gradoNombre}) registrado automáticamente.";
+                    }
+                }
             } else {
                 $msg = 'Examen aplazado. El alumno puede volver a rendirlo.';
                 $type = 'warning';
