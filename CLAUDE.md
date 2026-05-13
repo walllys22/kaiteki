@@ -120,6 +120,34 @@ The alumno detail page (`alumnos/read.blade.php`) is the hub for managing: tutor
 
 ---
 
+## Grade ordering (`Grado.orden`)
+
+The `grados` table has an `orden` column (`unsignedSmallInteger`, nullable) that defines the progression sequence following Japanese karate rules:
+- Kyu grades count **down** (10th Kyu = beginner, 1st Kyu = highest Kyu)
+- Dan grades count **up** (1st Dan → higher Dan = more advanced)
+- `orden=1` is the first grade a beginner student receives; higher numbers are more advanced
+
+### Scope
+`Grado::scopeOrdenado()` orders by `COALESCE(orden, 99999) ASC, id ASC`. All queries that list grades for display or student selection must use this scope — never `orderBy('tipo')/orderBy('numero')`.
+
+### Reorder UI
+- Button "Ordenar" in `grados/browse.blade.php` (requires `edit_grados` permission)
+- Dedicated page `grados/reorder.blade.php` — shows all grades in a drag-and-drop table (SortableJS CDN)
+- On "Guardar Orden" fires AJAX POST to `grados.reorder`; assigns sequential `orden` values starting at 1
+
+### Routes
+```
+GET  admin/grados/reorder   grados.reorder.index
+POST admin/grados/reorder   grados.reorder
+```
+
+### Key rules
+- New grades created via Voyager BREAD get `orden = null` and appear at the bottom of all lists until the user visits the reorder page and saves a new position.
+- `orden` is managed exclusively through the reorder view — it is not part of the edit form.
+- The seeder sets `orden` 1–10 for the 10 Kyu grades (10th Kyu → 1st Kyu).
+
+---
+
 ## Grade progression system (`AlumnoGrado`)
 
 Belt grade advancement is enforced through a structured progression system.

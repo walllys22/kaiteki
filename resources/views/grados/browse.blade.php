@@ -14,6 +14,11 @@
                             </h1>
                         </div>
                         <div class="col-md-4 text-right" style="margin-top: 30px">
+                            @if (auth()->user()->hasPermission('edit_grados') && Route::has('grados.reorder.index'))
+                                <a href="{{ route('grados.reorder.index') }}" class="btn btn-default" style="margin-right:6px;">
+                                    <i class="fa-solid fa-sort"></i> <span>Ordenar</span>
+                                </a>
+                            @endif
                             @if (auth()->user()->hasPermission('add_grados') && Route::has('voyager.grados.create'))
                                 <a href="{{ route('voyager.grados.create') }}" class="btn btn-success">
                                     <i class="voyager-plus"></i> <span>Crear</span>

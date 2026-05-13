@@ -19,7 +19,7 @@ class GradosTableSeeder extends Seeder
         \DB::table('grados')->delete();
         
         \DB::table('grados')->insert(array (
-            0 => 
+            0 =>
             array (
                 'id' => 1,
                 'tipo' => 'Kyu',
@@ -28,6 +28,7 @@ class GradosTableSeeder extends Seeder
                 'puntas' => 3,
                 'dias' => 90,
                 'status' => 1,
+                'orden' => 1,
                 'created_at' => '2026-04-23 09:02:59',
                 'updated_at' => '2026-04-23 17:36:43',
                 'registerUser_id' => NULL,
@@ -37,7 +38,7 @@ class GradosTableSeeder extends Seeder
                 'deleteRole' => NULL,
                 'deleteObservation' => NULL,
             ),
-            1 => 
+            1 =>
             array (
                 'id' => 2,
                 'tipo' => 'Kyu',
@@ -46,6 +47,7 @@ class GradosTableSeeder extends Seeder
                 'puntas' => 3,
                 'dias' => 90,
                 'status' => 1,
+                'orden' => 2,
                 'created_at' => '2026-04-23 17:28:29',
                 'updated_at' => '2026-04-24 15:01:32',
                 'registerUser_id' => NULL,
@@ -55,7 +57,7 @@ class GradosTableSeeder extends Seeder
                 'deleteRole' => NULL,
                 'deleteObservation' => NULL,
             ),
-            2 => 
+            2 =>
             array (
                 'id' => 3,
                 'tipo' => 'Kyu',
@@ -64,6 +66,7 @@ class GradosTableSeeder extends Seeder
                 'puntas' => 4,
                 'dias' => 120,
                 'status' => 1,
+                'orden' => 3,
                 'created_at' => '2026-04-23 17:29:37',
                 'updated_at' => '2026-04-23 17:30:38',
                 'registerUser_id' => NULL,
@@ -73,7 +76,7 @@ class GradosTableSeeder extends Seeder
                 'deleteRole' => NULL,
                 'deleteObservation' => NULL,
             ),
-            3 => 
+            3 =>
             array (
                 'id' => 4,
                 'tipo' => 'Kyu',
@@ -82,6 +85,7 @@ class GradosTableSeeder extends Seeder
                 'puntas' => 4,
                 'dias' => 120,
                 'status' => 1,
+                'orden' => 4,
                 'created_at' => '2026-04-23 17:30:20',
                 'updated_at' => '2026-04-24 19:01:57',
                 'registerUser_id' => NULL,
@@ -91,7 +95,7 @@ class GradosTableSeeder extends Seeder
                 'deleteRole' => NULL,
                 'deleteObservation' => NULL,
             ),
-            4 => 
+            4 =>
             array (
                 'id' => 5,
                 'tipo' => 'Kyu',
@@ -100,6 +104,7 @@ class GradosTableSeeder extends Seeder
                 'puntas' => 6,
                 'dias' => 180,
                 'status' => 1,
+                'orden' => 5,
                 'created_at' => '2026-04-24 19:00:31',
                 'updated_at' => '2026-04-24 19:00:31',
                 'registerUser_id' => NULL,
@@ -109,7 +114,7 @@ class GradosTableSeeder extends Seeder
                 'deleteRole' => NULL,
                 'deleteObservation' => NULL,
             ),
-            5 => 
+            5 =>
             array (
                 'id' => 6,
                 'tipo' => 'Kyu',
@@ -118,6 +123,7 @@ class GradosTableSeeder extends Seeder
                 'puntas' => 6,
                 'dias' => 180,
                 'status' => 1,
+                'orden' => 6,
                 'created_at' => '2026-04-24 19:02:40',
                 'updated_at' => '2026-04-24 19:02:40',
                 'registerUser_id' => NULL,
@@ -127,7 +133,7 @@ class GradosTableSeeder extends Seeder
                 'deleteRole' => NULL,
                 'deleteObservation' => NULL,
             ),
-            6 => 
+            6 =>
             array (
                 'id' => 7,
                 'tipo' => 'Kyu',
@@ -136,6 +142,7 @@ class GradosTableSeeder extends Seeder
                 'puntas' => 6,
                 'dias' => 180,
                 'status' => 1,
+                'orden' => 7,
                 'created_at' => '2026-04-24 19:21:17',
                 'updated_at' => '2026-04-24 19:21:17',
                 'registerUser_id' => NULL,
@@ -145,7 +152,7 @@ class GradosTableSeeder extends Seeder
                 'deleteRole' => NULL,
                 'deleteObservation' => NULL,
             ),
-            7 => 
+            7 =>
             array (
                 'id' => 8,
                 'tipo' => 'Kyu',
@@ -154,6 +161,7 @@ class GradosTableSeeder extends Seeder
                 'puntas' => 3,
                 'dias' => 180,
                 'status' => 1,
+                'orden' => 8,
                 'created_at' => '2026-04-24 19:23:35',
                 'updated_at' => '2026-04-24 19:23:35',
                 'registerUser_id' => NULL,
@@ -163,7 +171,7 @@ class GradosTableSeeder extends Seeder
                 'deleteRole' => NULL,
                 'deleteObservation' => NULL,
             ),
-            8 => 
+            8 =>
             array (
                 'id' => 9,
                 'tipo' => 'Kyu',
@@ -172,6 +180,7 @@ class GradosTableSeeder extends Seeder
                 'puntas' => 3,
                 'dias' => 360,
                 'status' => 1,
+                'orden' => 9,
                 'created_at' => '2026-04-24 19:24:06',
                 'updated_at' => '2026-04-24 19:24:06',
                 'registerUser_id' => NULL,
@@ -181,7 +190,7 @@ class GradosTableSeeder extends Seeder
                 'deleteRole' => NULL,
                 'deleteObservation' => NULL,
             ),
-            9 => 
+            9 =>
             array (
                 'id' => 10,
                 'tipo' => 'Kyu',
@@ -190,6 +199,7 @@ class GradosTableSeeder extends Seeder
                 'puntas' => 2,
                 'dias' => 359,
                 'status' => 1,
+                'orden' => 10,
                 'created_at' => '2026-04-24 19:24:38',
                 'updated_at' => '2026-04-24 19:24:38',
                 'registerUser_id' => NULL,

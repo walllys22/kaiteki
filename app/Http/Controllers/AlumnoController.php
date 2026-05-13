@@ -77,8 +77,7 @@ class AlumnoController extends Controller
         $grados = Grado::query()
             ->whereNull('deleted_at')
             ->where('status', 1)
-            ->orderBy('tipo')
-            ->orderBy('numero')
+            ->ordenado()
             ->get();
 
         $horarios = Horario::with('dojo')
@@ -308,8 +307,7 @@ class AlumnoController extends Controller
         $grados = Grado::whereNull('deleted_at')
             ->where('status', 1)
             ->whereNotIn('id', $gradosUsados)
-            ->orderBy('tipo')
-            ->orderBy('numero')
+            ->ordenado()
             ->get();
 
         $horarios = Horario::whereNull('deleted_at')
@@ -632,8 +630,7 @@ class AlumnoController extends Controller
         $grados = Grado::whereNull('deleted_at')
             ->where('status', 1)
             ->whereNotIn('id', $gradosUsados)
-            ->orderBy('tipo')
-            ->orderBy('numero')
+            ->ordenado()
             ->get();
 
         return view('alumnos.grados.list', compact(

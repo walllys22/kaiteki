@@ -47,6 +47,10 @@ Route::get('/comprobantes/mensualidades/pagos/{id}', [AlumnoMensualidadControlle
 // Route::get('/development', [ErrorController::class , 'error503'])->name('development');
 
 Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], function () {
+    // Estas rutas deben ir ANTES de Voyager::routes() para evitar que grados/{id} las capture
+    Route::get('grados/reorder', [GradoController::class, 'reorderView'])->name('grados.reorder.index');
+    Route::post('grados/reorder', [GradoController::class, 'reorder'])->name('grados.reorder');
+
     Voyager::routes();
 
     // Rutas Alumnos

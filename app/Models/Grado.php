@@ -21,6 +21,7 @@ class Grado extends Model
         'dias',
 
         'status',
+        'orden',
 
         'registerUser_id',
         'registerRole',
@@ -38,6 +39,11 @@ class Grado extends Model
     public function aranceles()
     {
         return $this->hasMany(Arancele::class, 'grado_id');
+    }
+
+    public function scopeOrdenado($query)
+    {
+        return $query->orderByRaw('COALESCE(orden, 99999) ASC, id ASC');
     }
 
     public function isDan(): bool

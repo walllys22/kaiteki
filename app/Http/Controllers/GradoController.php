@@ -39,10 +39,40 @@ class GradoController extends Controller
                 });
             })
             ->whereNull('deleted_at')
-            ->orderBy('id', 'DESC')
+            ->ordenado()
             ->paginate($paginate);
 
         return view('grados.list', compact('data'));
+    }
+
+    public function reorderView()
+    {
+        $this->custom_authorize('edit_grados');
+
+        $grados = Grado::query()
+            ->whereNull('deleted_at')
+            ->ordenado()
+            ->get();
+
+        return view('grados.reorder', compact('grados'));
+    }
+
+    public function reorder(Request $request)
+    {
+        $this->custom_authorize('edit_grados');
+
+        $request->validate([
+            'ids'   => 'required|array|min:1',
+            'ids.*' => 'required|integer|exists:grados,id',
+        ]);
+
+        foreach ($request->ids as $position => $id) {
+            Grado::whereNull('deleted_at')
+                ->where('id', $id)
+                ->update(['orden' => $position + 1]);
+        }
+
+        return response()->json(['success' => true]);
     }
 
     public function edit(int $id)

@@ -3,6 +3,7 @@
         <table id="dataTable" class="table table-bordered table-hover">
             <thead>
                 <tr>
+                    <th style="text-align: center; width: 44px">#</th>
                     <th style="text-align: center">Grado</th>
                     <th style="text-align: center">Puntas</th>
                     <th style="text-align: center">Dias</th>
@@ -16,6 +17,13 @@
                         $gradoLabel = trim(($item->tipo ?? '') . ' ' . ($item->numero ?? '') . ' ' . ($item->nombre ?? ''));
                     @endphp
                     <tr>
+                        <td style="text-align: center; vertical-align: middle;">
+                            @if($item->orden)
+                                <span class="label" style="background:#6c757d; font-size:12px; padding:3px 7px;">{{ $item->orden }}</span>
+                            @else
+                                <span style="color:#ccc; font-size:11px;">—</span>
+                            @endif
+                        </td>
                         <td style="vertical-align: middle;">
                             @if($item->image)
                                 @php $imgSrc = asset('storage/' . str_replace('.avif', '', $item->image) . '-cropped.webp'); @endphp
@@ -68,7 +76,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5">
+                        <td colspan="6">
                             <h5 class="text-center" style="margin-top: 50px">
                                 <img src="{{ asset('images/empty.png') }}" width="120px" alt="" style="opacity: 0.8">
                                 <br><br>
