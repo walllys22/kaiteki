@@ -615,6 +615,21 @@ class AlumnoController extends Controller
         // Puede agregar nuevo grado si no hay uno en progreso, o si el activo está completo
         $puedeAgregarGrado = !$activeGrado || ($progress && $progress['isComplete']);
 
+        // Primer grado asignado al alumno (para regla de certificados)
+        $primerAlumnoGrado = AlumnoGrado::where('alumno_id', $alumno_id)
+            ->whereNull('deleted_at')
+            ->orderBy('id')
+            ->first();
+        $primerAlumnoGradoId = $primerAlumnoGrado?->id;
+
+        $primerGradoEsPrimeroGlobal = false;
+        if ($primerAlumnoGrado?->grado_id) {
+            $minOrdenGlobal = Grado::whereNotNull('orden')->whereNull('deleted_at')->min('orden');
+            $ordenPrimerGrado = Grado::whereNull('deleted_at')->where('id', $primerAlumnoGrado->grado_id)->value('orden');
+            $primerGradoEsPrimeroGlobal = $minOrdenGlobal !== null && $ordenPrimerGrado !== null
+                && (int) $ordenPrimerGrado === (int) $minOrdenGlobal;
+        }
+
         // Fecha mínima para el próximo grado: fecha del examen final aprobado del último grado completado
         $minFechaGrado = null;
         $ultimoCompletado = AlumnoGrado::where('alumno_id', $alumno_id)
@@ -654,7 +669,8 @@ class AlumnoController extends Controller
             ->get();
 
         return view('alumnos.grados.list', compact(
-            'data', 'alumno_id', 'activeGrado', 'progress', 'puedeAgregarGrado', 'grados', 'minFechaGrado', 'arancelRepaso', 'arancelExamen', 'alumnoActivo'
+            'data', 'alumno_id', 'activeGrado', 'progress', 'puedeAgregarGrado', 'grados', 'minFechaGrado', 'arancelRepaso', 'arancelExamen', 'alumnoActivo',
+            'primerAlumnoGradoId', 'primerGradoEsPrimeroGlobal'
         ));
     }
 

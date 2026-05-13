@@ -33,6 +33,7 @@
                         Grado en Progreso: <span style="color:#2c3e50;">{{ $gradoLabel ?: 'Sin nombre' }}</span> - <strong>{{ \Carbon\Carbon::parse($activeGrado->fecha)->format('d/m/Y') }}</strong>
                     </h4>
                 </div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                 @if($progress['isComplete'])
                     <span class="label label-success" style="font-size:12px; padding:5px 10px;">
                         <i class="fa-solid fa-check-circle"></i> Completado — puede registrar el siguiente grado
@@ -46,6 +47,15 @@
                         <i class="fa-solid fa-spinner"></i> {{ $usaRepasos ? 'Acumulando puntas' : 'Pendiente de examen final' }}
                     </span>
                 @endif
+                @if($data->total() > 0)
+                    <a href="{{ route('alumno.grado.certificado.cursando', $activeGrado->id) }}"
+                       target="_blank"
+                       class="btn btn-primary btn-xs"
+                       title="Imprimir certificado de grado en progreso">
+                        <i class="fa-solid fa-certificate"></i> Certificado
+                    </a>
+                @endif
+                </div>
             </div>
         </div>
 
@@ -324,7 +334,7 @@
                                             </button>
                                             @endif
                                         @endif
-                                        @if((int) optional($activeGrado->alumno)->dojo_id === 3 && $examen->aprobado)
+                                        @if($examen->aprobado && ($activeGrado->id !== $primerAlumnoGradoId || $primerGradoEsPrimeroGlobal))
                                             <a href="{{ route('alumno.grado.examen.certificado', $examen->id) }}"
                                                target="_blank"
                                                class="btn btn-primary btn-xs"
@@ -722,7 +732,7 @@
                         @if($hExamAprobado)
                             <span class="label label-success"><i class="fa-solid fa-check"></i> Aprobado</span>
                             <br><small class="text-muted" style="font-size:11px;">{{ \Carbon\Carbon::parse($hExamenFinal->fecha)->format('d/m/Y') }}</small>
-                            @if((int) optional($item->alumno)->dojo_id === 3)
+                            @if($item->id !== $primerAlumnoGradoId || $primerGradoEsPrimeroGlobal)
                                 <br>
                                 <a href="{{ route('alumno.grado.examen.certificado', $hExamenFinal->id) }}"
                                    target="_blank"
@@ -747,7 +757,7 @@
 
                                 {{-- Repasos --}}
                                 @if($hUsaRepasos)
-                                <div class="col-md-8">
+                                <div class="col-md-7">
                                     <p style="font-weight:600; margin-bottom:6px; font-size:13px;">
                                         <i class="fa-solid fa-repeat" style="color:#8e44ad;"></i>
                                         Repasos
@@ -816,7 +826,7 @@
                                 @endif
 
                                 {{-- Exámenes --}}
-                                <div class="{{ $hUsaRepasos ? 'col-md-4' : 'col-md-12' }}">
+                                <div class="{{ $hUsaRepasos ? 'col-md-5' : 'col-md-12' }}">
                                     <p style="font-weight:600; margin-bottom:6px; font-size:13px;">
                                         <i class="fa-solid fa-graduation-cap" style="color:#e74c3c;"></i>
                                         Examen Final
