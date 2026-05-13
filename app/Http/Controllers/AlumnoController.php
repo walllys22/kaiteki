@@ -329,6 +329,29 @@ class AlumnoController extends Controller
         return view('alumnos.read', compact('dojo', 'people', 'enfermedades', 'parientes', 'grados', 'horarios', 'dataTypeContent'));
     }
 
+    public function kardex($id)
+    {
+        $this->custom_authorize('read_alumnos');
+        $userDojoId = auth()->user()->dojo_id;
+
+        $alumno = Alumno::with(['person', 'dojo'])
+            ->when($userDojoId, fn($q) => $q->where('dojo_id', $userDojoId))
+            ->findOrFail($id);
+
+        $tutores = AlumnoTutor::with(['tutor', 'pariente'])
+            ->where('alumno_id', $id)
+            ->whereNull('deleted_at')
+            ->where('status', 1)
+            ->get();
+
+        $enfermedades = AlumnoEnfermedad::where('alumno_id', $id)
+            ->whereNull('deleted_at')
+            ->where('status', 1)
+            ->get();
+
+        return view('alumnos.partials.kardex', compact('alumno', 'tutores', 'enfermedades'));
+    }
+
     public function updateStatus($id)
     {
         $this->custom_authorize('edit_alumnos');

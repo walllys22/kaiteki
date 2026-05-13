@@ -64,6 +64,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
 
 
     // Rutas auxiliares de alumnos
+    Route::get('alumnos/{id}/kardex', [AlumnoController::class, 'kardex'])->name('alumnos.kardex');
     Route::get('alumnos/{id}/check-historial', [AlumnoController::class, 'checkHistorial'])->name('alumnos.check_historial');
     Route::post('alumnos/{id}/status', [AlumnoController::class, 'updateStatus'])->name('alumnos.status.update');
     Route::get('alumnos/check-registration/{person_id}', [AlumnoController::class, 'checkRegistration'])->name('alumnos.check_registration');

@@ -14,6 +14,9 @@
                             </h1>
                         </div>
                         <div class="col-md-6 text-right" style="margin-top: 30px;">
+                            <a href="{{ route('alumnos.kardex', $dataTypeContent->id) }}" target="_blank" class="btn btn-default btn-sm">
+                                <i class="fa-solid fa-print"></i> Kardex
+                            </a>
                             <a href="{{ route('voyager.alumnos.index') }}" class="btn btn-warning btn-sm">
                                 <i class="voyager-list"></i> <span>Volver</span>
                             </a>
