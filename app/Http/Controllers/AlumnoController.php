@@ -297,16 +297,26 @@ class AlumnoController extends Controller
         $parientes = Parentesco::whereNull('deleted_at')->get();
         $enfermedades = AlumnoEnfermedad::whereNull('deleted_at')->get();
 
-        // Excluir grados que el alumno ya tiene registrados (completados o en progreso)
+        // Excluir grados ya registrados y los de orden inferior al máximo alcanzado
         $gradosUsados = AlumnoGrado::where('alumno_id', $id)
             ->whereNotNull('grado_id')
             ->whereNull('deleted_at')
             ->pluck('grado_id')
             ->toArray();
 
+        $maxOrden = \DB::table('alumno_grados')
+            ->join('grados', 'alumno_grados.grado_id', '=', 'grados.id')
+            ->where('alumno_grados.alumno_id', $id)
+            ->whereNull('alumno_grados.deleted_at')
+            ->whereNotNull('grados.orden')
+            ->max('grados.orden');
+
         $grados = Grado::whereNull('deleted_at')
             ->where('status', 1)
             ->whereNotIn('id', $gradosUsados)
+            ->when($maxOrden, fn($q) => $q->where(fn($inner) =>
+                $inner->whereNull('orden')->orWhere('orden', '>', $maxOrden)
+            ))
             ->ordenado()
             ->get();
 

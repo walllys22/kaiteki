@@ -445,9 +445,15 @@
                                 <textarea name="observacion" class="form-control" rows="2"></textarea>
                             </div>
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-success btn-submit">Registrar Grado</button>
+                        <div class="modal-footer" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                            <label style="margin:0; font-weight:normal; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                                <input type="checkbox" id="check-confirmar-grado" style="width:16px; height:16px; cursor:pointer;">
+                                <span>Confirmo que los datos son correctos</span>
+                            </label>
+                            <div>
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                                <button type="submit" id="btn-submit-grado" class="btn btn-success btn-submit" disabled>Registrar Grado</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -643,6 +649,15 @@
                 });
             });
 
+            $('#check-confirmar-grado').on('change', function() {
+                $('#btn-submit-grado').prop('disabled', !this.checked);
+            });
+
+            $('#modal-add-grado').on('hidden.bs.modal', function() {
+                $('#check-confirmar-grado').prop('checked', false);
+                $('#btn-submit-grado').prop('disabled', true);
+            });
+
             gradoList();
             listTutores();
             enfermedadList();
@@ -822,7 +837,7 @@
                     $('#div-grados-list').loading('toggle');
                     // Mostrar u ocultar el botón "Nuevo Grado"
                     var puedeAgregar = $('#puede-agregar-grado').val();
-                    $('#btn-add-grado').toggle(puedeAgregar === '1' && {{ $alumnoActivo ? 'true' : 'false' }});
+                    $('#btn-add-grado').toggle(puedeAgregar === '1' && {{ $alumnoActivo ? 'true' : 'false' }} && {{ $grados->isNotEmpty() ? 'true' : 'false' }});
                     // Pre-cargar fecha del último examen aprobado como fecha de inicio
                     var minFecha = $('#min-fecha-grado').val();
                     var $fechaInput = $('#form-add-grado input[name="fecha"]');
