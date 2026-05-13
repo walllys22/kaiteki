@@ -35,34 +35,28 @@ class ConsultaController extends Controller
         $this->custom_authorize('browse_consulta');
 
         $request->validate([
-            'dojo_id' => 'required|exists:dojos,id',
-            'q'       => 'nullable|string|max:100',
+            'q' => 'required|string|min:2|max:100',
         ]);
 
         $userDojoId = auth()->user()->dojo_id;
+        $q          = trim($request->q);
 
-        if ($userDojoId && (int) $request->dojo_id === (int) $userDojoId) {
-            return response()->json(['error' => 'No puede consultar su propio dojo.'], 403);
-        }
-
-        $q = $request->q;
-
-        $alumnos = Alumno::with(['person', 'ultimoGrado.grado'])
-            ->where('dojo_id', $request->dojo_id)
+        $alumnos = Alumno::with(['person', 'dojo', 'ultimoGrado.grado'])
             ->whereNull('deleted_at')
-            ->when($q, function ($query, $q) {
-                $query->whereHas('person', fn($pq) =>
-                    $pq->where('first_name', 'like', "%$q%")
-                       ->orWhere('ci', 'like', "%$q%")
-                );
-            })
+            ->when($userDojoId, fn($query) => $query->where('dojo_id', '!=', $userDojoId))
+            ->whereHas('person', fn($pq) =>
+                $pq->where('first_name', 'like', "%$q%")
+                   ->orWhere('ci', 'like', "%$q%")
+            )
             ->orderBy('id', 'desc')
+            ->limit(50)
             ->get();
 
         return response()->json($alumnos->map(fn($a) => [
             'id'     => $a->id,
             'nombre' => optional($a->person)->first_name ?? 'Sin nombre',
             'ci'     => optional($a->person)->ci ?? '—',
+            'dojo'   => optional($a->dojo)->nombre ?? '—',
             'status' => $a->status,
             'grado'  => ($a->ultimoGrado && $a->ultimoGrado->grado)
                 ? trim(($a->ultimoGrado->grado->tipo ?? '') . ' ' . ($a->ultimoGrado->grado->numero ?? '') . ' ' . ($a->ultimoGrado->grado->nombre ?? ''))

@@ -2,143 +2,130 @@
 
 @section('page_title', 'Consulta Inter-Dojo')
 
-@section('css')
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <style>
-        .consulta-panel { border-color: #3498db !important; }
-        .consulta-panel .panel-heading { background: linear-gradient(90deg, #ebf5fb, #fafcfe); border-bottom: 1px solid #d6eaf8; }
-        .alumno-row { cursor: pointer; transition: background .15s; }
-        .alumno-row:hover td { background: #eef6ff !important; }
-        .badge-activo   { background: #27ae60; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 11px; }
-        .badge-inactivo { background: #e67e22; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 11px; }
-        #tabla-resultados { display: none; }
-        #sin-resultados   { display: none; }
-        #cargando         { display: none; }
-    </style>
+@section('page_header')
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-bordered">
+                <div class="panel-body" style="padding:0;">
+                    <div class="col-md-6" style="padding:0;">
+                        <h1 class="page-title">
+                            <i class="fa-solid fa-magnifying-glass-location"></i> Consulta Inter-Dojo
+                        </h1>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @stop
 
-@section('page_header')
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-12">
+@section('content')
+<div class="page-content browse container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+
+            {{-- Buscador --}}
+            <div class="panel panel-bordered">
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-sm-9">
+                            <div class="input-group">
+                                <span class="input-group-addon"><i class="fa-solid fa-user"></i></span>
+                                <input type="text"
+                                       id="input-buscar"
+                                       class="form-control"
+                                       placeholder="Buscar por nombre o número de CI..."
+                                       autocomplete="off">
+                            </div>
+                            <p class="help-block" style="margin-top:6px; margin-bottom:0;">
+                                <i class="fa-solid fa-circle-info"></i>
+                                Buscá en todos los dojos excepto el tuyo.
+                            </p>
+                        </div>
+                        <div class="col-sm-3">
+                            <button id="btn-buscar" class="btn btn-primary btn-block">
+                                <i class="fa-solid fa-search"></i> Buscar
+                            </button>
+                        </div>
+                    </div>
+                    @if($dojos->isEmpty())
+                        <div class="alert alert-warning" style="margin-top:12px; margin-bottom:0;">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            No hay otros dojos disponibles para consultar.
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            {{-- Cargando --}}
+            <div id="cargando" style="display:none;">
                 <div class="panel panel-bordered">
+                    <div class="panel-body text-center" style="padding:40px;">
+                        <i class="fa-solid fa-spinner fa-spin fa-2x text-primary"></i>
+                        <p class="text-muted" style="margin-top:10px; margin-bottom:0;">Buscando alumnos...</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Sin resultados --}}
+            <div id="sin-resultados" style="display:none;">
+                <div class="panel panel-bordered">
+                    <div class="panel-body text-center" style="padding:40px;">
+                        <i class="fa-solid fa-magnifying-glass fa-2x text-muted"></i>
+                        <p class="text-muted" style="margin-top:10px; margin-bottom:0;">No se encontraron alumnos con ese nombre o CI.</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Estado inicial --}}
+            <div id="estado-inicial">
+                <div class="panel panel-bordered">
+                    <div class="panel-body text-center" style="padding:40px;">
+                        <i class="fa-solid fa-users-viewfinder fa-2x text-muted"></i>
+                        <p class="text-muted" style="margin-top:10px; margin-bottom:0;">Ingresá un nombre o CI para comenzar la búsqueda.</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Resultados --}}
+            <div id="panel-resultados" style="display:none;">
+                <div class="panel panel-bordered">
+                    <div class="panel-heading" style="display:flex; align-items:center; justify-content:space-between;">
+                        <h3 class="panel-title">
+                            <i class="fa-solid fa-users"></i> Resultados de la búsqueda
+                        </h3>
+                        <span id="count-badge" class="badge" style="font-size:12px;"></span>
+                    </div>
                     <div class="panel-body" style="padding:0;">
-                        <div class="col-md-6" style="padding:0;">
-                            <h1 class="page-title">
-                                <i class="fa-solid fa-magnifying-glass-location"></i> Consulta Inter-Dojo
-                            </h1>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover" style="margin:0;">
+                                <thead>
+                                    <tr>
+                                        <th>Alumno</th>
+                                        <th style="width:130px;">CI</th>
+                                        <th>Dojo</th>
+                                        <th>Grado Actual</th>
+                                        <th style="width:90px; text-align:center;">Estado</th>
+                                        <th style="width:70px; text-align:center;">Ver</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-alumnos"></tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
-@stop
-
-@section('content')
-<div class="page-content container-fluid">
-
-    <div class="panel panel-bordered consulta-panel">
-        <div class="panel-heading" style="padding:12px 15px;">
-            <h4 style="margin:0; font-weight:700;">
-                <i class="fa-solid fa-building" style="color:#3498db;"></i>
-                Seleccionar Dojo a Consultar
-            </h4>
-        </div>
-        <div class="panel-body">
-            <div class="row">
-                <div class="col-md-5">
-                    <div class="form-group">
-                        <label>Dojo / Sucursal <span class="text-danger">*</span></label>
-                        <select id="select-dojo" class="form-control select2" style="width:100%;">
-                            <option value="">— Seleccione un dojo —</option>
-                            @foreach($dojos as $dojo)
-                                <option value="{{ $dojo->id }}">{{ $dojo->nombre }}</option>
-                            @endforeach
-                        </select>
-                        @if($dojos->isEmpty())
-                            <small class="text-warning">No hay otros dojos disponibles para consultar.</small>
-                        @endif
-                    </div>
-                </div>
-                <div class="col-md-5">
-                    <div class="form-group">
-                        <label>Buscar Alumno</label>
-                        <input type="text" id="input-buscar" class="form-control" placeholder="Nombre o CI del alumno..." disabled>
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="form-group">
-                        <label>&nbsp;</label><br>
-                        <button id="btn-buscar" class="btn btn-primary" disabled>
-                            <i class="fa-solid fa-search"></i> Buscar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Indicador de carga --}}
-    <div id="cargando" class="text-center" style="padding:20px;">
-        <i class="fa-solid fa-spinner fa-spin fa-2x" style="color:#3498db;"></i>
-        <p class="text-muted" style="margin-top:8px;">Buscando alumnos...</p>
-    </div>
-
-    {{-- Sin resultados --}}
-    <div id="sin-resultados" class="alert alert-info">
-        <i class="fa-solid fa-circle-info"></i> No se encontraron alumnos con esos criterios en el dojo seleccionado.
-    </div>
-
-    {{-- Tabla de resultados --}}
-    <div id="tabla-resultados">
-        <div class="panel panel-bordered">
-            <div class="panel-heading" style="padding:10px 15px;">
-                <h5 style="margin:0; font-weight:600;">
-                    <i class="fa-solid fa-users"></i>
-                    Alumnos encontrados
-                    <span id="count-badge" class="badge" style="margin-left:6px; background:#3498db;"></span>
-                </h5>
-            </div>
-            <div class="panel-body" style="padding:0;">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover" style="margin:0; font-size:13px;">
-                        <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th style="width:130px;">CI / Documento</th>
-                                <th>Grado Actual</th>
-                                <th style="width:90px; text-align:center;">Estado</th>
-                                <th style="width:80px; text-align:center;">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-alumnos"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
 </div>
 @stop
 
 @section('javascript')
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <script>
 $(function () {
-    $('#select-dojo').select2({ placeholder: '— Seleccione un dojo —', allowClear: true });
-
-    $('#select-dojo').on('change', function () {
-        var dojoId = $(this).val();
-        if (dojoId) {
-            $('#input-buscar').prop('disabled', false);
-            $('#btn-buscar').prop('disabled', false);
-        } else {
-            $('#input-buscar').prop('disabled', true).val('');
-            $('#btn-buscar').prop('disabled', true);
-            ocultarResultados();
-        }
-    });
-
     $('#input-buscar').on('keypress', function (e) {
         if (e.which === 13) buscar();
     });
@@ -146,29 +133,29 @@ $(function () {
     $('#btn-buscar').on('click', buscar);
 
     function buscar() {
-        var dojoId = $('#select-dojo').val();
-        if (!dojoId) return;
-
         var q = $('#input-buscar').val().trim();
+        if (!q) {
+            toastr.warning('Ingresá un nombre o CI para buscar.');
+            return;
+        }
 
-        ocultarResultados();
-        $('#cargando').show();
+        setEstado('cargando');
 
         $.ajax({
             url: '{{ route("consulta.search") }}',
-            data: { dojo_id: dojoId, q: q },
+            data: { q: q },
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
             success: function (data) {
-                $('#cargando').hide();
                 if (!data || data.length === 0) {
-                    $('#sin-resultados').show();
-                    return;
+                    setEstado('vacio');
+                } else {
+                    renderTabla(data);
+                    setEstado('resultados');
                 }
-                renderTabla(data);
             },
             error: function (xhr) {
-                $('#cargando').hide();
-                var msg = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : 'Error al buscar.';
+                setEstado('inicial');
+                var msg = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : 'Error al realizar la búsqueda.';
                 toastr.error(msg);
             }
         });
@@ -178,37 +165,42 @@ $(function () {
         var tbody = $('#tbody-alumnos').empty();
 
         alumnos.forEach(function (a) {
-            var badge = a.status == 1
-                ? '<span class="badge-activo">Activo</span>'
-                : '<span class="badge-inactivo">Inactivo</span>';
+            var estado = a.status == 1
+                ? '<span class="label label-success">Activo</span>'
+                : '<span class="label label-warning">Inactivo</span>';
 
             var url = '{{ route("consulta.show", ":id") }}'.replace(':id', a.id);
 
             tbody.append(
-                '<tr class="alumno-row">' +
-                '<td><strong>' + escHtml(a.nombre) + '</strong></td>' +
-                '<td>' + escHtml(a.ci) + '</td>' +
-                '<td>' + escHtml(a.grado) + '</td>' +
-                '<td style="text-align:center;">' + badge + '</td>' +
+                '<tr style="cursor:pointer;" onclick="window.location=\'' + url + '\'">' +
+                '<td><strong>' + esc(a.nombre) + '</strong></td>' +
+                '<td>' + esc(a.ci) + '</td>' +
+                '<td>' + esc(a.dojo) + '</td>' +
+                '<td>' + esc(a.grado) + '</td>' +
+                '<td style="text-align:center;">' + estado + '</td>' +
                 '<td style="text-align:center;">' +
-                    '<a href="' + url + '" class="btn btn-info btn-xs"><i class="fa-solid fa-eye"></i> Ver</a>' +
+                    '<a href="' + url + '" class="btn btn-info btn-xs" onclick="event.stopPropagation();">' +
+                        '<i class="fa-solid fa-eye"></i>' +
+                    '</a>' +
                 '</td>' +
                 '</tr>'
             );
         });
 
-        $('#count-badge').text(alumnos.length);
-        $('#tabla-resultados').show();
+        var total = alumnos.length;
+        $('#count-badge').text(total + (total === 50 ? '+' : '') + ' resultado' + (total !== 1 ? 's' : ''));
     }
 
-    function ocultarResultados() {
-        $('#tabla-resultados').hide();
-        $('#sin-resultados').hide();
-        $('#tbody-alumnos').empty();
+    function setEstado(estado) {
+        $('#estado-inicial, #cargando, #sin-resultados, #panel-resultados').hide();
+        if (estado === 'inicial')    $('#estado-inicial').show();
+        if (estado === 'cargando')   $('#cargando').show();
+        if (estado === 'vacio')      $('#sin-resultados').show();
+        if (estado === 'resultados') $('#panel-resultados').show();
     }
 
-    function escHtml(str) {
-        return $('<div>').text(str).html();
+    function esc(str) {
+        return $('<div>').text(str || '').html();
     }
 });
 </script>
