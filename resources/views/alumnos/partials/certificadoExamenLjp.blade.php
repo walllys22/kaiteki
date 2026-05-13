@@ -36,7 +36,7 @@
 
     $dojoNombre   = trim((string) optional($dojo)->nombre) ?: 'Dojo';
     $alumnoNombre = trim((string) optional($person)->first_name) ?: 'Alumno no registrado';
-    $qrTexto      = "Alumno: {$alumnoNombre}\nDojo: {$dojoNombre}";
+    $qrTexto      = "Alumno: {$alumnoNombre}\nDojo: {$dojoNombre}\nGrado: {$gradoCertificado}\nFecha: {$dia}/{$mes}/{$anio}";
     $qrSvg        = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(110)->generate($qrTexto);
 
     $template = asset('images/dojos/ljp/certificados/examen.png');
@@ -136,10 +136,12 @@
         }
         .certificate-footer {
             align-items: flex-end;
+            bottom: 5%;
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            margin: 40px auto 0;
-            width: 80%;
+            left: 12%;
+            position: absolute;
+            width: 76%;
         }
         .grade-image {
             display: block;
@@ -224,27 +226,25 @@
                     A: <strong>{{ optional($person)->first_name ?: 'Alumno no registrado' }}</strong>, por haber vencido las pruebas fisicas y teoricas, se lo promueve al grado <span class="belt">{{ $gradoCertificado }}</span>, es dado a los {{ $dia }} dias del mes de {{ $mes }} del Año {{ $anio }}, en la ciudad de la Santisima Trinidad, Departamento del Beni, Bolivia.
                 @endif
             </span>
-            <br>
-            <div class="certificate-footer">
-                {{-- Columna izquierda: QR --}}
-                <div class="qr-box">
-                    {!! $qrSvg !!}
-                   
-                </div>
-                {{-- Columna central: imagen del grado --}}
-                <div style="text-align:center;">
-                    @if($gradoImage)
-                        <img src="{{ $gradoImage }}" class="grade-image" alt="Imagen del grado" onerror="this.style.display='none';">
-                    @endif
-                </div>
-                {{-- Columna derecha: firma --}}
-                <div class="signature-box">
-                    <div class="signature-line"></div>
-                    <div class="signature-name">{{ $responsableNombre }}</div>
-                    @if($responsableGrado)
-                        <div class="signature-grade">{{ $responsableGrado }}</div>
-                    @endif
-                </div>
+        </div>
+
+        <div class="certificate-footer">
+            <div class="qr-box">
+                {!! $qrSvg !!}
+                <div class="qr-label">{{ $alumnoNombre }}
+{{ $dojoNombre }}</div>
+            </div>
+            <div style="text-align:center;">
+                @if($gradoImage)
+                    <img src="{{ $gradoImage }}" class="grade-image" alt="Imagen del grado" onerror="this.style.display='none';">
+                @endif
+            </div>
+            <div class="signature-box">
+                <div class="signature-line"></div>
+                <div class="signature-name">{{ $responsableNombre }}</div>
+                @if($responsableGrado)
+                    <div class="signature-grade">{{ $responsableGrado }}</div>
+                @endif
             </div>
         </div>
     </div>
