@@ -128,22 +128,41 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                        <h4 class="modal-title" style="color: white;"><i class="fa-solid fa-print"></i> Imprimir Reporte de Alumnos</h4>
+                        <h4 class="modal-title" style="color: white;"><i class="fa-solid fa-print"></i> Lista de Alumnos por Grado</h4>
                     </div>
                     <div class="modal-body">
+                        @if(!$userDojoId)
                         <div class="form-group">
-                            <label for="print_dojo_id" style="color: #333;">Seleccione el Dojo que desea imprimir:</label>
+                            <label style="color: #333;">Sucursal / Dojo</label>
                             <select id="print_dojo_id" class="form-control">
-                                <option value="">-- Todos los Dojos --</option>
-                                @foreach (\App\Models\Dojo::whereNull('deleted_at')->get() as $item)
+                                <option value="">— Todos los Dojos —</option>
+                                @foreach (\App\Models\Dojo::whereNull('deleted_at')->orderBy('nombre')->get() as $item)
                                     <option value="{{ $item->id }}">{{ $item->nombre }}</option>
                                 @endforeach
                             </select>
                         </div>
+                        @else
+                        <input type="hidden" id="print_dojo_id" value="{{ $userDojoId }}">
+                        @endif
+
+                        <div class="form-group">
+                            <label style="color: #333;">Grado actual del alumno</label>
+                            <select id="print_grado_id" class="form-control">
+                                <option value="">— Todos los grados —</option>
+                                @foreach ($grados as $grado)
+                                    <option value="{{ $grado->id }}">
+                                        {{ trim(($grado->tipo ?? '') . ' ' . ($grado->numero ?? '') . ' ' . ($grado->nombre ?? '')) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-                        <button type="button" class="btn btn-success" id="btn-print-confirm">Imprimir</button>
+                        <button type="button" class="btn btn-success" id="btn-print-confirm">
+                            <i class="fa-solid fa-print"></i> Imprimir
+                        </button>
                     </div>
                 </div>
             </div>
@@ -453,10 +472,14 @@
             });
 
             $('#btn-print-confirm').click(function(){
-                let search = $('#input-search').val() ? $('#input-search').val() : '';
-                let dojo_id = $('#print_dojo_id').val();
+                let dojo_id  = $('#print_dojo_id').val();
+                let grado_id = $('#print_grado_id').val();
                 let url = '{{ route("alumnos.print") }}';
-                window.open(`${url}?search=${search}&dojo_id=${dojo_id}`, '_blank');
+                let params = [];
+                if (dojo_id)  params.push('dojo_id='  + dojo_id);
+                if (grado_id) params.push('grado_id=' + grado_id);
+                if (params.length) url += '?' + params.join('&');
+                window.open(url, '_blank');
                 $('#modal-print').modal('hide');
             });
 

@@ -434,27 +434,23 @@ class AlumnoController extends Controller
     {
         $this->custom_authorize('read_alumnos');
 
-        $search = $request->input('search');
-        $dojo_id = $request->input('dojo_id');
+        $userDojoId = auth()->user()->dojo_id;
+        $dojo_id    = $userDojoId ?: $request->input('dojo_id');
+        $grado_id   = $request->input('grado_id');
 
-        $query = Alumno::with(['person', 'dojo'])
-            ->when($dojo_id, function ($q) use ($dojo_id) {
-                return $q->where('dojo_id', $dojo_id);
-            })
-            ->when($search, function ($q) use ($search) {
-                return $q->whereHas('person', function ($personQuery) use ($search) {
-                    $personQuery->where('first_name', 'like', "%$search%");
-                });
-            });
+        $alumnos = Alumno::with(['person', 'dojo', 'ultimoGrado.grado', 'ultimoGrado.repasos'])
+            ->when($dojo_id, fn($q) => $q->where('dojo_id', $dojo_id))
+            ->when($grado_id, fn($q) => $q->whereHas('ultimoGrado', fn($inner) => $inner->where('grado_id', $grado_id)))
+            ->whereNull('deleted_at')
+            ->orderBy('dojo_id')
+            ->orderByDesc('status')
+            ->get();
 
-        $alumnos = $query->orderByDesc('id')->get();
-        $dojo = $dojo_id ? Dojo::find($dojo_id) : null;
+        $dojo       = $dojo_id ? Dojo::find($dojo_id) : null;
+        $gradoFiltro = $grado_id ? Grado::find($grado_id) : null;
+        $esGlobal   = !$userDojoId;
 
-        if (!$dojo && $alumnos->isNotEmpty() && $alumnos->pluck('dojo_id')->filter()->unique()->count() === 1) {
-            $dojo = $alumnos->first()->dojo;
-        }
-
-        return view('alumnos.print', compact('alumnos', 'search', 'dojo'));
+        return view('alumnos.print', compact('alumnos', 'dojo', 'gradoFiltro', 'esGlobal'));
     }
 
     public function tutorList($alumno_id)

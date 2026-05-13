@@ -1,119 +1,255 @@
+@php
+    $logo = null;
+    if ($dojo && $dojo->logo) {
+        $logoPath = public_path('storage/' . $dojo->logo);
+        if (file_exists($logoPath)) {
+            $mime = getimagesize($logoPath)['mime'] ?? 'image/jpeg';
+            $logo = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($logoPath));
+        }
+    }
+    $dojoNombre = $dojo ? $dojo->nombre : 'Todos los Dojos';
+@endphp
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Reporte de Alumnos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Alumnos por Grado</title>
     <style>
-        body { font-family: 'Helvetica', sans-serif; font-size: 11px; color: #333; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; font-weight: bold; text-transform: uppercase; }
-        .header { text-align: center; margin-bottom: 20px; }
-        .header h1 { margin: 10px 0; font-size: 18px; color: #1e3a8a; }
-        .footer { position: fixed; bottom: 0; width: 100%; text-align: right; font-size: 9px; color: #777; }
-        .status-active { color: #059669; }
-        .status-inactive { color: #d97706; }
-        .logo { position: absolute; left: 10px; top: 10px; width: 80px; z-index: 1000; }
-        /* Estilos para los botones */
-        .pdf-actions {
-            text-align: right;
-            margin-bottom: 15px;
-            position: relative; /* Para que no interfiera con el logo */
-            z-index: 999;
-        }
-        .pdf-actions a {
-            display: inline-block;
-            padding: 8px 15px;
-            margin-left: 10px;
-            border-radius: 5px;
-            text-decoration: none;
-            color: #fff;
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #ccc;
+            font-family: Arial, Helvetica, sans-serif;
             font-size: 12px;
+            color: #222;
+        }
+        .actions {
+            padding: 10px 20px;
+            text-align: right;
+            background: #555;
+        }
+        .actions button, .actions a {
+            background: #fff;
+            border: 1px solid #333;
+            border-radius: 3px;
+            color: #333;
             cursor: pointer;
+            display: inline-block;
+            font-size: 13px;
+            margin-left: 6px;
+            padding: 7px 18px;
+            text-decoration: none;
         }
-        .pdf-actions .print-button {
-            background-color: #4CAF50; /* Verde */
+        .sheet {
+            background: #fff;
+            margin: 18px auto;
+            padding: 28px 32px;
+            width: 960px;
         }
-        .pdf-actions .cancel-button {
-            background-color: #f44336; /* Rojo */
+
+        /* ── Encabezado ── */
+        .header-table { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+        .header-logo  { width: 90px; vertical-align: middle; }
+        .header-logo img { width: 80px; height: auto; }
+        .header-center { text-align: center; vertical-align: middle; }
+        .header-center .dojo-name { font-size: 22px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+        .header-center .doc-title { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+        .header-right  { text-align: right; vertical-align: top; font-size: 11px; color: #555; width: 140px; }
+
+        /* ── Filtros aplicados ── */
+        .filtros {
+            background: #f2f2f2;
+            border: 1px solid #e0e0e0;
+            border-radius: 3px;
+            padding: 7px 12px;
+            margin-bottom: 14px;
+            font-size: 11px;
+            color: #555;
         }
-        /* Ocultar botones al imprimir */
+        .filtros span { margin-right: 16px; }
+        .filtros strong { color: #333; }
+
+        /* ── Tabla principal ── */
+        .main-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .main-table th {
+            background: #d9d9d9;
+            border-bottom: 2px solid #bbb;
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            padding: 8px 10px;
+            text-align: left;
+            text-transform: uppercase;
+        }
+        .main-table td {
+            border-bottom: 1px solid #eee;
+            font-size: 12px;
+            padding: 8px 10px;
+            vertical-align: middle;
+        }
+        .main-table tr:last-child td { border-bottom: none; }
+        .main-table tr:nth-child(even) td { background: #fafafa; }
+
+        /* Badges */
+        .b-activo      { background: #2ecc71; color: #fff; font-size: 9px; font-weight: bold; padding: 2px 7px; border-radius: 2px; }
+        .b-inactivo    { background: #e74c3c; color: #fff; font-size: 9px; font-weight: bold; padding: 2px 7px; border-radius: 2px; }
+        .b-completado  { background: #27ae60; color: #fff; font-size: 9px; font-weight: bold; padding: 2px 7px; border-radius: 2px; }
+        .b-en-curso    { background: #f39c12; color: #fff; font-size: 9px; font-weight: bold; padding: 2px 7px; border-radius: 2px; }
+        .b-sin-grado   { background: #bbb;    color: #fff; font-size: 9px; font-weight: bold; padding: 2px 7px; border-radius: 2px; }
+
+        /* Barra de puntas */
+        .puntas-wrap { display: flex; align-items: center; gap: 5px; }
+        .bar-outer { background: #e0e0e0; border-radius: 3px; height: 7px; width: 70px; }
+        .bar-inner { border-radius: 3px; height: 7px; }
+        .bar-ok     { background: #2ecc71; }
+        .bar-parcial{ background: #f39c12; }
+
+        .ninguno { text-align: center; color: #888; padding: 30px 0; font-size: 14px; }
+
+        .total-row td {
+            background: #f2f2f2 !important;
+            font-weight: bold;
+            font-size: 11px;
+            color: #555;
+            border-top: 2px solid #ccc;
+        }
+
         @media print {
-            .pdf-actions { display: none; }
+            body { background: #fff; }
+            .actions { display: none; }
+            .sheet { margin: 0; padding: 16px 20px; width: 100%; }
+            @page { size: letter landscape; margin: 10mm; }
         }
     </style>
 </head>
 <body>
-    <div class="pdf-actions">
-        <a href="javascript:window.print()" class="print-button">Imprimir</a>
-        <a href="javascript:history.back()" class="cancel-button">Cancelar</a>
+
+<div class="actions">
+    <button onclick="window.print()">&#128438; Imprimir</button>
+    <a href="#" onclick="window.close(); return false;">&#8592; Cerrar</a>
+</div>
+
+<div class="sheet">
+
+    {{-- ── Encabezado ── --}}
+    <table class="header-table">
+        <tr>
+            <td class="header-logo">
+                @if($logo)
+                    <img src="{{ $logo }}" alt="Logo">
+                @endif
+            </td>
+            <td class="header-center">
+                <div class="dojo-name">{{ strtoupper($dojoNombre) }}</div>
+                <div class="doc-title">Lista de Alumnos por Grado</div>
+            </td>
+            <td class="header-right">
+                Impreso<br>
+                {{ now()->format('d/m/Y') }}<br>
+                {{ now()->format('g:i a') }}<br>
+                Total: {{ $alumnos->count() }} alumno(s)
+            </td>
+        </tr>
+    </table>
+
+    {{-- ── Filtros aplicados ── --}}
+    <div class="filtros">
+        <span><strong>Dojo:</strong> {{ $dojoNombre }}</span>
+        <span><strong>Grado:</strong> {{ $gradoFiltro ? trim(($gradoFiltro->tipo ?? '') . ' ' . ($gradoFiltro->numero ?? '') . ' ' . ($gradoFiltro->nombre ?? '')) : 'Todos' }}</span>
     </div>
-    @if($dojo && $dojo->logo)
-        @php
-            $logoPath = str_replace('\\', '/', $dojo->logo);
-            $path = public_path('storage/'.$logoPath);
-            if (!file_exists($path)) {
-                $path = storage_path('app/public/'.$logoPath);
-            }
-            $imgData = null;
-            $mimeType = 'image/jpeg';
-            if (file_exists($path)) {
-                $imgData = base64_encode(file_get_contents($path));
-                $info = getimagesize($path);
-                $mimeType = $info ? $info['mime'] : 'image/jpeg';
-            }
-        @endphp
 
-        @if($imgData)
-            <img src="data:{{ $mimeType }};base64,{{ $imgData }}" class="logo">
-        @else
-            <img src="{{ public_path('images/default.jpg') }}" class="logo">
-        @endif
-    @endif
-
-    <div class="header">
-        <h1>REPORTE GENERAL DE ALUMNOS</h1>
-        <p>Generado el: {{ date('d/m/Y H:i A') }}</p>
-        @if($search)
-            <p><strong>Filtro aplicado:</strong> "{{ $search }}"</p>
-        @endif
-    </div>
-
-    <table>
+    {{-- ── Tabla ── --}}
+    @if($alumnos->count())
+    <table class="main-table">
         <thead>
             <tr>
-                <th>Nombre del Alumno</th>
+                <th>#</th>
+                <th>Alumno</th>
+                @if($esGlobal && !$dojo)
                 <th>Dojo</th>
-                <th>Fecha Ingreso</th>
+                @endif
+                <th>Ingreso</th>
                 <th>Estado</th>
+                <th>Último Grado</th>
+                <th>Estado Grado</th>
+                <th>Puntas</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($alumnos as $alumno)
+            @foreach($alumnos as $i => $alumno)
+            @php
+                $ug         = $alumno->ultimoGrado;
+                $g          = optional($ug)->grado;
+                $gradoLabel = $g ? trim(($g->tipo ?? '') . ' ' . ($g->numero ?? '') . ' ' . ($g->nombre ?? '')) : null;
+                $completado = $ug ? $ug->isCompletado() : null;
+                $puntasReq  = $g ? (int) $g->puntas : 0;
+                $puntasObt  = $ug ? $ug->repasos->where('aprobado', 1)->count() : 0;
+                $pct        = $puntasReq > 0 ? min(100, round($puntasObt / $puntasReq * 100)) : ($ug ? 100 : 0);
+            @endphp
             <tr>
-                <td>{{ $alumno->person->first_name }}</td>
-                <td>{{ $alumno->dojo->nombre ?? 'N/A' }}</td>
-                <td>
-                    {{ $alumno->fechaIngreso ? \Carbon\Carbon::parse($alumno->fechaIngreso)->format('d/m/Y') : 'N/A' }}
+                <td style="color:#aaa; font-size:11px;">{{ $i + 1 }}</td>
+                <td style="font-weight:bold;">{{ optional($alumno->person)->first_name ?? '—' }}</td>
+                @if($esGlobal && !$dojo)
+                <td style="font-size:11px; color:#555;">{{ optional($alumno->dojo)->nombre ?? '—' }}</td>
+                @endif
+                <td style="white-space:nowrap; font-size:11px;">
+                    {{ $alumno->fechaIngreso ? \Carbon\Carbon::parse($alumno->fechaIngreso)->format('d/m/Y') : '—' }}
                 </td>
                 <td>
-                    <span class="{{ $alumno->status == 1 ? 'status-active' : 'status-inactive' }}">
-                        {{ $alumno->status == 1 ? 'ACTIVO' : 'INACTIVO' }}
-                    </span>
+                    @if((int) $alumno->status === 1)
+                        <span class="b-activo">Activo</span>
+                    @else
+                        <span class="b-inactivo">Inactivo</span>
+                    @endif
+                </td>
+                <td>
+                    @if($gradoLabel)
+                        {{ $gradoLabel }}
+                    @else
+                        <span class="b-sin-grado">Sin grado</span>
+                    @endif
+                </td>
+                <td>
+                    @if($ug === null)
+                        <span class="b-sin-grado">—</span>
+                    @elseif($completado)
+                        <span class="b-completado">Completado</span>
+                    @else
+                        <span class="b-en-curso">En curso</span>
+                    @endif
+                </td>
+                <td>
+                    @if($ug)
+                    <div class="puntas-wrap">
+                        <span style="font-size:11px; min-width:32px;">{{ $puntasObt }}/{{ $puntasReq }}</span>
+                        <div class="bar-outer">
+                            <div class="bar-inner {{ $pct >= 100 ? 'bar-ok' : 'bar-parcial' }}" style="width:{{ $pct }}%;"></div>
+                        </div>
+                    </div>
+                    @else
+                        <span style="color:#bbb;">—</span>
+                    @endif
                 </td>
             </tr>
             @endforeach
         </tbody>
+        <tfoot>
+            <tr class="total-row">
+                <td colspan="{{ ($esGlobal && !$dojo) ? 8 : 7 }}">
+                    Total: {{ $alumnos->count() }} alumno(s) &nbsp;·&nbsp;
+                    Activos: {{ $alumnos->where('status', 1)->count() }} &nbsp;·&nbsp;
+                    Inactivos: {{ $alumnos->where('status', 0)->count() }}
+                </td>
+            </tr>
+        </tfoot>
     </table>
+    @else
+        <div class="ninguno">No se encontraron alumnos con los filtros seleccionados.</div>
+    @endif
 
-    <div class="footer">
-        Página <script type="text/php">
-            if (isset($pdf)) {
-                $x = 520; $y = 820; $text = "{PAGE_NUM} de {PAGE_COUNT}";
-                $font = $fontMetrics->get_font("helvetica", "bold");
-                $size = 8; $pdf->page_text($x, $y, $text, $font, $size);
-            }
-        </script>
-    </div>
+</div>
 </body>
 </html>
