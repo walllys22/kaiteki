@@ -19,6 +19,9 @@
                                     <i class="voyager-plus"></i> <span>{{ __('voyager::generic.add_new') }}</span>
                                 </a>
                             @endcan
+                            <a href="{{ route('voyager.dashboard') }}" class="btn" style="background-color: #ffeb3b; color: #000;">
+                                <i class="voyager-angle-left"></i> <span>Volver al Inicio</span>
+                            </a>
                         </div>
                     </div>
                 </div>
