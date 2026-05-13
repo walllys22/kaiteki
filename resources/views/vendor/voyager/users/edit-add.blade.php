@@ -139,7 +139,7 @@
                                 </select>
                             </div>
                             @if ($dataTypeContent->getKey())
-                                <div class="form-group">
+                                <div class="form-group" style="display: none">
                                     <label for="status">Estado</label> <br>
                                     <input type="checkbox" name="status" class="toggleswitch" 
                                         @if(isset($dataTypeContent->id))
