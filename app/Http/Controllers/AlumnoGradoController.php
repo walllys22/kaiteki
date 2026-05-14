@@ -303,13 +303,17 @@ class AlumnoGradoController extends Controller
 
         $repaso = AlumnoGradoRepaso::with(['alumnoGrado.alumno'])
             ->whereNull('deleted_at')
-            ->when($userDojoId, function ($query, $userDojoId) {
-                return $query->whereHas('alumnoGrado.alumno', function ($alumnoQuery) use ($userDojoId) {
-                    $alumnoQuery->where('dojo_id', $userDojoId);
+            ->whereHas('alumnoGrado.alumno', function ($alumnoQuery) use ($userDojoId) {
+                $alumnoQuery->when($userDojoId, function ($query, $userDojoId) {
+                    return $query->where('dojo_id', $userDojoId);
                 });
             })
             ->findOrFail($id);
-        $this->ensureAlumnoActivo($repaso->alumnoGrado->alumno);
+
+        if ((float) ($repaso->monto ?? 0) > 0 && (float) ($repaso->monto_pagado ?? 0) >= (float) $repaso->monto) {
+            return redirect()->back()
+                ->with(['message' => 'Esta punta ya está pagada.', 'alert-type' => 'warning']);
+        }
 
         $monto = (float) $request->monto;
 
@@ -537,13 +541,17 @@ class AlumnoGradoController extends Controller
 
         $examen = AlumnoGradoExamen::with(['alumnoGrado.alumno'])
             ->whereNull('deleted_at')
-            ->when($userDojoId, function ($query, $userDojoId) {
-                return $query->whereHas('alumnoGrado.alumno', function ($alumnoQuery) use ($userDojoId) {
-                    $alumnoQuery->where('dojo_id', $userDojoId);
+            ->whereHas('alumnoGrado.alumno', function ($alumnoQuery) use ($userDojoId) {
+                $alumnoQuery->when($userDojoId, function ($query, $userDojoId) {
+                    return $query->where('dojo_id', $userDojoId);
                 });
             })
             ->findOrFail($id);
-        $this->ensureAlumnoActivo($examen->alumnoGrado->alumno);
+
+        if ((float) ($examen->monto ?? 0) > 0 && (float) ($examen->monto_pagado ?? 0) >= (float) $examen->monto) {
+            return redirect()->back()
+                ->with(['message' => 'Este examen ya está pagado.', 'alert-type' => 'warning']);
+        }
 
         $monto = (float) $request->monto;
 

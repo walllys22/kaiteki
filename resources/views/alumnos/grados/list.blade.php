@@ -201,7 +201,7 @@
                                                 <i class="fa-solid fa-print"></i>
                                             </a>
                                         @else
-                                            @if($alumnoActivo ?? true)
+                                            @if(auth()->user()->hasPermission('edit_alumnos'))
                                             <button type="button"
                                                     class="btn btn-success btn-xs btn-pagar-repaso"
                                                     title="Registrar pago"
@@ -322,7 +322,7 @@
                                                 <i class="fa-solid fa-print"></i>
                                             </a>
                                         @else
-                                            @if($alumnoActivo ?? true)
+                                            @if(auth()->user()->hasPermission('edit_alumnos'))
                                             <button type="button"
                                                     class="btn btn-success btn-xs btn-pagar-examen"
                                                     title="Registrar pago"
@@ -803,7 +803,7 @@
                                                                title="Imprimir comprobante">
                                                                 <i class="fa-solid fa-print"></i>
                                                             </a>
-                                                        @elseif($alumnoActivo ?? true)
+                                                        @elseif(auth()->user()->hasPermission('edit_alumnos'))
                                                             <button type="button"
                                                                     class="btn btn-success btn-xs btn-pagar-repaso"
                                                                     title="Registrar pago"
@@ -871,7 +871,7 @@
                                                                title="Imprimir comprobante">
                                                                 <i class="fa-solid fa-print"></i>
                                                             </a>
-                                                        @elseif($alumnoActivo ?? true)
+                                                        @elseif(auth()->user()->hasPermission('edit_alumnos'))
                                                             <button type="button"
                                                                     class="btn btn-success btn-xs btn-pagar-examen"
                                                                     title="Registrar pago"

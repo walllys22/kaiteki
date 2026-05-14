@@ -7,6 +7,7 @@
                     <th style="text-align: center">Grado</th>
                     <th style="text-align: center">Puntas</th>
                     <th style="text-align: center">Dias</th>
+                    <th style="text-align: center; min-width: 220px;">Aranceles</th>
                     <th style="text-align: center">Estado</th>
                     <th style="text-align: center">Acciones</th>
                 </tr>
@@ -49,6 +50,28 @@
                         <td style="text-align: center; vertical-align: middle;">
                             <label class="label label-default" style="margin-top: 6px;">{{ $item->dias }} dia(s)</label>
                         </td>
+                        <td style="vertical-align: middle;">
+                            @if($item->aranceles->count())
+                                <div class="grado-aranceles-stack">
+                                    @foreach($item->aranceles as $arancel)
+                                        <div class="grado-arancel-line {{ (int) $arancel->status === 1 ? 'activo' : 'inactivo' }}">
+                                            <span class="grado-arancel-tipo">{{ $arancel->tipo }}</span>
+                                            <span class="grado-arancel-precio">Bs {{ number_format((float) $arancel->precio, 2, '.', ',') }}</span>
+                                            @if(!$userDojoId)
+                                                <span class="grado-arancel-dojo">{{ optional($arancel->dojo)->nombre ?: 'Sin dojo' }}</span>
+                                            @endif
+                                            @if((int) $arancel->status !== 1)
+                                                <span class="grado-arancel-estado">Inactivo</span>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <span class="text-muted" style="font-size:12px;">
+                                    {{ $userDojoId ? 'Sin arancel para tu dojo' : 'Sin aranceles' }}
+                                </span>
+                            @endif
+                        </td>
                         <td style="text-align: center; vertical-align: middle;">
                             @if ($item->status == 1)
                                 <label class="label label-success">Activo</label>
@@ -76,7 +99,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6">
+                        <td colspan="7">
                             <h5 class="text-center" style="margin-top: 50px">
                                 <img src="{{ asset('images/empty.png') }}" width="120px" alt="" style="opacity: 0.8">
                                 <br><br>
@@ -89,6 +112,46 @@
         </table>
     </div>
 </div>
+
+<style>
+    .grado-aranceles-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        min-width: 210px;
+    }
+    .grado-arancel-line {
+        align-items: center;
+        background: #f8fafc;
+        border: 1px solid #dbe7f0;
+        border-left: 3px solid #2ecc71;
+        border-radius: 4px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 7px;
+        padding: 5px 7px;
+    }
+    .grado-arancel-line.inactivo {
+        border-left-color: #95a5a6;
+        opacity: .78;
+    }
+    .grado-arancel-tipo {
+        color: #34495e;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    .grado-arancel-precio {
+        color: #111827;
+        font-size: 13px;
+        font-weight: 800;
+    }
+    .grado-arancel-dojo,
+    .grado-arancel-estado {
+        color: #6b7280;
+        font-size: 11px;
+    }
+</style>
 
 <div class="col-md-12">
     <div class="col-md-4" style="overflow-x:auto">

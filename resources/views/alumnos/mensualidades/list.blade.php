@@ -69,7 +69,7 @@
         @if(!$alumnoActivo)
             <div class="alert alert-warning" style="font-size:12px; padding:8px 10px; margin-bottom:8px;">
                 <i class="fa-solid fa-lock"></i>
-                Alumno inactivo: mensualidades en modo solo visualizacion. No se pueden configurar, pausar, pagar ni eliminar registros.
+                Alumno inactivo: mensualidades en modo solo visualizacion. Solo se permite registrar pagos de deudas existentes.
             </div>
         @endif
         @if($planActivo)
@@ -385,7 +385,7 @@
                         </span>
                     </td>
                     <td style="width:160px; min-width:160px;" class="no-sort no-click bread-actions text-right">
-                        @if(auth()->user()->hasPermission('edit_alumnos') && $alumnoActivo && $item->status !== 'anulado')
+                        @if(auth()->user()->hasPermission('edit_alumnos') && $item->status !== 'anulado')
                             @if($item->saldo() > 0 && $puedePagarMensualidad)
                                 <button type="button"
                                         class="btn btn-success btn-sm btn-pagar-mensualidad"
@@ -405,7 +405,7 @@
                                     <i class="fa-solid fa-lock"></i>
                                 </button>
                             @endif
-                            @if($esUltimaMensualidad && $item->pagos->isEmpty())
+                            @if($alumnoActivo && $esUltimaMensualidad && $item->pagos->isEmpty())
                                 <a href="#" onclick="deleteItem('{{ route('alumno.mensualidades.destroy', $item->id) }}')"
                                    data-toggle="modal" data-target="#modal-delete"
                                    class="btn btn-danger btn-sm"
@@ -461,7 +461,8 @@
 
 {{ $data->links() }}
 
-@if(auth()->user()->hasPermission('edit_alumnos') && $alumnoActivo)
+@if(auth()->user()->hasPermission('edit_alumnos'))
+@if($alumnoActivo)
 <form id="form-mensualidad-plan" action="{{ route('alumno.mensualidades.plan.store') }}" method="POST" class="form-edit-add">
     @csrf
     <div class="modal fade" tabindex="-1" id="modal-mensualidad-plan" role="dialog">
@@ -933,6 +934,8 @@
         toggleFechaCorte();
     })();
 </script>
+
+@endif
 
 <form id="form-pagar-mensualidad" action="#" method="POST" class="form-edit-add">
     @csrf

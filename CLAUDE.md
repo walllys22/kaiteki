@@ -122,7 +122,7 @@ Most list views are loaded via AJAX. The controller has two methods:
 ### Student detail (read)
 The alumno detail page (`alumnos/read.blade.php`) is the hub for managing: tutors (`AlumnoTutor`), health conditions (`AlumnoEnfermedad`), belt grades (`AlumnoGrado`), schedules (`AlumnoHorario`), attendance history, monthly payments, kardex, and grade history. Editing alumnos from the list is intentionally disabled — only creation and status toggle are allowed from the list.
 
-Inactive students (`Alumno.status != 1`) are read-only for operational actions. Shared controller guard: `Controller::ensureAlumnoActivo()`. It also enforces dojo scope for branch users when it receives an alumno id. Do not bypass this guard when adding actions that mutate student-related records.
+Inactive students (`Alumno.status != 1`) are read-only for operational actions, except debt collection. Existing unpaid repaso, exam, and mensualidad debts can still be paid while the alumno is inactive. Shared controller guard: `Controller::ensureAlumnoActivo()`. It also enforces dojo scope for branch users when it receives an alumno id. Do not use this guard in payment-only actions that must allow inactive alumnos; keep explicit dojo scoping instead.
 
 ### Student auxiliary routes
 ```
@@ -193,7 +193,7 @@ Belt grade advancement is enforced through a structured progression system.
 13. Repaso/exam prices default from the arancel but can be adjusted at registration time.
 14. Each repaso/exam records its own `monto` (historical — unaffected by future arancel changes).
 15. The user selects payment state: `Pagado` → `monto_pagado = monto`; `Pendiente` → `monto_pagado = 0`.
-16. Pending repaso/exam payments can be marked paid later through `pagarRepaso()` / `pagarExamen()`.
+16. Pending repaso/exam payments can be marked paid later through `pagarRepaso()` / `pagarExamen()`, even when the alumno is inactive. Direct access is blocked if the item is already fully paid.
 17. Printed comprobantes are only available when the repaso or exam is fully paid.
 18. When an exam is approved and there are active unused grades after the current one (or grades with `orden=null`), `next_grado_id` is required and the controller creates the next `AlumnoGrado` with the same exam date and `status='0'`.
 
@@ -231,6 +231,7 @@ Managed from the grade detail view (`resources/views/grados/read.blade.php`).
 - Fields: `grado_id`, `dojo_id`, `tipo` (`Repaso`/`Examen`), `precio`, `observacion`, `status`
 - If no active `Repaso` arancel exists for the grade+dojo, the "Agregar Repaso" button is disabled and a warning is shown. The controller also blocks the save.
 - Dan grades only use `Examen` aranceles. `Repaso` aranceles are blocked for Dan grades.
+- The grades AJAX list (`GradoController::list()` + `resources/views/grados/list.blade.php`) shows the aranceles for each grade. Branch users only see aranceles for their own `auth()->user()->dojo_id`; global users see aranceles for all dojos with the dojo name shown.
 
 ### Comprobante de Punta
 View: `resources/views/alumnos/partials/comprobantePunta.blade.php`
@@ -368,7 +369,8 @@ Monthly payments live inside the alumno detail page (`resources/views/alumnos/me
 - If a same `alumno_id + periodo` row exists in soft-deleted state, generation restores it instead of creating a duplicate.
 
 ### Payment rules
-- Payments require an active alumno and an authenticated user, except the public signed receipt route.
+- Payments require an authenticated user, except the public signed receipt route.
+- Monthly debt payments are allowed for inactive alumnos. Do not call `ensureAlumnoActivo()` from `pagar()`.
 - A payment cannot be registered on `status='anulado'`, on a mensualidad with no saldo, or with `monto` greater than the current saldo.
 - Older pending mensualidades must be paid first.
 - `pagar()` uses `lockForUpdate()` before creating `AlumnoMensualidadPago` and updating `monto_pagado`.
@@ -471,6 +473,7 @@ This is an authenticated admin route inside the `/admin` group. Current implemen
 - `Person` uses only `first_name` — old fields (`middle_name`, `paternal_surname`, `maternal_surname`, `last_name`) are removed and must not be reintroduced.
 - A person can only be registered as an alumno once across the entire system (unique `person_id` in `alumnos`, checked including soft-deleted records).
 - Alumno status changes happen directly on `Alumno.status` — no dependency on grade history.
+- Inactive alumnos cannot receive new operational records, but existing debts can still be paid.
 - `AlumnoGrado.status`: `'0'`/`null` = in progress, `'1'` = completed. Never skip the progression system by setting `status='1'` directly on creation.
 - Dan grades (`Grado.tipo = Dan`) do not use repasos/puntas. Do not add repaso flows or Repaso aranceles for them.
 - `registerUser_id` is audit-only — it does not determine dojo ownership.

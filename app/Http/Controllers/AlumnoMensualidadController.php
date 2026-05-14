@@ -251,7 +251,11 @@ class AlumnoMensualidadController extends Controller
 
         $mensualidad = $this->findMensualidad($id);
         $mensualidad->loadMissing('alumno');
-        $this->ensureAlumnoActivo($mensualidad->alumno, 'El alumno esta inactivo. No se pueden registrar pagos.');
+
+        if (!$mensualidad->alumno) {
+            return redirect()->back()
+                ->with(['message' => 'No se puede registrar pago porque el alumno no está disponible.', 'alert-type' => 'error']);
+        }
 
         if ($mensualidad->status === 'anulado') {
             return redirect()->back()

@@ -25,8 +25,21 @@ class GradoController extends Controller
     {
         $search = request('search') ?? null;
         $paginate = request('paginate') ?? 10;
+        $userDojoId = auth()->user()->dojo_id;
 
         $data = Grado::query()
+            ->with([
+                'aranceles' => function ($query) use ($userDojoId) {
+                    $query->with('dojo')
+                        ->whereNull('deleted_at')
+                        ->when($userDojoId, function ($query, $userDojoId) {
+                            return $query->where('dojo_id', $userDojoId);
+                        })
+                        ->orderByDesc('status')
+                        ->orderBy('tipo')
+                        ->orderBy('dojo_id');
+                },
+            ])
             ->withCount('alumnoGrados')
             ->when($search, function ($query, $search) {
                 return $query->where(function ($q) use ($search) {
@@ -42,7 +55,7 @@ class GradoController extends Controller
             ->ordenado()
             ->paginate($paginate);
 
-        return view('grados.list', compact('data'));
+        return view('grados.list', compact('data', 'userDojoId'));
     }
 
     public function reorderView()

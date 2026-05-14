@@ -49,7 +49,7 @@
         @if(!$alumnoActivo)
             <div class="alert alert-warning">
                 <i class="fa-solid fa-lock"></i>
-                Alumno inactivo: esta ficha queda en modo solo visualizacion. No se pueden registrar mensualidades, grados, repasos, examenes, horarios, asistencias, tutores ni enfermedades.
+                Alumno inactivo: esta ficha queda en modo solo visualizacion. Solo se permite registrar pagos de deudas existentes.
             </div>
         @endif
 
