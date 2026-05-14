@@ -33,19 +33,26 @@ php artisan optimize:clear         # clear all caches
 php artisan view:clear
 ```
 
-### Seeder order (must follow dependency order)
-1. `VoyagerDatabaseSeeder`
-2. `UsersTableSeeder` — creates global users with no `person_id`/`dojo_id` (`admin@soluciondigital.dev`, `wallys@admin.com`)
-3. `CiudadsTableSeeder`
-4. `DataTypesTableSeeder`
-5. `DataRowsTableSeeder`
-6. `MenuItemsTableSeeder`
-7. `GradosTableSeeder`
-8. `ParentescosTableSeeder`
-9. `DojosTableSeeder`
-10. `PeopleTableSeeder`
+### Seeder behavior
+`DatabaseSeeder` disables foreign key checks during the full seed run and enables them again in a `finally` block. This is intentional: the example data has circular references between `users`, `people`, and `dojos` (`users.person_id`, `users.dojo_id`, `people.dojo_id`, `people.registerUser_id`, and `dojos.person_id`).
 
-There is currently no `DojoUsersTableSeeder` in the repository. Branch/operator users should be created with a `person_id`; `users.dojo_id` is then derived from the selected person's `people.dojo_id`.
+Current full seed package:
+1. `VoyagerDatabaseSeeder`
+2. `CiudadsTableSeeder`
+3. `DataTypesTableSeeder`
+4. `DataRowsTableSeeder`
+5. `MenuItemsTableSeeder`
+6. `GradosTableSeeder`
+7. `ParentescosTableSeeder`
+8. `DojosTableSeeder`
+9. `PeopleTableSeeder`
+10. `UsersTableSeeder`
+11. `SettingsTableSeeder`
+12. `ArancelesTableSeeder`
+13. `HorariosTableSeeder`
+14. `HorarioReponsablesTableSeeder`
+
+Do not remove seeders from this list to make `example:install` pass. The demo dataset must keep users, horarios, grados, aranceles, horario responsables, dojos, people, ciudads, and parentescos. There is no separate `DojoUsersTableSeeder`; global users and branch/operator users live in `UsersTableSeeder`.
 
 ### Tests
 ```bash
@@ -89,7 +96,7 @@ This pattern is applied in `PersonController`, `AlumnoController`, `UserControll
 | Type | `person_id` | `dojo_id` | Example |
 |------|------------|-----------|---------|
 | Global/Admin | `null` | `null` | `admin@soluciondigital.dev`, `wallys@admin.com` |
-| Branch operator | set | set (from person) | operational users |
+| Branch operator | set | set (from person) | `admin@gusuku.com`, `admin@ljpzabala.com` |
 
 When a branch user creates a Person or Alumno, `dojo_id` is taken from `auth()->user()->dojo_id` server-side — the UI cannot override it.
 
