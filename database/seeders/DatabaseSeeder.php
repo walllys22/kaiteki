@@ -24,5 +24,9 @@ class DatabaseSeeder extends Seeder
         $this->call(ParentescosTableSeeder::class);
         $this->call(DojosTableSeeder::class);
         $this->call(PeopleTableSeeder::class);
+        $this->call(SettingsTableSeeder::class);
+        $this->call(ArancelesTableSeeder::class);
+        $this->call(HorariosTableSeeder::class);
+        $this->call(HorarioReponsablesTableSeeder::class);
     }
 }

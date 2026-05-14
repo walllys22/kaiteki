@@ -2,9 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Documentation rule
+
+`CLAUDE.md` is the operational source of truth for this repository. Any change that adds or modifies behavior, routes, models, migrations, permissions, business rules, views, integrations, or deployment/runtime assumptions must update this file in the same change. Do not leave new rules only in chat, code comments, side documents, or memory.
+
 ## Project Overview
 
-**Kaiteki** is a karate dojo management system built on Laravel 10 + Voyager admin panel. It manages students (alumnos), people (people), schedules (horarios), tournaments (torneos), belt grades (grados), and per-branch (dojo/sucursal) data isolation.
+**Kaiteki** is a karate dojo management system built on Laravel 10 + Voyager admin panel. It manages students (alumnos), people (people), schedules (horarios), attendance (asistencias), monthly payments (mensualidades), belt grades (grados), exam/repaso fees (aranceles), certificates, and per-branch (dojo/sucursal) data isolation.
 
 ## Commands
 
@@ -31,7 +35,7 @@ php artisan view:clear
 
 ### Seeder order (must follow dependency order)
 1. `VoyagerDatabaseSeeder`
-2. `UsersTableSeeder` — creates `admin@soluciondigital.dev` (global, no person/dojo)
+2. `UsersTableSeeder` — creates global users with no `person_id`/`dojo_id` (`admin@soluciondigital.dev`, `wallys@admin.com`)
 3. `CiudadsTableSeeder`
 4. `DataTypesTableSeeder`
 5. `DataRowsTableSeeder`
@@ -41,7 +45,7 @@ php artisan view:clear
 9. `DojosTableSeeder`
 10. `PeopleTableSeeder`
 
-`DojoUsersTableSeeder` is separate — creates an operational user linked to a person + dojo. Run manually after the above if needed.
+There is currently no `DojoUsersTableSeeder` in the repository. Branch/operator users should be created with a `person_id`; `users.dojo_id` is then derived from the selected person's `people.dojo_id`.
 
 ### Tests
 ```bash
@@ -58,11 +62,11 @@ php artisan test --filter=TestClassName
 ## Architecture
 
 ### Voyager Integration
-All routes live under `/admin` and pass through two custom middleware:
+Most admin routes live under `/admin` and pass through two custom middleware:
 - `loggin` — logs every HTTP request (method, status, user, device, input) to a `requests` log channel
 - `system` — redirects non-admin users to a 503 page when `system.development` setting is enabled
 
-Custom controllers **override** Voyager's BREAD by registering named routes that match Voyager's expected route names (e.g. `voyager.alumnos.index`). The app-level controllers take priority over Voyager's generic BREAD for those entities. Custom routes are registered **after** `Voyager::routes()` so they win the name conflict.
+Custom controllers **override** Voyager's BREAD by registering named routes that match Voyager's expected route names (e.g. `voyager.alumnos.index`). The app-level controllers take priority over Voyager's generic BREAD for those entities. Most custom override routes are registered **after** `Voyager::routes()` so they win the name conflict. Exception: `admin/grados/reorder` is registered before `Voyager::routes()` so Voyager's `grados/{id}` route cannot capture it.
 
 Voyager controllers are extended/overridden in [app/Http/Controllers/Voyager/](app/Http/Controllers/Voyager/).
 
@@ -75,7 +79,7 @@ $userDojoId = auth()->user()->dojo_id;
 // If null → user is global/admin and sees everything
 ```
 
-This pattern is applied in `PersonController`, `AlumnoController`, `UserController`, `AsistenciaController`, `HorarioController`, `AjaxController`, and must be applied to any new module that should respect branch isolation.
+This pattern is applied in `PersonController`, `AlumnoController`, `UserController`, `AsistenciaController`, `HorarioController`, `AjaxController`, `ConsultaController`, `GradoController` arancel actions, `AlumnoMensualidadController`, and grade receipt/certificate actions. Apply it to any new module that should respect branch isolation.
 
 - `users.dojo_id` — which branch a user belongs to
 - `people.dojo_id` — which branch registered the person
@@ -84,7 +88,7 @@ This pattern is applied in `PersonController`, `AlumnoController`, `UserControll
 ### User types
 | Type | `person_id` | `dojo_id` | Example |
 |------|------------|-----------|---------|
-| Global/Admin | `null` | `null` | `admin@soluciondigital.dev` |
+| Global/Admin | `null` | `null` | `admin@soluciondigital.dev`, `wallys@admin.com` |
 | Branch operator | set | set (from person) | operational users |
 
 When a branch user creates a Person or Alumno, `dojo_id` is taken from `auth()->user()->dojo_id` server-side — the UI cannot override it.
@@ -107,16 +111,30 @@ Most list views are loaded via AJAX. The controller has two methods:
 
 ### View structure
 - `resources/views/administrations/people/` — People module
-- `resources/views/alumnos/` — Students module (browse, read, tutores/, grados/, enfermedades/)
+- `resources/views/alumnos/` — Students module (browse, read, tutores/, grados/, enfermedades/, horarios/, asistencias/, mensualidades/)
+- `resources/views/alumnos/partials/` — Student print/receipt/certificate partials (kardex, grade history, repaso/examen receipts, certificates)
 - `resources/views/consulta/` — Inter-dojo read-only lookup
-- `resources/views/torneos/` — Tournaments
 - `resources/views/horarios/` — Schedules
 - `resources/views/partials/` — Reusable modals
 - `resources/views/vendor/voyager/` — Overridden Voyager templates
 - `resources/views/layouts-print/` — Print templates (letter, legal, horizontal)
 
 ### Student detail (read)
-The alumno detail page (`alumnos/read.blade.php`) is the hub for managing: tutors (`AlumnoTutor`), health conditions (`AlumnoEnfermedad`), and belt grades (`AlumnoGrado`). Editing alumnos from the list is intentionally disabled — only creation and status toggle are allowed from the list.
+The alumno detail page (`alumnos/read.blade.php`) is the hub for managing: tutors (`AlumnoTutor`), health conditions (`AlumnoEnfermedad`), belt grades (`AlumnoGrado`), schedules (`AlumnoHorario`), attendance history, monthly payments, kardex, and grade history. Editing alumnos from the list is intentionally disabled — only creation and status toggle are allowed from the list.
+
+Inactive students (`Alumno.status != 1`) are read-only for operational actions. Shared controller guard: `Controller::ensureAlumnoActivo()`. It also enforces dojo scope for branch users when it receives an alumno id. Do not bypass this guard when adding actions that mutate student-related records.
+
+### Student auxiliary routes
+```
+GET  admin/alumnos/{id}/kardex             alumnos.kardex
+GET  admin/alumnos/{id}/historial-grados   alumnos.historial.grados
+GET  admin/alumnos/{id}/check-historial    alumnos.check_historial
+POST admin/alumnos/{id}/status             alumnos.status.update
+GET  admin/alumnos/check-registration/{person_id} alumnos.check_registration
+GET  admin/alumnos/imprimir/reporte        alumnos.print
+```
+
+`updateStatus()` cannot inactivate a student while they have an active monthly plan or a currently vigente mensualidad. `checkRegistration()` prevents registering a person already used as an alumno anywhere in the system and also detects when the selected person is the responsible person for the same dojo.
 
 ---
 
@@ -153,25 +171,31 @@ POST admin/grados/reorder   grados.reorder
 Belt grade advancement is enforced through a structured progression system.
 
 ### Models
+- `Grado` — belt definition. `isDan()` returns true when `tipo` is `Dan`; `usaRepasos()` returns false for Dan grades.
 - `AlumnoGrado` — records each grade a student is assigned. `status='0'`/`null` = in progress, `status='1'` = completed. Has `isCompletado()` helper.
 - `AlumnoGradoRepaso` — each practice session (punta). `aprobado=1` counts toward the required total. Stores `arancel_id`, `monto`, `monto_pagado`.
-- `AlumnoGradoExamen` — each final exam attempt. `aprobado=1` marks the grade as completed.
+- `AlumnoGradoExamen` — each final exam attempt. `aprobado=1` marks the grade as completed. Stores `arancel_id`, `monto`, `monto_pagado`.
 - `Arancele` — configurable price per `grado_id`, `dojo_id`, and `tipo` (`Repaso` / `Examen`).
 
 ### Business rules (all enforced server-side in `AlumnoGradoController`)
 1. A student cannot register a new grade while one is in progress (`status='0'`).
-2. To enable the final exam, the student must accumulate approved repasos equal to `Grado.puntas`.
-3. Once the puntas quota is met, no more repasos can be added — the exam must be taken next.
-4. The exam can be retaken any number of times if failed (aplazado).
-5. The grade is marked completed (`status='1'`) only when the exam is approved.
-6. The same grade cannot be registered twice for the same student (regardless of soft-deletes).
-7. Already-completed grades are excluded from the grade select dropdown.
-8. The start date of a new grade cannot be earlier than the approved final exam date of the previous grade.
-9. To add a repaso, an active `Arancele` of type `Repaso` must exist for the same `grado_id` and `dojo_id`.
-10. The repaso price defaults from the arancel but can be adjusted at registration time.
-11. Each repaso records its own `monto` (historical — unaffected by future arancel changes).
-12. The user selects payment state: `Pagado` → `monto_pagado = monto`; `Pendiente` → `monto_pagado = 0`.
-13. The printed comprobante is only available when the repaso is fully paid.
+2. Kyu grades require approved repasos equal to `Grado.puntas` before the final exam.
+3. Dan grades do not use puntas/repasos (`Grado::usaRepasos()` returns false) and can go directly to final exam.
+4. Once the puntas quota is met on a Kyu grade, no more repasos can be added — the exam must be taken next.
+5. The exam can be retaken any number of times if failed (aplazado).
+6. The grade is marked completed (`status='1'`) only when the exam is approved.
+7. The same grade cannot be registered twice for the same student (regardless of soft-deletes).
+8. Already-completed grades are excluded from the grade select dropdown.
+9. The start date of a new grade cannot be earlier than the approved final exam date of the previous grade.
+10. To add a repaso, an active `Arancele` of type `Repaso` must exist for the same `grado_id` and `dojo_id`.
+11. To add an exam, an active `Arancele` of type `Examen` must exist for the same `grado_id` and `dojo_id`.
+12. A Dan grade must not have `Repaso` aranceles; `GradoController::storeArancel()` blocks them.
+13. Repaso/exam prices default from the arancel but can be adjusted at registration time.
+14. Each repaso/exam records its own `monto` (historical — unaffected by future arancel changes).
+15. The user selects payment state: `Pagado` → `monto_pagado = monto`; `Pendiente` → `monto_pagado = 0`.
+16. Pending repaso/exam payments can be marked paid later through `pagarRepaso()` / `pagarExamen()`.
+17. Printed comprobantes are only available when the repaso or exam is fully paid.
+18. When an exam is approved and there are active unused grades after the current one (or grades with `orden=null`), `next_grado_id` is required and the controller creates the next `AlumnoGrado` with the same exam date and `status='0'`.
 
 ### Date validation rules for repasos and examenes
 All validated server-side in `storeRepaso()` and `storeExamen()`. Also enforced client-side via `min` attribute on date inputs in the modal.
@@ -189,9 +213,10 @@ All validated server-side in `storeRepaso()` and `storeExamen()`. Also enforced 
 The view (`alumnos/grados/list.blade.php`) computes `$minFechaRepaso` and `$minFechaExamen` server-side as `max(all candidates) + 1 day` and sets them as `min` on the date inputs. The default value pre-selected is `max($minFecha, today)`. Hint text below each input shows which record is the blocking reference.
 
 ### `calcularProgreso(AlumnoGrado)` — static method
-Returns an array with: `puntasRequeridas`, `puntasObtenidas`, `diasRequeridos`, `diasTranscurridos`, `cumplePuntas`, `cumpleDias`, `puedeExamen`, `examenAprobado`, `isComplete`.
+Returns an array with: `puntasRequeridas`, `puntasObtenidas`, `diasRequeridos`, `diasTranscurridos`, `cumplePuntas`, `cumpleDias`, `puedeExamen`, `examenAprobado`, `isComplete`, `usaRepasos`.
 
 - `diasTranscurridos` counts real `AsistenciaAlumno` records with `estado='asistencia'` from the grade start date onward (not calendar days). This is informational/reference only — it does NOT gate the exam.
+- For Dan grades, `usaRepasos=false`, `puntasRequeridas=0`, and `puedeExamen=true` as long as date/arancel rules pass.
 - Used by both the controller actions and `AlumnoController::gradoList()`.
 
 ### Critical implementation detail
@@ -205,6 +230,7 @@ Managed from the grade detail view (`resources/views/grados/read.blade.php`).
 - Model: `App\Models\Arancele`, table: `aranceles`
 - Fields: `grado_id`, `dojo_id`, `tipo` (`Repaso`/`Examen`), `precio`, `observacion`, `status`
 - If no active `Repaso` arancel exists for the grade+dojo, the "Agregar Repaso" button is disabled and a warning is shown. The controller also blocks the save.
+- Dan grades only use `Examen` aranceles. `Repaso` aranceles are blocked for Dan grades.
 
 ### Comprobante de Punta
 View: `resources/views/alumnos/partials/comprobantePunta.blade.php`
@@ -212,6 +238,22 @@ View: `resources/views/alumnos/partials/comprobantePunta.blade.php`
 A repaso is considered paid when `monto > 0` AND `monto_pagado >= monto`. Only paid repasos show a print button. The controller (`comprobanteRepaso()`) also blocks direct URL access to unpaid repasos.
 
 The comprobante shows: dojo info, alumno info, grade info, repaso details, payment summary, and a voucher number based on `repaso.id`.
+
+### Comprobante de Examen
+View: `resources/views/alumnos/partials/comprobanteExamen.blade.php`
+
+An exam is considered paid when `monto > 0` AND `monto_pagado >= monto`. Only paid exams show a print button. The controller (`comprobanteExamen()`) also blocks direct URL access to unpaid exams.
+
+### Certificates
+View: `resources/views/alumnos/partials/certificadoExamenLjp.blade.php`
+
+Certificate support is currently configured only for `dojo_id = 3` (`L.J.P. Zabala Dojo`) with template `public/images/dojos/ljp/certificados/examen.png`.
+
+- `certificadoExamen()` prints a certificate only for approved exams (`aprobado=1`) and only when the alumno belongs to dojo 3.
+- `certificadoCursando()` prints a "currently studying this grade" certificate for an in-progress grade, only after the student already has at least one completed grade.
+- Both certificate routes respect branch scoping through `auth()->user()->dojo_id`.
+- The template places the student photo, registration number, grade text, optional grade image (`grados.image`), QR code generated by `simplesoftwareio/simple-qrcode`, and dojo responsible signature.
+- When adding certificates for other dojos, add the template under `public/images/dojos/{dojo}/certificados/`, add the controller rule, and document the coordinates here.
 
 ### AJAX state communication
 `alumnos/grados/list.blade.php` (loaded via AJAX) communicates state back to `read.blade.php` via hidden inputs:
@@ -224,8 +266,13 @@ The comprobante shows: dojo info, alumno info, grade info, repaso details, payme
 POST   admin/alumnos/grado/store                       alumno.grado.store
 POST   admin/alumnos/grado/repaso/store                alumno.grado.repaso.store
 GET    admin/alumnos/grado/repaso/{id}/comprobante     alumno.grado.repaso.comprobante
+PUT    admin/alumnos/grado/repaso/{id}/pagar           alumno.grado.repaso.pagar
 DELETE admin/alumnos/grado/repaso/{id}/delete          alumno.grado.repaso.destroy
 POST   admin/alumnos/grado/examen/store                alumno.grado.examen.store
+GET    admin/alumnos/grado/examen/{id}/comprobante     alumno.grado.examen.comprobante
+GET    admin/alumnos/grado/examen/{id}/certificado     alumno.grado.examen.certificado
+GET    admin/alumnos/grado/{id}/certificado-cursando   alumno.grado.certificado.cursando
+PUT    admin/alumnos/grado/examen/{id}/pagar           alumno.grado.examen.pagar
 DELETE admin/alumnos/grado/examen/{id}/delete          alumno.grado.examen.destroy
 ```
 
@@ -280,6 +327,93 @@ POST   admin/horarios/responsables/store    horarios.responsables.store
 
 ---
 
+## Alumno schedules (`AlumnoHorarioController`)
+
+Student schedule assignment is managed from the alumno detail page (`resources/views/alumnos/horarios/list.blade.php`).
+
+**Rules:**
+- Mutating actions require an active alumno via `ensureAlumnoActivo()`.
+- A student cannot have the same active schedule twice.
+- Assigning a new schedule sets all previous active `AlumnoHorario` rows for that student to `status='0'`, then creates a new active row.
+- Deleting is allowed only for an active assignment (`status='1'`).
+- Available schedules are active schedules from the user's dojo for branch users; global users can see all active schedules.
+
+**Routes:**
+```
+GET    admin/alumnos/{id}/horarios/list     alumno.horario.list
+POST   admin/alumnos/horario/store          alumno.horario.store
+DELETE admin/alumnos/horario/{id}/delete    alumno.horario.destroy
+```
+
+---
+
+## Mensualidades (`AlumnoMensualidadController`)
+
+Monthly payments live inside the alumno detail page (`resources/views/alumnos/mensualidades/list.blade.php`) and are scoped by `dojo_id`.
+
+### Models
+- `AlumnoMensualidadPlan` — payment generation configuration for a student. Fields include `monto_mensual`, `descuento`, `fecha_inicio`, `fecha_fin`, `tipo_generacion` (`automatica` / `fecha_fin`), `status`.
+- `AlumnoMensualidad` — generated month/period. Fields include `periodo`, `fecha_fin`, `monto`, `descuento`, `monto_pagado`, `status`.
+- `AlumnoMensualidadPago` — individual payment applied to a generated mensualidad.
+
+### Generation rules
+- `list()` generates missing mensualidades automatically only when there is an active plan and the alumno is active.
+- `tipo_generacion='automatica'` generates from `fecha_inicio` through today, month by month.
+- `tipo_generacion='fecha_fin'` generates only through `fecha_fin`, then the plan is marked inactive (`status=0`).
+- Month boundaries use Carbon `addMonthNoOverflow()`.
+- Partial final periods are prorated by days and stored in `monto`, `descuento`, and `fecha_fin`.
+- `fecha_inicio` cannot be in the future. The first plan cannot start before `Alumno.fechaIngreso`.
+- Only one active plan is allowed per alumno. A current plan must be paused/finalized before another one is configured.
+- A new plan cannot start while the latest generated mensualidad is still vigente or while a programmed cutoff is still in the future.
+- If a same `alumno_id + periodo` row exists in soft-deleted state, generation restores it instead of creating a duplicate.
+
+### Payment rules
+- Payments require an active alumno and an authenticated user, except the public signed receipt route.
+- A payment cannot be registered on `status='anulado'`, on a mensualidad with no saldo, or with `monto` greater than the current saldo.
+- Older pending mensualidades must be paid first.
+- `pagar()` uses `lockForUpdate()` before creating `AlumnoMensualidadPago` and updating `monto_pagado`.
+- `resolverStatus()` returns: `anulado`, `exonerado`, `pagado`, `parcial`, or `pendiente`.
+
+### Pause / activate / delete
+- `pausarPlan()` supports `tipo_corte='mes_completo'` or `tipo_corte='fecha'`.
+- Plans generated with `fecha_fin` can only be finalized by specific date, not by full month.
+- Date cuts must fall inside the latest generated period and recalculate that period proportionally.
+- `activarPlan()` only reactivates paused automatic plans, and only if the alumno has no other active plan.
+- `destroy()` can delete only the most recent generated mensualidad and only when it has no payments.
+- `beca` and `mora` columns were removed; do not reintroduce them. Use `descuento` and payment status instead.
+
+### Receipts
+View: `resources/views/alumnos/mensualidades/comprobantePago.blade.php`
+
+- Authenticated route: `alumno.mensualidades.pago.comprobante`.
+- Public route: `/comprobantes/mensualidades/pagos/{id}` with `signed` middleware and route name `alumno.mensualidades.pago.comprobante.public`.
+- Receipt output includes dojo info, alumno info, payment amount, period range, collector, and a QR generated client-side with `qrcodejs`.
+
+### Routes
+```
+GET    admin/alumnos/{id}/mensualidades/list              alumno.mensualidades.list
+POST   admin/alumnos/mensualidades/plan/store             alumno.mensualidades.plan.store
+PUT    admin/alumnos/mensualidades/plan/{id}/pausar       alumno.mensualidades.plan.pausar
+PUT    admin/alumnos/mensualidades/plan/{id}/activar      alumno.mensualidades.plan.activar
+PUT    admin/alumnos/mensualidades/{id}/pagar             alumno.mensualidades.pagar
+DELETE admin/alumnos/mensualidades/{id}/delete            alumno.mensualidades.destroy
+GET    admin/alumnos/mensualidades/pagos/{id}/comprobante alumno.mensualidades.pago.comprobante
+GET    /comprobantes/mensualidades/pagos/{id}             alumno.mensualidades.pago.comprobante.public (signed)
+```
+
+---
+
+## Dashboard (`resources/views/vendor/voyager/index.blade.php`)
+
+The Voyager dashboard is customized for financial and operational summary by dojo.
+
+- Branch users are fixed to `auth()->user()->dojo_id`.
+- Global users choose a dojo with `?dojo_id=`.
+- It summarizes repaso fees, exam fees, mensualidades, pending debts, current-month totals, and latest monthly payments.
+- Dashboard queries are view-local and should stay dojo-scoped when new financial sources are added.
+
+---
+
 ## Consulta Inter-Dojo (`ConsultaController`)
 
 Read-only cross-branch lookup. Allows users to search and view students from **other** dojos without being able to edit anything.
@@ -313,13 +447,22 @@ GET  admin/consulta/alumno/{id}        consulta.show
 
 **What is NOT shown:** tutors, attendance, schedule assignments — those are operational and belong to the owning dojo only.
 
-**Menu:** item ID 51 in `menu_items`, under "Administración" (parent_id=40). Registered in `MenuItemsTableSeeder`.
+**Menu:** item ID 52 in `menu_items`, top-level "Consulta" (`parent_id=null`, `order=3`). Registered in `MenuItemsTableSeeder`.
 
 ---
 
-## Public-only routes (no auth)
-- `/kumite-temporizador` — fight timer board
-- `/tablero-kata` — kata scoreboard
+## WhatsApp microservice stub
+
+Route: `GET admin/whatsapp` (`whatsapp.message`) handled by `MicroServiceController::message()`.
+
+This is an authenticated admin route inside the `/admin` group. Current implementation is a local/dev stub: `tokenGenerator()` posts to `http://127.0.0.1:3005/api/tokens/generate`, `message()` posts to `http://127.0.0.1:3002/send`, and `id='dev'` plus the recipient phone are hardcoded. Do not treat this as production-ready without externalizing configuration and removing hardcoded recipients.
+
+---
+
+## Public / utility routes
+- `GET /comprobantes/mensualidades/pagos/{id}` — signed public monthly-payment receipt (`alumno.mensualidades.pago.comprobante.public`), no auth but protected by `signed` middleware.
+- `GET /admin/clear-cache` — calls `php artisan optimize:clear` and redirects to `/admin/profile`. It is currently declared outside the authenticated `/admin` route group; do not add similar utility routes without explicit auth/middleware.
+- `resources/views/kumite_temporizador.blade.php` and `resources/views/tablero_kata.blade.php` exist, but `routes/web.php` currently does not register `/kumite-temporizador` or `/tablero-kata`. Add routes explicitly before documenting them as public endpoints.
 
 ---
 
@@ -329,8 +472,11 @@ GET  admin/consulta/alumno/{id}        consulta.show
 - A person can only be registered as an alumno once across the entire system (unique `person_id` in `alumnos`, checked including soft-deleted records).
 - Alumno status changes happen directly on `Alumno.status` — no dependency on grade history.
 - `AlumnoGrado.status`: `'0'`/`null` = in progress, `'1'` = completed. Never skip the progression system by setting `status='1'` directly on creation.
+- Dan grades (`Grado.tipo = Dan`) do not use repasos/puntas. Do not add repaso flows or Repaso aranceles for them.
 - `registerUser_id` is audit-only — it does not determine dojo ownership.
 - `dojo_id` on users comes from the associated person (`users.dojo_id = people.dojo_id`). The UI does not allow selecting dojo directly on users — it auto-fills from the selected person.
 - Repasos cannot have their date set earlier than the grade start date, the last repaso, or the last examen — validated both server-side and via `min` attribute in the view.
+- Exam comprobantes follow the same paid-only rule as repaso comprobantes.
+- Mensualidades use `descuento`; `beca` and `mora` were removed and must not be reintroduced.
 - The `Arancele` model uses the name `Arancele` (not `Arancel`) — this matches the migration and must not be renamed.
-- Multi-branch isolation is applied to: `people`, `users`, `alumnos`, `horarios`, `asistencias`, `consulta`. Other modules (payments, reports, torneos) are not yet scoped by dojo.
+- Multi-branch isolation is applied to: `people`, `users`, `alumnos`, `horarios`, `asistencias`, `consulta`, `aranceles`, `mensualidades`, and grade receipts/certificates. Other modules must be reviewed before assuming they are dojo-scoped.
