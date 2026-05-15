@@ -120,7 +120,7 @@
             letter-spacing: .02em;
             line-height: 1.65;
             position: absolute;
-            top: 43%;
+            top: 48%;
             width: 76%;
         }
         .certificate-text strong {
