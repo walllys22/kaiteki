@@ -94,12 +94,12 @@
             width: min(100%, 1120px);
         }
         .student-photo {
-            height: 23.5%;
-            left: 71%;
+            height: 19%;
+            left: 79%;
             object-fit: cover;
             position: absolute;
-            top: 9.2%;
-            width: 17.1%;
+            top: 18%;
+            width: 13.5%;
         }
         .reg {
             color: #f20b3f;
