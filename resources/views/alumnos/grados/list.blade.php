@@ -184,7 +184,7 @@
                                     </td>
                                     <td style="text-align:center;">
                                         @if((float) ($repaso->monto ?? 0) <= 0)
-                                            <span class="label label-default">Sin monto</span>
+                                            <span class="label label-success">Exonerado</span>
                                         @elseif((float) ($repaso->monto_pagado ?? 0) >= (float) ($repaso->monto ?? 0))
                                             <span class="label label-success">Pagado</span>
                                         @else
@@ -193,7 +193,7 @@
                                     </td>
                                     <td>{{ $repaso->observacion ?: '—' }}</td>
                                     <td style="text-align:center;">
-                                        @if((float) ($repaso->monto ?? 0) > 0 && (float) ($repaso->monto_pagado ?? 0) >= (float) ($repaso->monto ?? 0))
+                                        @if((float) ($repaso->monto ?? 0) <= 0 || (float) ($repaso->monto_pagado ?? 0) >= (float) ($repaso->monto ?? 0))
                                             <a href="{{ route('alumno.grado.repaso.comprobante', $repaso->id) }}"
                                                target="_blank"
                                                class="btn btn-info btn-xs"
@@ -305,7 +305,7 @@
                                     </td>
                                     <td style="text-align:center;">
                                         @if((float) ($examen->monto ?? 0) <= 0)
-                                            <span class="label label-default">Sin monto</span>
+                                            <span class="label label-success">Exonerado</span>
                                         @elseif((float) ($examen->monto_pagado ?? 0) >= (float) ($examen->monto ?? 0))
                                             <span class="label label-success">Pagado</span>
                                         @else
@@ -314,7 +314,7 @@
                                     </td>
                                     <td>{{ $examen->observacion ?: '—' }}</td>
                                     <td style="text-align:center;">
-                                        @if((float) ($examen->monto ?? 0) > 0 && (float) ($examen->monto_pagado ?? 0) >= (float) ($examen->monto ?? 0))
+                                        @if((float) ($examen->monto ?? 0) <= 0 || (float) ($examen->monto_pagado ?? 0) >= (float) ($examen->monto ?? 0))
                                             <a href="{{ route('alumno.grado.examen.comprobante', $examen->id) }}"
                                                target="_blank"
                                                class="btn btn-info btn-xs"
@@ -430,6 +430,7 @@
                                 <div class="input-group">
                                     <span class="input-group-addon">Bs</span>
                                     <input type="number"
+                                           id="repaso-monto"
                                            name="monto"
                                            class="form-control"
                                            min="0"
@@ -441,10 +442,14 @@
                             </div>
                             <div class="form-group col-md-6">
                                 <label>Estado de pago <span class="text-danger">*</span></label>
-                                <select name="estado_pago" class="form-control" required>
+                                <input type="hidden" id="repaso-estado-pago-hidden" name="estado_pago" value="">
+                                <select id="repaso-estado-pago" class="form-control" required>
                                     <option value="pendiente" {{ old('estado_pago', 'pendiente') === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
                                     <option value="pagado" {{ old('estado_pago') === 'pagado' ? 'selected' : '' }}>Pagado</option>
                                 </select>
+                                <small id="repaso-monto-cero-hint" class="text-info" style="display:none;">
+                                    <i class="fa-solid fa-circle-info"></i> Monto 0: se registra como pagado automáticamente.
+                                </small>
                             </div>
                         </div>
                         <div class="row">
@@ -454,9 +459,15 @@
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary btn-submit">Guardar Repaso</button>
+                    <div class="modal-footer" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                        <label style="margin:0; font-weight:normal; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                            <input type="checkbox" id="check-confirmar-repaso" style="width:16px; height:16px; cursor:pointer;">
+                            <span>Confirmo que los datos son correctos</span>
+                        </label>
+                        <div>
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                            <button type="submit" id="btn-guardar-repaso" class="btn btn-primary btn-submit" disabled>Guardar Repaso</button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -523,6 +534,7 @@
                                 <div class="input-group">
                                     <span class="input-group-addon">Bs</span>
                                     <input type="number"
+                                           id="examen-monto"
                                            name="monto"
                                            class="form-control"
                                            min="0"
@@ -534,10 +546,14 @@
                             </div>
                             <div class="form-group col-md-6">
                                 <label>Estado de pago <span class="text-danger">*</span></label>
-                                <select name="estado_pago" class="form-control" required>
+                                <input type="hidden" id="examen-estado-pago-hidden" name="estado_pago" value="">
+                                <select id="examen-estado-pago" class="form-control" required>
                                     <option value="pendiente" {{ old('estado_pago', 'pendiente') === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
                                     <option value="pagado" {{ old('estado_pago') === 'pagado' ? 'selected' : '' }}>Pagado</option>
                                 </select>
+                                <small id="examen-monto-cero-hint" class="text-info" style="display:none;">
+                                    <i class="fa-solid fa-circle-info"></i> Monto 0: se registra como pagado automáticamente.
+                                </small>
                             </div>
                         </div>
 
@@ -990,6 +1006,68 @@
 
     $selectAprobado.on('change', toggleSiguienteGrado);
 
+    // ── Lógica monto=0 para repaso ──
+    function syncRepasoPago() {
+        var monto  = parseFloat($('#repaso-monto').val()) || 0;
+        var $sel   = $('#repaso-estado-pago');
+        var $hidden = $('#repaso-estado-pago-hidden');
+        var $hint  = $('#repaso-monto-cero-hint');
+        if (monto === 0) {
+            $sel.val('pagado').prop('disabled', true);
+            $hidden.val('pagado');
+            $hint.show();
+        } else {
+            $sel.prop('disabled', false);
+            $hidden.val('');
+            $hint.hide();
+        }
+    }
+    $('#repaso-estado-pago').on('change', function () {
+        if (!$(this).prop('disabled')) $('#repaso-estado-pago-hidden').val($(this).val());
+    });
+    $('#repaso-monto').on('input change', syncRepasoPago);
+
+    var $checkConfirmarRepaso = $('#check-confirmar-repaso');
+    var $btnGuardarRepaso     = $('#btn-guardar-repaso');
+
+    $checkConfirmarRepaso.on('change', function () {
+        $btnGuardarRepaso.prop('disabled', !this.checked);
+    });
+
+    $('#modal-add-repaso').on('shown.bs.modal', function () {
+        syncRepasoPago();
+        if (!$('#repaso-estado-pago').prop('disabled')) {
+            $('#repaso-estado-pago-hidden').val($('#repaso-estado-pago').val());
+        }
+    }).on('hidden.bs.modal', function () {
+        $checkConfirmarRepaso.prop('checked', false);
+        $btnGuardarRepaso.prop('disabled', true);
+        $('#repaso-estado-pago').prop('disabled', false);
+        $('#repaso-estado-pago-hidden').val('');
+        $('#repaso-monto-cero-hint').hide();
+    });
+
+    // ── Lógica monto=0 para examen ──
+    function syncExamenPago() {
+        var monto   = parseFloat($('#examen-monto').val()) || 0;
+        var $sel    = $('#examen-estado-pago');
+        var $hidden = $('#examen-estado-pago-hidden');
+        var $hint   = $('#examen-monto-cero-hint');
+        if (monto === 0) {
+            $sel.val('pagado').prop('disabled', true);
+            $hidden.val('pagado');
+            $hint.show();
+        } else {
+            $sel.prop('disabled', false);
+            $hidden.val('');
+            $hint.hide();
+        }
+    }
+    $('#examen-estado-pago').on('change', function () {
+        if (!$(this).prop('disabled')) $('#examen-estado-pago-hidden').val($(this).val());
+    });
+    $('#examen-monto').on('input change', syncExamenPago);
+
     var $checkConfirmar  = $('#check-confirmar-examen');
     var $btnRegistrar    = $('#btn-registrar-examen');
 
@@ -999,6 +1077,10 @@
 
     $('#modal-add-examen').on('shown.bs.modal', function () {
         toggleSiguienteGrado();
+        syncExamenPago();
+        if (!$('#examen-estado-pago').prop('disabled')) {
+            $('#examen-estado-pago-hidden').val($('#examen-estado-pago').val());
+        }
     }).on('hidden.bs.modal', function () {
         $seccionSiguiente.hide();
         $selectAprobado.val('').trigger('change');
@@ -1009,6 +1091,9 @@
         $selectNextGrado.val('');
         $checkConfirmar.prop('checked', false);
         $btnRegistrar.prop('disabled', true);
+        $('#examen-estado-pago').prop('disabled', false);
+        $('#examen-estado-pago-hidden').val('');
+        $('#examen-monto-cero-hint').hide();
     });
 })();
 </script>

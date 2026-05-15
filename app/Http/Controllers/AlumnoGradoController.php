@@ -283,7 +283,7 @@ class AlumnoGradoController extends Controller
         $monto = (float) ($repaso->monto ?? 0);
         $pagado = (float) ($repaso->monto_pagado ?? 0);
 
-        if ($monto <= 0 || $pagado < $monto) {
+        if ($monto > 0 && $pagado < $monto) {
             return redirect()->route('voyager.alumnos.show', ['id' => $repaso->alumnoGrado->alumno_id])
                 ->with(['message' => 'El comprobante solo se puede imprimir cuando la punta está pagada.', 'alert-type' => 'warning']);
         }
@@ -591,7 +591,7 @@ class AlumnoGradoController extends Controller
         $monto = (float) ($examen->monto ?? 0);
         $pagado = (float) ($examen->monto_pagado ?? 0);
 
-        if ($monto <= 0 || $pagado < $monto) {
+        if ($monto > 0 && $pagado < $monto) {
             return redirect()->route('voyager.alumnos.show', ['id' => $examen->alumnoGrado->alumno_id])
                 ->with(['message' => 'El comprobante solo se puede imprimir cuando el examen está pagado.', 'alert-type' => 'warning']);
         }
