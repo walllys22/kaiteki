@@ -672,12 +672,19 @@ class AlumnoGradoController extends Controller
 
         $alumno = $examen->alumnoGrado->alumno;
 
-        if ((int) $alumno->dojo_id !== 3) {
+        $viewMap = [
+            3 => 'alumnos.partials.certificadoExamenLjp',
+            4 => 'alumnos.partials.certificadoExamenEka',
+        ];
+
+        $dojoId = (int) $alumno->dojo_id;
+
+        if (!isset($viewMap[$dojoId])) {
             return redirect()->route('voyager.alumnos.show', ['id' => $alumno->id])
-                ->with(['message' => 'El certificado de examen solo está configurado para el Dojo LJP Zabala.', 'alert-type' => 'warning']);
+                ->with(['message' => 'El certificado de examen no está configurado para este dojo.', 'alert-type' => 'warning']);
         }
 
-        return view('alumnos.partials.certificadoExamenLjp', compact('examen'));
+        return view($viewMap[$dojoId], compact('examen'));
     }
 
     public function certificadoCursando(int $id)
@@ -703,8 +710,20 @@ class AlumnoGradoController extends Controller
                 ->with(['message' => 'El certificado de grado en proceso solo está disponible a partir del segundo grado.', 'alert-type' => 'warning']);
         }
 
+        $viewMap = [
+            3 => 'alumnos.partials.certificadoExamenLjp',
+            4 => 'alumnos.partials.certificadoExamenEka',
+        ];
+
+        $dojoId = (int) optional($alumnoGrado->alumno)->dojo_id;
+
+        if (!isset($viewMap[$dojoId])) {
+            return redirect()->route('voyager.alumnos.show', ['id' => $alumnoGrado->alumno_id])
+                ->with(['message' => 'El certificado de grado en proceso no está configurado para este dojo.', 'alert-type' => 'warning']);
+        }
+
         $isCursando = true;
-        return view('alumnos.partials.certificadoExamenLjp', compact('alumnoGrado', 'isCursando'));
+        return view($viewMap[$dojoId], compact('alumnoGrado', 'isCursando'));
     }
 
     public function updateExamen(Request $request, int $id)
