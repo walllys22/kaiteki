@@ -115,6 +115,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     Route::post('alumnos/grado/repaso/store', [AlumnoGradoController::class, 'storeRepaso'])->name('alumno.grado.repaso.store');
     Route::get('alumnos/grado/repaso/{id}/comprobante', [AlumnoGradoController::class, 'comprobanteRepaso'])->name('alumno.grado.repaso.comprobante');
     Route::put('alumnos/grado/repaso/{id}/pagar', [AlumnoGradoController::class, 'pagarRepaso'])->name('alumno.grado.repaso.pagar');
+    Route::put('alumnos/grado/repaso/{id}/update', [AlumnoGradoController::class, 'updateRepaso'])->name('alumno.grado.repaso.update');
     Route::delete('alumnos/grado/repaso/{id}/delete', [AlumnoGradoController::class, 'destroyRepaso'])->name('alumno.grado.repaso.destroy');
     Route::post('alumnos/grado/examen/store', [AlumnoGradoController::class, 'storeExamen'])->name('alumno.grado.examen.store');
     Route::get('alumnos/grado/examen/{id}/comprobante', [AlumnoGradoController::class, 'comprobanteExamen'])->name('alumno.grado.examen.comprobante');

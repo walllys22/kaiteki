@@ -330,6 +330,42 @@ class AlumnoGradoController extends Controller
         }
     }
 
+    public function updateRepaso(Request $request, int $id)
+    {
+        $this->custom_authorize('edit_alumnos');
+
+        $request->validate([
+            'monto'      => 'required|numeric|min:0|max:99999999.99',
+            'observacion'=> 'nullable|string|max:1000',
+        ]);
+
+        $userDojoId = auth()->user()->dojo_id;
+
+        $repaso = AlumnoGradoRepaso::with(['alumnoGrado.alumno'])
+            ->whereNull('deleted_at')
+            ->whereHas('alumnoGrado.alumno', function ($q) use ($userDojoId) {
+                $q->when($userDojoId, fn($q2) => $q2->where('dojo_id', $userDojoId));
+            })
+            ->findOrFail($id);
+
+        if ((float) ($repaso->monto_pagado ?? 0) > 0) {
+            return redirect()->back()
+                ->with(['message' => 'No se puede editar una punta que ya tiene pagos registrados.', 'alert-type' => 'warning']);
+        }
+
+        try {
+            $repaso->monto       = (float) $request->monto;
+            $repaso->observacion = $request->observacion;
+            $repaso->save();
+
+            return redirect()->route('voyager.alumnos.show', ['id' => $repaso->alumnoGrado->alumno_id])
+                ->with(['message' => 'Repaso actualizado correctamente.', 'alert-type' => 'success']);
+        } catch (\Throwable $th) {
+            return redirect()->back()
+                ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
+        }
+    }
+
     public function destroyRepaso(int $id)
     {
         $this->custom_authorize('delete_alumnos');

@@ -163,7 +163,7 @@
                                     <th style="width:95px; text-align:right;">Saldo</th>
                                     <th style="width:95px; text-align:center;">Pago</th>
                                     <th>Observación</th>
-                                    <th style="width:85px; text-align:center;">Acc.</th>
+                                    <th style="width:230px; text-align:center;">Acc.</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -211,6 +211,19 @@
                                                     data-monto="{{ number_format((float) ($repaso->monto ?? 0), 2, '.', '') }}">
                                                 <i class="fa-solid fa-money-bill"></i>
                                             </button>
+                                            @if((float) ($repaso->monto_pagado ?? 0) == 0)
+                                            <button type="button"
+                                                    class="btn btn-warning btn-xs btn-edit-repaso"
+                                                    title="Editar repaso"
+                                                    data-toggle="modal"
+                                                    data-target="#modal-edit-repaso"
+                                                    data-id="{{ $repaso->id }}"
+                                                    data-monto="{{ number_format((float) ($repaso->monto ?? 0), 2, '.', '') }}"
+                                                    data-observacion="{{ $repaso->observacion ?? '' }}"
+                                                    data-url="{{ route('alumno.grado.repaso.update', $repaso->id) }}">
+                                                <i class="fa-solid fa-pen"></i>
+                                            </button>
+                                            @endif
                                             @endif
                                         @endif
                                         @if(($alumnoActivo ?? true) && !$activeGrado->isCompletado() && $loop->first && $examenes->isEmpty())
@@ -444,7 +457,8 @@
                                 <label>Estado de pago <span class="text-danger">*</span></label>
                                 <input type="hidden" id="repaso-estado-pago-hidden" name="estado_pago" value="">
                                 <select id="repaso-estado-pago" class="form-control" required>
-                                    <option value="pendiente" {{ old('estado_pago', 'pendiente') === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
+                                    <option value="" disabled selected>Seleccione una opción</option>
+                                    <option value="pendiente" {{ old('estado_pago') === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
                                     <option value="pagado" {{ old('estado_pago') === 'pagado' ? 'selected' : '' }}>Pagado</option>
                                 </select>
                                 <small id="repaso-monto-cero-hint" class="text-info" style="display:none;">
@@ -607,6 +621,56 @@
 @elseif($activeGrado && !$activeGrado->grado)
     <div class="alert alert-warning">El grado activo no tiene un grado asociado válido.</div>
 @endif
+
+{{-- Modal: Editar repaso pendiente --}}
+<div class="modal fade" tabindex="-1" id="modal-edit-repaso" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="form-edit-repaso" action="#" method="POST" class="form-edit-add">
+                @csrf
+                @method('PUT')
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                    <h4 class="modal-title"><i class="fa-solid fa-pen"></i> Editar Repaso</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Precio del repaso <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-addon">Bs</span>
+                            <input type="number"
+                                   name="monto"
+                                   id="edit-repaso-monto"
+                                   class="form-control"
+                                   min="0"
+                                   max="99999999.99"
+                                   step="0.01"
+                                   required>
+                        </div>
+                        <div id="edit-repaso-monto-cero-hint" class="alert alert-info" style="display:none; margin-top:8px; padding:8px 12px; font-size:13px;">
+                            <i class="fa-solid fa-circle-info"></i>
+                            Precio <strong>0</strong> — el repaso quedará marcado como <strong>Exonerado</strong> (sin cobro).
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Observaciones</label>
+                        <textarea name="observacion" id="edit-repaso-observacion" class="form-control" rows="2" placeholder="Notas sobre el repaso..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                    <label style="margin:0; font-weight:normal; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                        <input type="checkbox" id="check-confirmar-edit-repaso" style="width:16px; height:16px; cursor:pointer;">
+                        <span>Confirmo que los datos son correctos</span>
+                    </label>
+                    <div>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" id="btn-guardar-edit-repaso" class="btn btn-warning btn-submit" disabled>Guardar cambios</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 {{-- Modal: Registrar pago de repaso pendiente --}}
 <div class="modal fade" tabindex="-1" id="modal-pagar-repaso" role="dialog">
@@ -969,6 +1033,29 @@
         $('#pagar-repaso-monto').val(button.data('monto') || '');
     });
 
+    function syncEditRepasoCeroHint() {
+        var monto = parseFloat($('#edit-repaso-monto').val()) || 0;
+        $('#edit-repaso-monto-cero-hint').toggle(monto === 0);
+    }
+
+    $('#edit-repaso-monto').on('input change', syncEditRepasoCeroHint);
+
+    $('#check-confirmar-edit-repaso').on('change', function () {
+        $('#btn-guardar-edit-repaso').prop('disabled', !this.checked);
+    });
+
+    $('#modal-edit-repaso').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        $('#form-edit-repaso').attr('action', button.data('url'));
+        $('#edit-repaso-monto').val(button.data('monto') || '');
+        $('#edit-repaso-observacion').val(button.data('observacion') || '');
+        syncEditRepasoCeroHint();
+    }).on('hidden.bs.modal', function() {
+        $('#edit-repaso-monto-cero-hint').hide();
+        $('#check-confirmar-edit-repaso').prop('checked', false);
+        $('#btn-guardar-edit-repaso').prop('disabled', true);
+    });
+
     $('#modal-pagar-examen').on('show.bs.modal', function(event) {
         var button = $(event.relatedTarget);
         $('#form-pagar-examen').attr('action', button.data('url'));
@@ -1023,7 +1110,7 @@
         }
     }
     $('#repaso-estado-pago').on('change', function () {
-        if (!$(this).prop('disabled')) $('#repaso-estado-pago-hidden').val($(this).val());
+        $('#repaso-estado-pago-hidden').val($(this).prop('disabled') ? '' : $(this).val());
     });
     $('#repaso-monto').on('input change', syncRepasoPago);
 
