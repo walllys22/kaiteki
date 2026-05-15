@@ -84,7 +84,14 @@
                                     <br>
                                     <small>{{ __('voyager::profile.password_hint') }}</small>
                                 @endif
-                                <input type="password" class="form-control" id="password" name="password" value="" autocomplete="new-password">
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="password" name="password" value="" autocomplete="new-password">
+                                    <span class="input-group-btn">
+                                        <button class="btn btn-default" type="button" id="toggle-password" tabindex="-1" style="margin:0">
+                                            <i class="glyphicon glyphicon-eye-open" id="toggle-password-icon"></i>
+                                        </button>
+                                    </span>
+                                </div>
                             </div>
                             @php
                                 $rol_id = Auth::user()->role->id;
@@ -192,6 +199,18 @@
     <script>
         $('document').ready(function () {
             $('.toggleswitch').bootstrapToggle();
+
+            $('#toggle-password').on('click', function () {
+                const input = $('#password');
+                const icon = $('#toggle-password-icon');
+                if (input.attr('type') === 'password') {
+                    input.attr('type', 'text');
+                    icon.removeClass('glyphicon-eye-open').addClass('glyphicon-eye-close');
+                } else {
+                    input.attr('type', 'password');
+                    icon.removeClass('glyphicon-eye-close').addClass('glyphicon-eye-open');
+                }
+            });
 
             $('#select-person_id').on('change', function () {
                 const dojoName = window.personSelected && window.personSelected.dojo ? window.personSelected.dojo.nombre : '';
