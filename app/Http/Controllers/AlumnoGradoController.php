@@ -632,7 +632,7 @@ class AlumnoGradoController extends Controller
     public function certificadoCursando(int $id)
     {
         // $this->custom_authorize('read_alumnos');
-        return 1;
+        // return 1;
 
         $userDojoId = auth()->user()->dojo_id;
 
