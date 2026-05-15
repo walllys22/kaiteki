@@ -395,10 +395,10 @@
                                                     data-monto="{{ number_format((float) ($examen->monto ?? 0), 2, '.', '') }}">
                                                 <i class="fa-solid fa-money-bill"></i>
                                             </button>
-                                            @if((float) ($examen->monto_pagado ?? 0) == 0 && auth()->user()->dojo_id === null)
+                                            @if((float) ($examen->monto_pagado ?? 0) == 0)
                                             <button type="button"
                                                     class="btn btn-warning btn-xs btn-edit-examen"
-                                                    title="Editar examen (admin global)"
+                                                    title="Editar precio del examen"
                                                     data-toggle="modal"
                                                     data-target="#modal-edit-examen"
                                                     data-id="{{ $examen->id }}"

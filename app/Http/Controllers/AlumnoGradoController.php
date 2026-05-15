@@ -711,17 +711,18 @@ class AlumnoGradoController extends Controller
     {
         $this->custom_authorize('edit_alumnos');
 
-        if (auth()->user()->dojo_id !== null) {
-            abort(403, 'Solo administradores globales pueden editar examenes pagados/exonerados.');
-        }
-
         $request->validate([
             'monto'       => 'required|numeric|min:0|max:99999999.99',
             'observacion' => 'nullable|string|max:1000',
         ]);
 
+        $userDojoId = auth()->user()->dojo_id;
+
         $examen = AlumnoGradoExamen::with(['alumnoGrado.alumno'])
             ->whereNull('deleted_at')
+            ->whereHas('alumnoGrado.alumno', function ($q) use ($userDojoId) {
+                $q->when($userDojoId, fn($q2) => $q2->where('dojo_id', $userDojoId));
+            })
             ->findOrFail($id);
 
         if ((float) ($examen->monto_pagado ?? 0) > 0) {
