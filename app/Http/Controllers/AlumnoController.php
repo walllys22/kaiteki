@@ -292,9 +292,10 @@ class AlumnoController extends Controller
                 return $query->where('dojo_id', $userDojoId);
             })
             ->findOrFail($id);
-        $people = Person::whereNull('deleted_at')->get();
-        $dojo = Dojo::whereNull('deleted_at')->get();
-        $parientes = Parentesco::whereNull('deleted_at')->get();
+        $people = Person::whereNull('deleted_at')->orderBy('first_name', 'ASC')->get();
+        $dojo = Dojo::whereNull('deleted_at')->orderBy('nombre', 'ASC')->get();
+
+        $parientes = Parentesco::whereNull('deleted_at')->orderBy('nombre', 'ASC')->get();
         $enfermedades = AlumnoEnfermedad::whereNull('deleted_at')->get();
 
         // Excluir grados ya registrados y los de orden inferior al máximo alcanzado
@@ -304,7 +305,7 @@ class AlumnoController extends Controller
             ->pluck('grado_id')
             ->toArray();
 
-        $maxOrden = \DB::table('alumno_grados')
+        $maxOrden = DB::table('alumno_grados')
             ->join('grados', 'alumno_grados.grado_id', '=', 'grados.id')
             ->where('alumno_grados.alumno_id', $id)
             ->whereNull('alumno_grados.deleted_at')

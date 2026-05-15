@@ -601,7 +601,7 @@ class AlumnoGradoController extends Controller
 
     public function certificadoExamen(int $id)
     {
-        $this->custom_authorize('read_alumnos');
+        // $this->custom_authorize('read_alumnos');
 
         $userDojoId = auth()->user()->dojo_id;
 
@@ -631,7 +631,7 @@ class AlumnoGradoController extends Controller
 
     public function certificadoCursando(int $id)
     {
-        $this->custom_authorize('read_alumnos');
+        // $this->custom_authorize('read_alumnos');
 
         $userDojoId = auth()->user()->dojo_id;
 
