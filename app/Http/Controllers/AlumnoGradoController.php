@@ -295,10 +295,6 @@ class AlumnoGradoController extends Controller
     {
         $this->custom_authorize('edit_alumnos');
 
-        $request->validate([
-            'monto' => 'required|numeric|min:0.01|max:99999999.99',
-        ]);
-
         $userDojoId = auth()->user()->dojo_id;
 
         $repaso = AlumnoGradoRepaso::with(['alumnoGrado.alumno'])
@@ -315,11 +311,8 @@ class AlumnoGradoController extends Controller
                 ->with(['message' => 'Esta punta ya está pagada.', 'alert-type' => 'warning']);
         }
 
-        $monto = (float) $request->monto;
-
         try {
-            $repaso->monto = $monto;
-            $repaso->monto_pagado = $monto;
+            $repaso->monto_pagado = $repaso->monto;
             $repaso->save();
 
             return redirect()->route('voyager.alumnos.show', ['id' => $repaso->alumnoGrado->alumno_id])

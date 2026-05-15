@@ -685,18 +685,17 @@
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label>Monto pagado <span class="text-danger">*</span></label>
+                        <label>Monto a cobrar</label>
                         <div class="input-group">
                             <span class="input-group-addon">Bs</span>
                             <input type="number"
-                                   name="monto"
                                    id="pagar-repaso-monto"
                                    class="form-control"
-                                   min="0.01"
-                                   max="99999999.99"
                                    step="0.01"
-                                   required>
+                                   readonly
+                                   style="background:#f5f5f5; cursor:not-allowed;">
                         </div>
+                        <small class="text-muted">El monto es fijo según el precio registrado del repaso.</small>
                     </div>
                 </div>
                 <div class="modal-footer">
