@@ -103,14 +103,14 @@
         }
         .reg {
             color: #f20b3f;
-            font-size: clamp(18px, 3vw, 36px);
+            font-size: clamp(14px, 2vw, 28px);
             font-style: italic;
             font-weight: 800;
-            left: 74.2%;
+            left: 79%;
             position: absolute;
             text-align: center;
-            top: 30.4%;
-            width: 13%;
+            top: 38%;
+            width: 13.5%;
         }
         .certificate-text {
             color: #000;
