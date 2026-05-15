@@ -591,10 +591,6 @@ class AlumnoGradoController extends Controller
     {
         $this->custom_authorize('edit_alumnos');
 
-        $request->validate([
-            'monto' => 'required|numeric|min:0.01|max:99999999.99',
-        ]);
-
         $userDojoId = auth()->user()->dojo_id;
 
         $examen = AlumnoGradoExamen::with(['alumnoGrado.alumno'])
@@ -611,11 +607,8 @@ class AlumnoGradoController extends Controller
                 ->with(['message' => 'Este examen ya está pagado.', 'alert-type' => 'warning']);
         }
 
-        $monto = (float) $request->monto;
-
         try {
-            $examen->monto = $monto;
-            $examen->monto_pagado = $monto;
+            $examen->monto_pagado = $examen->monto;
             $examen->save();
 
             return redirect()->route('voyager.alumnos.show', ['id' => $examen->alumnoGrado->alumno_id])
@@ -712,6 +705,70 @@ class AlumnoGradoController extends Controller
 
         $isCursando = true;
         return view('alumnos.partials.certificadoExamenLjp', compact('alumnoGrado', 'isCursando'));
+    }
+
+    public function updateExamen(Request $request, int $id)
+    {
+        $this->custom_authorize('edit_alumnos');
+
+        if (auth()->user()->dojo_id !== null) {
+            abort(403, 'Solo administradores globales pueden editar examenes pagados/exonerados.');
+        }
+
+        $request->validate([
+            'monto'       => 'required|numeric|min:0|max:99999999.99',
+            'observacion' => 'nullable|string|max:1000',
+        ]);
+
+        $examen = AlumnoGradoExamen::with(['alumnoGrado.alumno'])
+            ->whereNull('deleted_at')
+            ->findOrFail($id);
+
+        if ((float) ($examen->monto_pagado ?? 0) > 0) {
+            return redirect()->back()
+                ->with(['message' => 'No se puede editar un examen que ya tiene pagos registrados.', 'alert-type' => 'warning']);
+        }
+
+        try {
+            $examen->monto       = (float) $request->monto;
+            $examen->observacion = $request->observacion;
+            $examen->save();
+
+            return redirect()->route('voyager.alumnos.show', ['id' => $examen->alumnoGrado->alumno_id])
+                ->with(['message' => 'Examen actualizado correctamente.', 'alert-type' => 'success']);
+        } catch (\Throwable $th) {
+            return redirect()->back()
+                ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
+        }
+    }
+
+    public function anularPagoExamen(int $id)
+    {
+        $this->custom_authorize('edit_alumnos');
+
+        if (auth()->user()->dojo_id !== null) {
+            abort(403, 'Solo administradores globales pueden anular pagos de examenes.');
+        }
+
+        $examen = AlumnoGradoExamen::with(['alumnoGrado.alumno'])
+            ->whereNull('deleted_at')
+            ->findOrFail($id);
+
+        if ((float) ($examen->monto_pagado ?? 0) <= 0) {
+            return redirect()->back()
+                ->with(['message' => 'Este examen no tiene pago registrado.', 'alert-type' => 'warning']);
+        }
+
+        try {
+            $examen->monto_pagado = 0;
+            $examen->save();
+
+            return redirect()->route('voyager.alumnos.show', ['id' => $examen->alumnoGrado->alumno_id])
+                ->with(['message' => 'Pago anulado. El examen volvió a estado Pendiente.', 'alert-type' => 'success']);
+        } catch (\Throwable $th) {
+            return redirect()->back()
+                ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
+        }
     }
 
     public function destroyExamen(int $id)

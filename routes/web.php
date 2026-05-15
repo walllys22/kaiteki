@@ -123,6 +123,8 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     Route::get('alumnos/grado/examen/{id}/certificado', [AlumnoGradoController::class, 'certificadoExamen'])->name('alumno.grado.examen.certificado');
     Route::get('alumnos/grado/{id}/certificado-cursando', [AlumnoGradoController::class, 'certificadoCursando'])->name('alumno.grado.certificado.cursando');
     Route::put('alumnos/grado/examen/{id}/pagar', [AlumnoGradoController::class, 'pagarExamen'])->name('alumno.grado.examen.pagar');
+    Route::put('alumnos/grado/examen/{id}/update', [AlumnoGradoController::class, 'updateExamen'])->name('alumno.grado.examen.update');
+    Route::put('alumnos/grado/examen/{id}/anular-pago', [AlumnoGradoController::class, 'anularPagoExamen'])->name('alumno.grado.examen.anular-pago');
     Route::delete('alumnos/grado/examen/{id}/delete', [AlumnoGradoController::class, 'destroyExamen'])->name('alumno.grado.examen.destroy');
 
 

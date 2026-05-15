@@ -323,7 +323,7 @@
                                     <th style="width:95px; text-align:right;">Saldo</th>
                                     <th style="width:95px; text-align:center;">Pago</th>
                                     <th>Observación</th>
-                                    <th style="width:85px; text-align:center;">Acc.</th>
+                                    <th style="width:230px; text-align:center;">Acc.</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -360,6 +360,30 @@
                                                title="Imprimir comprobante">
                                                 <i class="fa-solid fa-print"></i>
                                             </a>
+                                            @if(auth()->user()->dojo_id === null && auth()->user()->hasPermission('edit_alumnos'))
+                                                @if((float) ($examen->monto ?? 0) <= 0)
+                                                <button type="button"
+                                                        class="btn btn-warning btn-xs btn-edit-examen"
+                                                        title="Editar examen exonerado (admin global)"
+                                                        data-toggle="modal"
+                                                        data-target="#modal-edit-examen"
+                                                        data-id="{{ $examen->id }}"
+                                                        data-monto="{{ number_format((float) ($examen->monto ?? 0), 2, '.', '') }}"
+                                                        data-observacion="{{ $examen->observacion ?? '' }}"
+                                                        data-url="{{ route('alumno.grado.examen.update', $examen->id) }}">
+                                                    <i class="fa-solid fa-pen"></i>
+                                                </button>
+                                                @else
+                                                <form action="{{ route('alumno.grado.examen.anular-pago', $examen->id) }}" method="POST" style="display:inline;"
+                                                      onsubmit="return confirm('¿Anular el pago de este examen? Volverá a estado Pendiente.');">
+                                                    @csrf
+                                                    @method('PUT')
+                                                    <button type="submit" class="btn btn-danger btn-xs" title="Anular pago (solo admin global)">
+                                                        <i class="fa-solid fa-rotate-left"></i>
+                                                    </button>
+                                                </form>
+                                                @endif
+                                            @endif
                                         @else
                                             @if(auth()->user()->hasPermission('edit_alumnos'))
                                             <button type="button"
@@ -371,6 +395,19 @@
                                                     data-monto="{{ number_format((float) ($examen->monto ?? 0), 2, '.', '') }}">
                                                 <i class="fa-solid fa-money-bill"></i>
                                             </button>
+                                            @if((float) ($examen->monto_pagado ?? 0) == 0 && auth()->user()->dojo_id === null)
+                                            <button type="button"
+                                                    class="btn btn-warning btn-xs btn-edit-examen"
+                                                    title="Editar examen (admin global)"
+                                                    data-toggle="modal"
+                                                    data-target="#modal-edit-examen"
+                                                    data-id="{{ $examen->id }}"
+                                                    data-monto="{{ number_format((float) ($examen->monto ?? 0), 2, '.', '') }}"
+                                                    data-observacion="{{ $examen->observacion ?? '' }}"
+                                                    data-url="{{ route('alumno.grado.examen.update', $examen->id) }}">
+                                                <i class="fa-solid fa-pen"></i>
+                                            </button>
+                                            @endif
                                             @endif
                                         @endif
                                         @if($examen->aprobado && ($activeGrado->id !== $primerAlumnoGradoId || $primerGradoEsPrimeroGlobal))
@@ -487,9 +524,10 @@
                                     <option value="pendiente" {{ old('estado_pago') === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
                                     <option value="pagado" {{ old('estado_pago') === 'pagado' ? 'selected' : '' }}>Pagado</option>
                                 </select>
-                                <small id="repaso-monto-cero-hint" class="text-info" style="display:none;">
-                                    <i class="fa-solid fa-circle-info"></i> Monto 0: se registra como pagado automáticamente.
-                                </small>
+                                <div id="repaso-monto-cero-hint" class="alert alert-info" style="display:none; margin-top:8px; padding:8px 12px; font-size:13px;">
+                                    <i class="fa-solid fa-circle-info"></i>
+                                    Precio <strong>0</strong> — el repaso quedará marcado como <strong>Exonerado</strong> (sin cobro).
+                                </div>
                             </div>
                         </div>
                         <div class="row">
@@ -591,9 +629,10 @@
                                     <option value="pendiente" {{ old('estado_pago', 'pendiente') === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
                                     <option value="pagado" {{ old('estado_pago') === 'pagado' ? 'selected' : '' }}>Pagado</option>
                                 </select>
-                                <small id="examen-monto-cero-hint" class="text-info" style="display:none;">
-                                    <i class="fa-solid fa-circle-info"></i> Monto 0: se registra como pagado automáticamente.
-                                </small>
+                                <div id="examen-monto-cero-hint" class="alert alert-info" style="display:none; margin-top:8px; padding:8px 12px; font-size:13px;">
+                                    <i class="fa-solid fa-circle-info"></i>
+                                    Precio <strong>0</strong> — el examen quedará marcado como <strong>Exonerado</strong> (sin cobro).
+                                </div>
                             </div>
                         </div>
 
@@ -698,6 +737,56 @@
     </div>
 </div>
 
+{{-- Modal: Editar examen (admin global) --}}
+<div class="modal fade" tabindex="-1" id="modal-edit-examen" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="form-edit-examen" action="#" method="POST" class="form-edit-add">
+                @csrf
+                @method('PUT')
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                    <h4 class="modal-title"><i class="fa-solid fa-pen"></i> Editar Examen</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Precio del examen <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-addon">Bs</span>
+                            <input type="number"
+                                   name="monto"
+                                   id="edit-examen-monto"
+                                   class="form-control"
+                                   min="0"
+                                   max="99999999.99"
+                                   step="0.01"
+                                   required>
+                        </div>
+                        <div id="edit-examen-monto-cero-hint" class="alert alert-info" style="display:none; margin-top:8px; padding:8px 12px; font-size:13px;">
+                            <i class="fa-solid fa-circle-info"></i>
+                            Precio <strong>0</strong> — el examen quedará marcado como <strong>Exonerado</strong> (sin cobro).
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Observaciones</label>
+                        <textarea name="observacion" id="edit-examen-observacion" class="form-control" rows="2" placeholder="Notas sobre el examen..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                    <label style="margin:0; font-weight:normal; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                        <input type="checkbox" id="check-confirmar-edit-examen" style="width:16px; height:16px; cursor:pointer;">
+                        <span>Confirmo que los datos son correctos</span>
+                    </label>
+                    <div>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" id="btn-guardar-edit-examen" class="btn btn-warning btn-submit" disabled>Guardar cambios</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {{-- Modal: Registrar pago de repaso pendiente --}}
 <div class="modal fade" tabindex="-1" id="modal-pagar-repaso" role="dialog">
     <div class="modal-dialog">
@@ -746,23 +835,28 @@
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label>Monto pagado <span class="text-danger">*</span></label>
+                        <label>Monto a cobrar</label>
                         <div class="input-group">
                             <span class="input-group-addon">Bs</span>
                             <input type="number"
-                                   name="monto"
                                    id="pagar-examen-monto"
                                    class="form-control"
-                                   min="0.01"
-                                   max="99999999.99"
                                    step="0.01"
-                                   required>
+                                   readonly
+                                   style="background:#f5f5f5; cursor:not-allowed;">
                         </div>
+                        <small class="text-muted">El monto es fijo según el precio registrado del examen.</small>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-success btn-submit">Guardar Pago</button>
+                <div class="modal-footer" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                    <label style="margin:0; font-weight:normal; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                        <input type="checkbox" id="check-confirmar-pagar-examen" style="width:16px; height:16px; cursor:pointer;">
+                        <span>Confirmo que los datos son correctos</span>
+                    </label>
+                    <div>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" id="btn-guardar-pagar-examen" class="btn btn-success btn-submit" disabled>Guardar Pago</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -1058,6 +1152,29 @@
         $('#pagar-repaso-monto').val(button.data('monto') || '');
     });
 
+    function syncEditExamenCeroHint() {
+        var monto = parseFloat($('#edit-examen-monto').val()) || 0;
+        $('#edit-examen-monto-cero-hint').toggle(monto === 0);
+    }
+
+    $('#edit-examen-monto').on('input change', syncEditExamenCeroHint);
+
+    $('#check-confirmar-edit-examen').on('change', function () {
+        $('#btn-guardar-edit-examen').prop('disabled', !this.checked);
+    });
+
+    $('#modal-edit-examen').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        $('#form-edit-examen').attr('action', button.data('url'));
+        $('#edit-examen-monto').val(button.data('monto') || '');
+        $('#edit-examen-observacion').val(button.data('observacion') || '');
+        syncEditExamenCeroHint();
+    }).on('hidden.bs.modal', function() {
+        $('#edit-examen-monto-cero-hint').hide();
+        $('#check-confirmar-edit-examen').prop('checked', false);
+        $('#btn-guardar-edit-examen').prop('disabled', true);
+    });
+
     function syncEditRepasoCeroHint() {
         var monto = parseFloat($('#edit-repaso-monto').val()) || 0;
         $('#edit-repaso-monto-cero-hint').toggle(monto === 0);
@@ -1085,6 +1202,13 @@
         var button = $(event.relatedTarget);
         $('#form-pagar-examen').attr('action', button.data('url'));
         $('#pagar-examen-monto').val(button.data('monto') || '');
+    }).on('hidden.bs.modal', function() {
+        $('#check-confirmar-pagar-examen').prop('checked', false);
+        $('#btn-guardar-pagar-examen').prop('disabled', true);
+    });
+
+    $('#check-confirmar-pagar-examen').on('change', function () {
+        $('#btn-guardar-pagar-examen').prop('disabled', !this.checked);
     });
 
     // ── Modal examen final: mostrar/ocultar sección siguiente grado ──
