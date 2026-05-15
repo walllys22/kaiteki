@@ -323,6 +323,35 @@ class AlumnoGradoController extends Controller
         }
     }
 
+    public function anularPagoRepaso(int $id)
+    {
+        $this->custom_authorize('edit_alumnos');
+
+        if (auth()->user()->dojo_id !== null) {
+            abort(403, 'Solo administradores globales pueden anular pagos de repasos.');
+        }
+
+        $repaso = AlumnoGradoRepaso::with(['alumnoGrado.alumno'])
+            ->whereNull('deleted_at')
+            ->findOrFail($id);
+
+        if ((float) ($repaso->monto_pagado ?? 0) <= 0) {
+            return redirect()->back()
+                ->with(['message' => 'Este repaso no tiene pago registrado.', 'alert-type' => 'warning']);
+        }
+
+        try {
+            $repaso->monto_pagado = 0;
+            $repaso->save();
+
+            return redirect()->route('voyager.alumnos.show', ['id' => $repaso->alumnoGrado->alumno_id])
+                ->with(['message' => 'Pago anulado. El repaso volvió a estado Pendiente.', 'alert-type' => 'success']);
+        } catch (\Throwable $th) {
+            return redirect()->back()
+                ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
+        }
+    }
+
     public function updateRepaso(Request $request, int $id)
     {
         $this->custom_authorize('edit_alumnos');

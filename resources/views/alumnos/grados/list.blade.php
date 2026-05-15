@@ -200,6 +200,32 @@
                                                title="Imprimir comprobante">
                                                 <i class="fa-solid fa-print"></i>
                                             </a>
+                                            @if(auth()->user()->dojo_id === null && auth()->user()->hasPermission('edit_alumnos'))
+                                                @if((float) ($repaso->monto ?? 0) <= 0)
+                                                {{-- Exonerado: editar directo (monto_pagado ya es 0) --}}
+                                                <button type="button"
+                                                        class="btn btn-warning btn-xs btn-edit-repaso"
+                                                        title="Editar repaso exonerado (admin global)"
+                                                        data-toggle="modal"
+                                                        data-target="#modal-edit-repaso"
+                                                        data-id="{{ $repaso->id }}"
+                                                        data-monto="{{ number_format((float) ($repaso->monto ?? 0), 2, '.', '') }}"
+                                                        data-observacion="{{ $repaso->observacion ?? '' }}"
+                                                        data-url="{{ route('alumno.grado.repaso.update', $repaso->id) }}">
+                                                    <i class="fa-solid fa-pen"></i>
+                                                </button>
+                                                @else
+                                                {{-- Pagado: anular pago para volver a pendiente --}}
+                                                <form action="{{ route('alumno.grado.repaso.anular-pago', $repaso->id) }}" method="POST" style="display:inline;"
+                                                      onsubmit="return confirm('¿Anular el pago de este repaso? Volverá a estado Pendiente.');">
+                                                    @csrf
+                                                    @method('PUT')
+                                                    <button type="submit" class="btn btn-danger btn-xs" title="Anular pago (solo admin global)">
+                                                        <i class="fa-solid fa-rotate-left"></i>
+                                                    </button>
+                                                </form>
+                                                @endif
+                                            @endif
                                         @else
                                             @if(auth()->user()->hasPermission('edit_alumnos'))
                                             <button type="button"
