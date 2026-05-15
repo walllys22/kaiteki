@@ -956,7 +956,7 @@
 
                                 {{-- Repasos --}}
                                 @if($hUsaRepasos)
-                                <div class="col-md-7">
+                                <div class="col-md-6">
                                     <p style="font-weight:600; margin-bottom:6px; font-size:13px;">
                                         <i class="fa-solid fa-repeat" style="color:#8e44ad;"></i>
                                         Repasos
@@ -971,7 +971,7 @@
                                                     <th style="width:85px; text-align:right;">Monto</th>
                                                     <th style="width:80px; text-align:center;">Pago</th>
                                                     <th>Observación</th>
-                                                    <th style="width:70px; text-align:center;">Acc.</th>
+                                                    <th style="width:150px; text-align:center;">Acc.</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -987,7 +987,9 @@
                                                     </td>
                                                     <td style="text-align:right;">Bs {{ number_format((float) ($r->monto ?? 0), 2, '.', ',') }}</td>
                                                     <td style="text-align:center;">
-                                                        @if((float) ($r->monto ?? 0) > 0 && (float) ($r->monto_pagado ?? 0) >= (float) ($r->monto ?? 0))
+                                                        @if((float) ($r->monto ?? 0) <= 0)
+                                                            <span class="label label-success">Exonerado</span>
+                                                        @elseif((float) ($r->monto_pagado ?? 0) >= (float) ($r->monto ?? 0))
                                                             <span class="label label-success">Pagado</span>
                                                         @else
                                                             <span class="label label-warning">Pendiente</span>
@@ -995,13 +997,35 @@
                                                     </td>
                                                     <td>{{ $r->observacion ?: '—' }}</td>
                                                     <td style="text-align:center;">
-                                                        @if((float) ($r->monto ?? 0) > 0 && (float) ($r->monto_pagado ?? 0) >= (float) ($r->monto ?? 0))
+                                                        @if((float) ($r->monto ?? 0) <= 0 || (float) ($r->monto_pagado ?? 0) >= (float) ($r->monto ?? 0))
                                                             <a href="{{ route('alumno.grado.repaso.comprobante', $r->id) }}"
                                                                target="_blank"
                                                                class="btn btn-info btn-xs"
                                                                title="Imprimir comprobante">
                                                                 <i class="fa-solid fa-print"></i>
                                                             </a>
+                                                            @if(auth()->user()->dojo_id === null && auth()->user()->hasPermission('edit_alumnos'))
+                                                                @if((float) ($r->monto ?? 0) <= 0)
+                                                                <button type="button"
+                                                                        class="btn btn-warning btn-xs btn-edit-repaso"
+                                                                        title="Editar repaso exonerado"
+                                                                        data-toggle="modal" data-target="#modal-edit-repaso"
+                                                                        data-id="{{ $r->id }}"
+                                                                        data-monto="{{ number_format((float) ($r->monto ?? 0), 2, '.', '') }}"
+                                                                        data-observacion="{{ $r->observacion ?? '' }}"
+                                                                        data-url="{{ route('alumno.grado.repaso.update', $r->id) }}">
+                                                                    <i class="fa-solid fa-pen"></i>
+                                                                </button>
+                                                                @else
+                                                                <form action="{{ route('alumno.grado.repaso.anular-pago', $r->id) }}" method="POST" style="display:inline;"
+                                                                      onsubmit="return confirm('¿Anular el pago de este repaso?');">
+                                                                    @csrf @method('PUT')
+                                                                    <button type="submit" class="btn btn-danger btn-xs" title="Anular pago">
+                                                                        <i class="fa-solid fa-rotate-left"></i>
+                                                                    </button>
+                                                                </form>
+                                                                @endif
+                                                            @endif
                                                         @elseif(auth()->user()->hasPermission('edit_alumnos'))
                                                             <button type="button"
                                                                     class="btn btn-success btn-xs btn-pagar-repaso"
@@ -1012,6 +1036,18 @@
                                                                     data-monto="{{ number_format((float) ($r->monto ?? 0), 2, '.', '') }}">
                                                                 <i class="fa-solid fa-money-bill"></i>
                                                             </button>
+                                                            @if((float) ($r->monto_pagado ?? 0) == 0)
+                                                            <button type="button"
+                                                                    class="btn btn-warning btn-xs btn-edit-repaso"
+                                                                    title="Editar repaso"
+                                                                    data-toggle="modal" data-target="#modal-edit-repaso"
+                                                                    data-id="{{ $r->id }}"
+                                                                    data-monto="{{ number_format((float) ($r->monto ?? 0), 2, '.', '') }}"
+                                                                    data-observacion="{{ $r->observacion ?? '' }}"
+                                                                    data-url="{{ route('alumno.grado.repaso.update', $r->id) }}">
+                                                                <i class="fa-solid fa-pen"></i>
+                                                            </button>
+                                                            @endif
                                                         @endif
                                                     </td>
                                                 </tr>
@@ -1025,7 +1061,7 @@
                                 @endif
 
                                 {{-- Exámenes --}}
-                                <div class="{{ $hUsaRepasos ? 'col-md-5' : 'col-md-12' }}">
+                                <div class="{{ $hUsaRepasos ? 'col-md-6' : 'col-md-12' }}">
                                     <p style="font-weight:600; margin-bottom:6px; font-size:13px;">
                                         <i class="fa-solid fa-graduation-cap" style="color:#e74c3c;"></i>
                                         Examen Final
@@ -1035,11 +1071,11 @@
                                             <thead>
                                                 <tr>
                                                     <th style="width:100px;">Fecha</th>
-                                                    <th style="text-align:center;">Resultado</th>
+                                                    <th style="width:100px; text-align:center;">Resultado</th>
                                                     <th style="width:85px; text-align:right;">Monto</th>
                                                     <th style="width:80px; text-align:center;">Pago</th>
                                                     <th>Observación</th>
-                                                    <th style="width:70px; text-align:center;">Acc.</th>
+                                                    <th style="width:150px; text-align:center;">Acc.</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -1055,7 +1091,9 @@
                                                     </td>
                                                     <td style="text-align:right;">Bs {{ number_format((float) ($e->monto ?? 0), 2, '.', ',') }}</td>
                                                     <td style="text-align:center;">
-                                                        @if((float) ($e->monto ?? 0) > 0 && (float) ($e->monto_pagado ?? 0) >= (float) ($e->monto ?? 0))
+                                                        @if((float) ($e->monto ?? 0) <= 0)
+                                                            <span class="label label-success">Exonerado</span>
+                                                        @elseif((float) ($e->monto_pagado ?? 0) >= (float) ($e->monto ?? 0))
                                                             <span class="label label-success">Pagado</span>
                                                         @else
                                                             <span class="label label-warning">Pendiente</span>
@@ -1063,13 +1101,35 @@
                                                     </td>
                                                     <td>{{ $e->observacion ?: '—' }}</td>
                                                     <td style="text-align:center;">
-                                                        @if((float) ($e->monto ?? 0) > 0 && (float) ($e->monto_pagado ?? 0) >= (float) ($e->monto ?? 0))
+                                                        @if((float) ($e->monto ?? 0) <= 0 || (float) ($e->monto_pagado ?? 0) >= (float) ($e->monto ?? 0))
                                                             <a href="{{ route('alumno.grado.examen.comprobante', $e->id) }}"
                                                                target="_blank"
                                                                class="btn btn-info btn-xs"
                                                                title="Imprimir comprobante">
                                                                 <i class="fa-solid fa-print"></i>
                                                             </a>
+                                                            @if(auth()->user()->dojo_id === null && auth()->user()->hasPermission('edit_alumnos'))
+                                                                @if((float) ($e->monto ?? 0) <= 0)
+                                                                <button type="button"
+                                                                        class="btn btn-warning btn-xs btn-edit-examen"
+                                                                        title="Editar examen exonerado"
+                                                                        data-toggle="modal" data-target="#modal-edit-examen"
+                                                                        data-id="{{ $e->id }}"
+                                                                        data-monto="{{ number_format((float) ($e->monto ?? 0), 2, '.', '') }}"
+                                                                        data-observacion="{{ $e->observacion ?? '' }}"
+                                                                        data-url="{{ route('alumno.grado.examen.update', $e->id) }}">
+                                                                    <i class="fa-solid fa-pen"></i>
+                                                                </button>
+                                                                @else
+                                                                <form action="{{ route('alumno.grado.examen.anular-pago', $e->id) }}" method="POST" style="display:inline;"
+                                                                      onsubmit="return confirm('¿Anular el pago de este examen?');">
+                                                                    @csrf @method('PUT')
+                                                                    <button type="submit" class="btn btn-danger btn-xs" title="Anular pago">
+                                                                        <i class="fa-solid fa-rotate-left"></i>
+                                                                    </button>
+                                                                </form>
+                                                                @endif
+                                                            @endif
                                                         @elseif(auth()->user()->hasPermission('edit_alumnos'))
                                                             <button type="button"
                                                                     class="btn btn-success btn-xs btn-pagar-examen"
@@ -1079,6 +1139,16 @@
                                                                     data-url="{{ route('alumno.grado.examen.pagar', $e->id) }}"
                                                                     data-monto="{{ number_format((float) ($e->monto ?? 0), 2, '.', '') }}">
                                                                 <i class="fa-solid fa-money-bill"></i>
+                                                            </button>
+                                                            <button type="button"
+                                                                    class="btn btn-warning btn-xs btn-edit-examen"
+                                                                    title="Editar precio del examen"
+                                                                    data-toggle="modal" data-target="#modal-edit-examen"
+                                                                    data-id="{{ $e->id }}"
+                                                                    data-monto="{{ number_format((float) ($e->monto ?? 0), 2, '.', '') }}"
+                                                                    data-observacion="{{ $e->observacion ?? '' }}"
+                                                                    data-url="{{ route('alumno.grado.examen.update', $e->id) }}">
+                                                                <i class="fa-solid fa-pen"></i>
                                                             </button>
                                                         @endif
                                                     </td>
