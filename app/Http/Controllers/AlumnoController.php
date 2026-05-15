@@ -690,7 +690,7 @@ class AlumnoController extends Controller
             ->pluck('grado_id')
             ->toArray();
 
-        $maxOrden = \DB::table('alumno_grados')
+        $maxOrden = DB::table('alumno_grados')
             ->join('grados', 'alumno_grados.grado_id', '=', 'grados.id')
             ->where('alumno_grados.alumno_id', $alumno_id)
             ->whereNull('alumno_grados.deleted_at')

@@ -5,7 +5,9 @@
       "Bash(grep -n 'syncNextFecha\\\\|fechaExamen\\\\|$nextFecha\\\\|shown.bs.modal' /home/user/Escritorio/projects/kaiteki/resources/views/alumnos/grados/list.blade.php)",
       "Bash(grep -n 'gradoList\\\\|primerGrado\\\\|historial\\\\|$data\\\\b' /home/user/Escritorio/projects/kaiteki/app/Http/Controllers/AlumnoController.php)",
       "Bash(xargs ls)",
-      "Bash(composer require *)"
+      "Bash(composer require *)",
+      "Bash(php -r \"echo json_encode\\(getimagesize\\('/home/user/Escritorio/projects/kaiteki/public/images/dojos/ljp/certificados/examen.png'\\)\\);\")",
+      "Bash(php -r \"echo json_encode\\(getimagesize\\('/home/user/Escritorio/projects/kaiteki/public/images/dojos/eka/certificados/examen.png'\\)\\);\")"
     ]
   }
 }
