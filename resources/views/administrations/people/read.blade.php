@@ -75,15 +75,25 @@
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-4 form-group">
+                                    <div class="col-md-3 form-group">
                                         <label class="control-label" style="font-weight:bold;">Género</label>
                                         <p class="form-control-static">{{ $person->gender }}</p>
                                     </div>
-                                    <div class="col-md-4 form-group">
+                                    <div class="col-md-3 form-group">
+                                        <label class="control-label" style="font-weight:bold;">Tipo de Sangre</label>
+                                        <p class="form-control-static">
+                                            @if($person->sangre)
+                                                <span class="label label-danger" style="font-size:13px; padding:4px 8px;">{{ $person->sangre }}</span>
+                                            @else
+                                                <span class="text-muted">N/A</span>
+                                            @endif
+                                        </p>
+                                    </div>
+                                    <div class="col-md-3 form-group">
                                         <label class="control-label" style="font-weight:bold;">Email</label>
                                         <p class="form-control-static">{{ $person->email??'N/A' }}</p>
                                     </div>
-                                    <div class="col-md-4 form-group">
+                                    <div class="col-md-3 form-group">
                                         <label class="control-label" style="font-weight:bold;">Teléfono</label>
                                         @php
                                             $countryCodes = ['591' => 'bo', '54' => 'ar', '55' => 'br', '56' => 'cl', '51' => 'pe', '1' => 'us', '34' => 'es'];

@@ -292,7 +292,11 @@ class AlumnoController extends Controller
                 return $query->where('dojo_id', $userDojoId);
             })
             ->findOrFail($id);
-        $people = Person::whereNull('deleted_at')->orderBy('first_name', 'ASC')->get();
+        $people = Person::whereNull('deleted_at')
+            ->where('dojo_id', $dataTypeContent->dojo_id)
+            ->where('status', 1)
+            ->orderBy('first_name', 'ASC')
+            ->get();
         $dojo = Dojo::whereNull('deleted_at')->orderBy('nombre', 'ASC')->get();
 
         $parientes = Parentesco::whereNull('deleted_at')->orderBy('nombre', 'ASC')->get();

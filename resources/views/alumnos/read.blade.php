@@ -80,7 +80,14 @@
                                 <div class="alumno-info-header">
                                     <div>
                                         <div class="alumno-label">Alumno</div>
-                                        <h3 class="alumno-name">{{ optional($person)->first_name ?: 'Persona no disponible' }}</h3>
+                                        <h3 class="alumno-name">
+                                            {{ optional($person)->first_name ?: 'Persona no disponible' }}
+                                            @if(optional($person)->id)
+                                                <a href="{{ route('voyager.people.show', $person->id) }}" target="_blank" title="Ver Persona" style="font-size:16px; margin-left:8px; color:#777; vertical-align:middle;">
+                                                    <i class="fa-solid fa-eye"></i>
+                                                </a>
+                                            @endif
+                                        </h3>
                                     </div>
                                     <div class="alumno-status-wrap">
                                         <span class="label {{ $alumno->status == 1 ? 'label-success' : 'label-warning' }} alumno-status-label">
@@ -90,82 +97,64 @@
                                 </div>
 
                                 <div class="row">
-                                    <div class="col-md-3">
-                                        <div class="alumno-data-card">
-                                            <div class="alumno-label">Dojo</div>
-                                            <div class="alumno-value">{{ optional($dojoData)->nombre ?: 'Sin dojo asignado' }}</div>
-                                        </div>
+                                    <div class="col-md-3 form-group">
+                                        <label class="control-label" style="font-weight:bold;">Documento de Identidad</label>
+                                        <p class="form-control-static">{{ optional($person)->documentType ?: 'N/A' }}: {{ optional($person)->ci ?: 'No registrado' }}</p>
                                     </div>
-                                    <div class="col-md-3">
-                                        <div class="alumno-data-card">
-                                            <div class="alumno-label">Fecha de Ingreso</div>
-                                            <div class="alumno-value">{{ $alumno->fechaIngreso ? \Carbon\Carbon::parse($alumno->fechaIngreso)->format('d/m/Y') : 'No registrada' }}</div>
-                                        </div>
+                                    <div class="col-md-3 form-group">
+                                        <label class="control-label" style="font-weight:bold;">Dojo</label>
+                                        <p class="form-control-static">{{ optional($dojoData)->nombre ?: 'Sin dojo asignado' }}</p>
                                     </div>
-                                    <div class="col-md-3">
-                                        <div class="alumno-data-card">
-                                            <div class="alumno-label">Documento</div>
-                                            <div class="alumno-value">{{ optional($person)->documentType ?: 'N/A' }}: {{ optional($person)->ci ?: 'No registrado' }}</div>
-                                        </div>
+                                    <div class="col-md-3 form-group">
+                                        <label class="control-label" style="font-weight:bold;">Fecha de Ingreso</label>
+                                        <p class="form-control-static">{{ $alumno->fechaIngreso ? \Carbon\Carbon::parse($alumno->fechaIngreso)->format('d/m/Y') : 'No registrada' }}</p>
                                     </div>
-                                    <div class="col-md-3">
-                                        <div class="alumno-data-card">
-                                            <div class="alumno-label">Género</div>
-                                            <div class="alumno-value">{{ optional($person)->gender ?: 'No registrado' }}</div>
-                                        </div>
+                                    <div class="col-md-3 form-group">
+                                        <label class="control-label" style="font-weight:bold;">Género</label>
+                                        <p class="form-control-static">{{ optional($person)->gender ?: 'No registrado' }}</p>
+                                    </div>  
+                                </div>
+                                <div class="row">
+                                    
+                                    <div class="col-md-3 form-group">
+                                        <label class="control-label" style="font-weight:bold;">Tipo de Sangre</label>
+                                        <p class="form-control-static">
+                                            @if(optional($person)->sangre)
+                                                <span class="label label-danger" style="font-size:13px; padding:4px 8px;">{{ $person->sangre }}</span>
+                                            @else
+                                                <span class="text-muted">N/A</span>
+                                            @endif
+                                        </p>
+                                    </div>
+                                    <div class="col-md-3 form-group">
+                                        <label class="control-label" style="font-weight:bold;">Fecha de Nacimiento</label>
+                                        <p class="form-control-static">{{ optional($person)->birth_date ? \Carbon\Carbon::parse($person->birth_date)->format('d/m/Y') : 'No registrada' }}</p>
+                                    </div>
+                                    <div class="col-md-3 form-group">
+                                        <label class="control-label" style="font-weight:bold;">Edad</label>
+                                        <p class="form-control-static">{{ optional($person)->birth_date ? \Carbon\Carbon::parse($person->birth_date)->age . ' año(s)' : 'No registrada' }}</p>
+                                    </div>
+                                    <div class="col-md-3 form-group">
+                                        <label class="control-label" style="font-weight:bold;">Teléfono</label>
+                                        <p class="form-control-static">
+                                            @if(optional($person)->phone)
+                                                +{{ $person->country_code ?: '591' }} {{ $person->phone }}
+                                            @else
+                                                No registrado
+                                            @endif
+                                        </p>
                                     </div>
                                 </div>
-
+                                <hr style="margin: 10px 0;">
                                 <div class="row">
-                                    <div class="col-md-3">
-                                        <div class="alumno-data-card">
-                                            <div class="alumno-label">Fecha de Nacimiento</div>
-                                            <div class="alumno-value">{{ optional($person)->birth_date ? \Carbon\Carbon::parse($person->birth_date)->format('d/m/Y') : 'No registrada' }}</div>
-                                        </div>
+                                    <div class="col-md-6 form-group">
+                                        <label class="control-label" style="font-weight:bold;">Dirección</label>
+                                        <p class="form-control-static">{{ optional($person)->address ?: 'No registrada' }}</p>
                                     </div>
-                                    <div class="col-md-3">
-                                        <div class="alumno-data-card">
-                                            <div class="alumno-label">Edad</div>
-                                            <div class="alumno-value">
-                                                {{ optional($person)->birth_date ? \Carbon\Carbon::parse($person->birth_date)->age . ' año(s)' : 'No registrada' }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="alumno-data-card">
-                                            <div class="alumno-label">Teléfono</div>
-                                            <div class="alumno-value">
-                                                @if (optional($person)->phone)
-                                                    +{{ $person->country_code ?: '591' }} {{ $person->phone }}
-                                                @else
-                                                    No registrado
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="alumno-data-card">
-                                            <div class="alumno-label">Correo</div>
-                                            <div class="alumno-value">{{ optional($person)->email ?: 'No registrado' }}</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <div class="alumno-data-card">
-                                            <div class="alumno-label">Dirección</div>
-                                            <div class="alumno-value">{{ optional($person)->address ?: 'No registrada' }}</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-12">
-                                        <div class="alumno-data-card">
-                                            <div class="alumno-label">Observaciones</div>
-                                            <div class="alumno-value">{{ $alumno->observacion ?: 'Sin observaciones registradas.' }}</div>
-                                        </div>
+                          
+                                    <div class="col-md-6 form-group">
+                                        <label class="control-label" style="font-weight:bold;">Observaciones</label>
+                                        <p class="form-control-static">{{ $alumno->observacion ?: 'Sin observaciones registradas.' }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -385,8 +374,13 @@
                         <div class="modal-body">
                             <input type="hidden" name="alumno_id" value="{{ $alumno->id }}">
                             <div class="form-group col-md-6">
-                                <label for="person_id">Nombre del Tutor</label>
-                                <select name="person_id" class="form-control select2" required>
+                                <label for="tutor_person_id" style="display:flex; justify-content:space-between; align-items:center;">
+                                    Nombre del Tutor
+                                    <button class="btn btn-xs btn-primary" title="Nueva persona" type="button" id="btn-open-create-person-tutor">
+                                        <span class="glyphicon glyphicon-plus" aria-hidden="true"></span> Nueva
+                                    </button>
+                                </label>
+                                <select id="tutor_person_id" name="person_id" class="form-control select2" required>
                                     <option value="">Seleccione una persona</option>
                                     @foreach ($people as $person)
                                         @if ((int) $person->id !== (int) $alumno->person_id)
@@ -541,6 +535,8 @@
                 </div>
             </div>
         </form>
+
+    @include('partials.modal-registerPerson')
     </div>
 @stop
 
@@ -633,6 +629,7 @@
 
 @section('javascript')
     <script src="{{ asset('js/btn-submit.js') }}"></script>
+    <script src="{{ asset('js/include/person-register.js') }}"></script>
     <script>
         var countPageGrado = 10;
         var countPageTutor = 10;
@@ -646,6 +643,8 @@
         var timeoutHorario = null;
         var timeoutAsistencia = null;
         var timeoutMensualidad = null;
+        var shouldRestoreTutorModal = false;
+        var pendingTutorPerson = null;
 
         $(document).ready(function() {
             $('#modal-add-tutor, #modal-add-enfermedad, #modal-add-grado, #modal-add-horario').on('shown.bs.modal', function() {
@@ -653,6 +652,40 @@
                     dropdownParent: $(this),
                     width: '100%'
                 });
+            });
+
+            $('#modal-add-tutor').on('shown.bs.modal', function() {
+                var p = pendingTutorPerson;
+                shouldRestoreTutorModal = false;
+                if (p) {
+                    $('#tutor_person_id').val(p.id).trigger('change');
+                    pendingTutorPerson = null;
+                }
+            });
+
+            $('#btn-open-create-person-tutor').on('click', function() {
+                shouldRestoreTutorModal = true;
+                $('#modal-add-tutor').modal('hide');
+            });
+
+            $('#modal-add-tutor').on('hidden.bs.modal', function() {
+                if (shouldRestoreTutorModal) {
+                    $('#modal-create-person').modal('show');
+                }
+            });
+
+            $('#modal-create-person').on('hidden.bs.modal', function() {
+                if (shouldRestoreTutorModal) {
+                    $('#modal-add-tutor').modal('show');
+                }
+            });
+
+            $(document).on('person:created', function(event, person) {
+                if (!shouldRestoreTutorModal || !person) return;
+                if (!$('#tutor_person_id option[value="' + person.id + '"]').length) {
+                    $('#tutor_person_id').append(new Option(person.first_name, person.id, false, false));
+                }
+                pendingTutorPerson = person;
             });
 
             $('#check-confirmar-grado').on('change', function() {
