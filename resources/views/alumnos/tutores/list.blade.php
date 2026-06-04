@@ -38,8 +38,8 @@
                             {{ (string) $item->status === '1' || $item->status === 1 || $item->status === null ? 'Activo' : 'Inactivo' }}
                         </span>
                     </td>
-                    <td class="text-center">
-                        @php
+                    <td class="no-sort no-click bread-actions text-right">
+                        {{-- @php
                             $isActive = (string) $item->status === '1' || $item->status === 1 || $item->status === null;
                         @endphp
                         @if (auth()->user()->hasPermission('edit_alumnos') && ($alumnoActivo ?? true))
@@ -51,7 +51,7 @@
                                     <i class="{{ $isActive ? 'voyager-x' : 'voyager-check' }}"></i>
                                 </button>
                             </form>
-                        @endif
+                        @endif --}}
                         @if($alumnoActivo ?? true)
                         <a href="javascript:void(0);"
                             onclick="deleteItem('{{ route('alumno.tutores.destroy', ['id' => $item->id]) }}')"
