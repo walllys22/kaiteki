@@ -187,6 +187,7 @@ class AlumnoController extends Controller
             ->with([
                 'person',
                 'dojo',
+                'register',
                 'ultimoGrado.grado',
                 'alumnoHorarios' => function ($query) {
                     $query->with('horario')

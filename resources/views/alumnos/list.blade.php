@@ -8,7 +8,8 @@
                     <th style="text-align: center">Nombre Completo</th>
                     <th style="text-align: center">Horario</th>
                     <th style="text-align: center">Ultimo Actual</th>
-                    <th style="text-align: center">Ingreso</th>                    
+                    <th style="text-align: center">Ingreso</th>
+                    <th style="text-align: center">Registrado por</th>
                     <th style="text-align: center">Estado</th>
                     <th style="text-align: center">Acciones</th>
                 </tr>
@@ -74,8 +75,16 @@
                     <td style="text-align: center">
                         {{ $item->fechaIngreso ? \Carbon\Carbon::parse($item->fechaIngreso)->format('d/m/Y') : 'N/A' }}
                     </td>
+                    <td style="text-align:center; vertical-align:middle;">
+                        @if($item->register)
+                            <div style="font-size:12px; font-weight:600;">{{ $item->register->name }}</div>
+                        @endif
+                        <div style="font-size:11px; color:#888; margin-top:2px;">
+                            {{ $item->created_at ? $item->created_at->format('d/m/Y') : '—' }}
+                        </div>
+                    </td>
                     <td style="text-align: center">
-                        @if ($item->status==1)  
+                        @if ($item->status==1)
                             <label class="label label-success">Activo</label>
                         @else
                             <label class="label label-warning">Inactivo</label>

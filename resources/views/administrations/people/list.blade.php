@@ -7,6 +7,7 @@
                     <th style="text-align: center">Nombre completo</th>                    
                     <th style="text-align: center">Datos personales</th>
                     <th style="text-align: center">Contacto</th>
+                    <th style="text-align: center">Registrado por</th>
                     <th style="text-align: center">Estado</th>
                     <th style="text-align: center">Acciones</th>
                 </tr>
@@ -87,14 +88,20 @@
                             @endif
                         @endif
                     </td>
+                    <td style="text-align:center; vertical-align:middle;">
+                        @if($item->register)
+                            <div style="font-size:12px; font-weight:600;">{{ $item->register->name }}</div>
+                        @endif
+                        <div style="font-size:11px; color:#888; margin-top:2px;">
+                            {{ $item->created_at ? $item->created_at->format('d/m/Y') : '—' }}
+                        </div>
+                    </td>
                     <td style="text-align: center">
-                        @if ($item->status==1)  
+                        @if ($item->status==1)
                             <label class="label label-success">Activo</label>
                         @else
                             <label class="label label-warning">Inactivo</label>
                         @endif
-
-                        
                     </td>
                     <td style="width: 18%" class="no-sort no-click bread-actions text-right">
                         @if (auth()->user()->hasPermission('read_people'))
