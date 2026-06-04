@@ -3,7 +3,6 @@
         <thead>
             <tr>
                 <th style="text-align:center; width: 70px;">CI/Nit</th>
-                <th style="width:50px;"></th>
                 <th>Tutor</th>
                 <th>Parentesco</th>
                 <th>Telefono</th>
@@ -16,17 +15,20 @@
             @forelse ($data as $item)
                 <tr>
                     <td style="text-align:center; vertical-align:middle;">{{ $item->tutor->ci }}</td>
-                    <td style="text-align:center; vertical-align:middle; padding:6px 4px;">
+                    <td style="vertical-align:middle;">
                         @php
                             $tutorImg = asset('images/default.jpg');
                             if(optional($item->tutor)->image){
                                 $tutorImg = asset('storage/' . str_replace('.avif', '', $item->tutor->image) . '-cropped.webp');
                             }
                         @endphp
-                        <img src="{{ $tutorImg }}" alt="{{ optional($item->tutor)->first_name }}"
-                             style="width:38px; height:38px; border-radius:50%; object-fit:cover; border:1px solid #ddd;">
+                        <div style="display:flex; align-items:center;">
+                            <img src="{{ $tutorImg }}" alt="{{ optional($item->tutor)->first_name }}"
+                                 class="image-expandable"
+                                 style="width:60px; height:60px; border-radius:30px; margin-right:10px; object-fit:cover;">
+                            <span>{{ optional($item->tutor)->first_name ?: 'Tutor no disponible' }}</span>
+                        </div>
                     </td>
-                    <td style="vertical-align:middle;">{{ optional($item->tutor)->first_name ?: 'Tutor no disponible' }}</td>
                     <td>{{ optional($item->pariente)->nombre ?: 'No registrado' }}</td>
                     <td>{{ $item->tutor->phone }}</td>
                     <td>{{ $item->tutor->address}}</td>
@@ -61,7 +63,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="8">
+                    <td colspan="7">
                         <h5 class="text-center" style="margin-top: 50px">
                             <img src="{{ asset('images/empty.png') }}" width="120px" alt=""
                                 style="opacity: 0.8">
