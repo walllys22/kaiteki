@@ -172,7 +172,7 @@
                 <th>Dojo</th>
                 @endif
                 <th>Ingreso</th>
-                <th>Estado</th>
+                <th>Ingreso grado</th>
                 <th>Último Grado</th>
                 <th>Estado Grado</th>
                 <th>Puntas</th>
@@ -198,12 +198,8 @@
                 <td style="white-space:nowrap; font-size:11px;">
                     {{ $alumno->fechaIngreso ? \Carbon\Carbon::parse($alumno->fechaIngreso)->format('d/m/Y') : '—' }}
                 </td>
-                <td>
-                    @if((int) $alumno->status === 1)
-                        <span class="b-activo">Activo</span>
-                    @else
-                        <span class="b-inactivo">Inactivo</span>
-                    @endif
+                <td style="white-space:nowrap; font-size:11px;">
+                    {{ $ug && $ug->fecha ? \Carbon\Carbon::parse($ug->fecha)->format('d/m/Y') : '—' }}
                 </td>
                 <td>
                     @if($gradoLabel)
@@ -239,9 +235,7 @@
         <tfoot>
             <tr class="total-row">
                 <td colspan="{{ ($esGlobal && !$dojo) ? 8 : 7 }}">
-                    Total: {{ $alumnos->count() }} alumno(s) &nbsp;·&nbsp;
-                    Activos: {{ $alumnos->where('status', 1)->count() }} &nbsp;·&nbsp;
-                    Inactivos: {{ $alumnos->where('status', 0)->count() }}
+                    Total: {{ $alumnos->count() }} alumno(s)
                 </td>
             </tr>
         </tfoot>
