@@ -52,9 +52,21 @@
             padding: 28px 32px;
             width: 900px;
         }
-        .print-document { width: 100%; border-collapse: collapse; }
-        .print-document > thead > tr > td,
-        .print-document > tbody > tr > td { padding: 0; }
+        .print-pages { display: none; }
+        .print-page {
+            background: #fff;
+            page-break-after: always;
+            padding: 16px 20px;
+            width: 100%;
+        }
+        .print-page:last-child { page-break-after: auto; }
+        .print-measure {
+            left: -10000px;
+            position: absolute;
+            top: 0;
+            visibility: hidden;
+            width: 740px;
+        }
 
         /* ── Encabezado ── */
         .header-table { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
@@ -169,20 +181,15 @@
         .sin-registros { color: #aaa; font-size: 11px; padding: 6px 8px; }
 
         .ninguno { text-align: center; color: #888; padding: 18px 0; font-size: 13px; }
-        .page-number::before { content: "1"; }
-        .page-total::before { content: "1"; }
 
         @media print {
             body { background: #fff; }
             .actions { display: none; }
-            .sheet { margin: 0; padding: 16px 20px; width: 100%; }
-            .print-document > thead { display: table-header-group; }
-            .print-document > tfoot { display: table-footer-group; }
-            .print-document > tbody { display: table-row-group; }
+            .sheet { display: none; }
+            .print-pages { display: block; }
+            .print-page { margin: 0; width: 100%; }
             .header-table { margin-bottom: 12px; }
             .grado-card { page-break-inside: avoid; }
-            .page-number::before { content: counter(page); }
-            .page-total::before { content: counter(pages); }
             @page { size: letter; margin: 10mm; }
         }
     </style>
@@ -190,37 +197,27 @@
 <body>
 
 <div class="actions">
-    <button onclick="window.print()">&#128438; Imprimir</button>
+    <button onclick="window.printHistorialAlumno()">&#128438; Imprimir</button>
     <a href="#" onclick="window.close(); return false;">&#8592; Cerrar</a>
 </div>
 
 <div class="sheet">
-    <table class="print-document">
-        <thead>
-            <tr>
-                <td>
-                    {{-- ── Encabezado repetido por hoja ── --}}
-                    <table class="header-table">
-                        <tr>
-                            <td class="header-logo"><img src="{{ $logo }}" alt="Logo"></td>
-                            <td class="header-center">
-                                <div class="dojo-name">{{ strtoupper($dojoNombre) }}</div>
-                                <div class="doc-title">Historial del Alumno</div>
-                            </td>
-                            <td class="header-right">
-                                Impreso<br>
-                                {{ now()->format('d/m/Y') }}<br>
-                                {{ now()->format('g:i a') }}<br>
-                                Página <span class="page-number"></span> de <span class="page-total"></span>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>
+    {{-- ── Encabezado de vista previa ── --}}
+    <table class="header-table">
+        <tr>
+            <td class="header-logo"><img src="{{ $logo }}" alt="Logo"></td>
+            <td class="header-center">
+                <div class="dojo-name">{{ strtoupper($dojoNombre) }}</div>
+                <div class="doc-title">Historial del Alumno</div>
+            </td>
+            <td class="header-right">
+                Impreso<br>
+                {{ now()->format('d/m/Y') }}<br>
+                {{ now()->format('g:i a') }}<br>
+                Página 1 de 1
+            </td>
+        </tr>
+    </table>
 
     {{-- ── Datos del alumno ── --}}
     <div class="section-header">Alumno</div>
@@ -425,10 +422,101 @@
         @endforelse
     </div>
 
-                </td>
-            </tr>
-        </tbody>
-    </table>
 </div>
+<div class="print-pages" id="print-pages"></div>
+
+<script>
+    (function () {
+        const printMeta = {
+            date: @json(now()->format('d/m/Y')),
+            time: @json(now()->format('g:i a'))
+        };
+        const pageHeight = 980;
+
+        function buildHeader(page, total) {
+            const header = document.querySelector('.sheet > .header-table').cloneNode(true);
+            const right = header.querySelector('.header-right');
+            right.innerHTML = 'Impreso<br>' + printMeta.date + '<br>' + printMeta.time + '<br>Página ' + page + ' de ' + total;
+            return header;
+        }
+
+        function createPage(measurer) {
+            const page = document.createElement('div');
+            page.className = 'print-page';
+            page.appendChild(buildHeader(0, 0));
+
+            const body = document.createElement('div');
+            body.className = 'print-page-body';
+            page.appendChild(body);
+            measurer.appendChild(page);
+
+            return { page, body };
+        }
+
+        function cloneBlock(node) {
+            return node.cloneNode(true);
+        }
+
+        function paginateHistorial() {
+            const sheet = document.querySelector('.sheet');
+            const printPages = document.getElementById('print-pages');
+            const sectionHeaders = sheet.querySelectorAll('.section-header');
+
+            if (!sheet || !printPages || sectionHeaders.length < 2) {
+                return;
+            }
+
+            const alumnoHeader = sectionHeaders[0];
+            const alumnoBody = alumnoHeader.nextElementSibling;
+            const historialHeader = sectionHeaders[1];
+            const historialBody = historialHeader.nextElementSibling;
+            const historialItems = Array.from(historialBody.children).filter(function (item) {
+                return item.classList.contains('grado-card') || item.classList.contains('ninguno');
+            });
+
+            printPages.innerHTML = '';
+
+            const measurer = document.createElement('div');
+            measurer.className = 'print-measure';
+            document.body.appendChild(measurer);
+
+            const pages = [];
+            let current = createPage(measurer);
+            pages.push(current);
+
+            current.body.appendChild(cloneBlock(alumnoHeader));
+            current.body.appendChild(cloneBlock(alumnoBody));
+            current.body.appendChild(cloneBlock(historialHeader));
+
+            historialItems.forEach(function (item) {
+                const cloned = cloneBlock(item);
+                const previousCount = current.body.children.length;
+                current.body.appendChild(cloned);
+
+                if (current.page.scrollHeight > pageHeight && previousCount > 0) {
+                    current.body.removeChild(cloned);
+                    current = createPage(measurer);
+                    pages.push(current);
+                    current.body.appendChild(cloned);
+                }
+            });
+
+            const total = pages.length;
+            pages.forEach(function (entry, index) {
+                entry.page.replaceChild(buildHeader(index + 1, total), entry.page.firstElementChild);
+                printPages.appendChild(entry.page);
+            });
+
+            document.body.removeChild(measurer);
+        }
+
+        window.addEventListener('load', paginateHistorial);
+        window.addEventListener('beforeprint', paginateHistorial);
+        window.printHistorialAlumno = function () {
+            paginateHistorial();
+            window.print();
+        };
+    })();
+</script>
 </body>
 </html>
