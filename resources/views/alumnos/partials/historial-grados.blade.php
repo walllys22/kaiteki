@@ -52,6 +52,9 @@
             padding: 28px 32px;
             width: 900px;
         }
+        .print-document { width: 100%; border-collapse: collapse; }
+        .print-document > thead > tr > td,
+        .print-document > tbody > tr > td { padding: 0; }
 
         /* ── Encabezado ── */
         .header-table { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
@@ -166,12 +169,20 @@
         .sin-registros { color: #aaa; font-size: 11px; padding: 6px 8px; }
 
         .ninguno { text-align: center; color: #888; padding: 18px 0; font-size: 13px; }
+        .page-number::before { content: "1"; }
+        .page-total::before { content: "1"; }
 
         @media print {
             body { background: #fff; }
             .actions { display: none; }
             .sheet { margin: 0; padding: 16px 20px; width: 100%; }
+            .print-document > thead { display: table-header-group; }
+            .print-document > tfoot { display: table-footer-group; }
+            .print-document > tbody { display: table-row-group; }
+            .header-table { margin-bottom: 12px; }
             .grado-card { page-break-inside: avoid; }
+            .page-number::before { content: counter(page); }
+            .page-total::before { content: counter(pages); }
             @page { size: letter; margin: 10mm; }
         }
     </style>
@@ -184,23 +195,32 @@
 </div>
 
 <div class="sheet">
-
-    {{-- ── Encabezado ── --}}
-    <table class="header-table">
-        <tr>
-            <td class="header-logo"><img src="{{ $logo }}" alt="Logo"></td>
-            <td class="header-center">
-                <div class="dojo-name">{{ strtoupper($dojoNombre) }}</div>
-                <div class="doc-title">Historial del Alumno</div>
-            </td>
-            <td class="header-right">
-                Impreso<br>
-                {{ now()->format('d/m/Y') }}<br>
-                {{ now()->format('g:i a') }}<br>
-                Página 1 de 1
-            </td>
-        </tr>
-    </table>
+    <table class="print-document">
+        <thead>
+            <tr>
+                <td>
+                    {{-- ── Encabezado repetido por hoja ── --}}
+                    <table class="header-table">
+                        <tr>
+                            <td class="header-logo"><img src="{{ $logo }}" alt="Logo"></td>
+                            <td class="header-center">
+                                <div class="dojo-name">{{ strtoupper($dojoNombre) }}</div>
+                                <div class="doc-title">Historial del Alumno</div>
+                            </td>
+                            <td class="header-right">
+                                Impreso<br>
+                                {{ now()->format('d/m/Y') }}<br>
+                                {{ now()->format('g:i a') }}<br>
+                                Página <span class="page-number"></span> de <span class="page-total"></span>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
 
     {{-- ── Datos del alumno ── --}}
     <div class="section-header">Alumno</div>
@@ -314,7 +334,7 @@
                             $monto  = (float) ($r->monto ?? 0);
                             $pagado = (float) ($r->monto_pagado ?? 0);
                             $saldo  = max(0, $monto - $pagado);
-                            $esPagado = $monto > 0 && $pagado >= $monto;
+                            $esPagado = $monto <= 0 || $pagado >= $monto;
                         @endphp
                         <tr>
                             <td style="color:#aaa;">{{ $j + 1 }}</td>
@@ -367,7 +387,7 @@
                             $monto  = (float) ($ex->monto ?? 0);
                             $pagado = (float) ($ex->monto_pagado ?? 0);
                             $saldo  = max(0, $monto - $pagado);
-                            $esPagado = $monto > 0 && $pagado >= $monto;
+                            $esPagado = $monto <= 0 || $pagado >= $monto;
                         @endphp
                         <tr>
                             <td style="color:#aaa;">{{ $j + 1 }}</td>
@@ -405,6 +425,10 @@
         @endforelse
     </div>
 
+                </td>
+            </tr>
+        </tbody>
+    </table>
 </div>
 </body>
 </html>
