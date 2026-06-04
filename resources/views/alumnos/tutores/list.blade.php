@@ -8,7 +8,7 @@
                 <th>Telefono</th>
                 <th>Dirección</th>
                 <th style="text-align:center; width: 130px;">Estado</th>
-                <th style="text-align:center; width: 160px;">Acciones</th>
+                <th style="text-align:center;">Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -38,7 +38,7 @@
                             {{ (string) $item->status === '1' || $item->status === 1 || $item->status === null ? 'Activo' : 'Inactivo' }}
                         </span>
                     </td>
-                    <td class="no-sort no-click bread-actions text-right">
+                    <td class="no-sort no-click bread-actions text-center">
                         {{-- @php
                             $isActive = (string) $item->status === '1' || $item->status === 1 || $item->status === null;
                         @endphp
