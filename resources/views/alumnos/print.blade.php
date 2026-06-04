@@ -173,7 +173,9 @@
                 @endif
                 <th>Ingreso</th>
                 <th>Ingreso grado</th>
+                @if(!$gradoFiltro)
                 <th>Último Grado</th>
+                @endif
                 <th>Estado Grado</th>
                 <th>Puntas</th>
             </tr>
@@ -201,13 +203,15 @@
                 <td style="white-space:nowrap; font-size:11px;">
                     {{ $ug && $ug->fecha ? \Carbon\Carbon::parse($ug->fecha)->format('d/m/Y') : '—' }}
                 </td>
-                <td>
-                    @if($gradoLabel)
-                        {{ $gradoLabel }}
-                    @else
-                        <span class="b-sin-grado">Sin grado</span>
-                    @endif
-                </td>
+                @if(!$gradoFiltro)
+                    <td>
+                        @if($gradoLabel)
+                            {{ $gradoLabel }}
+                        @else
+                            <span class="b-sin-grado">Sin grado</span>
+                        @endif
+                    </td>
+                @endif
                 <td>
                     @if($ug === null)
                         <span class="b-sin-grado">—</span>
@@ -234,7 +238,7 @@
         </tbody>
         <tfoot>
             <tr class="total-row">
-                <td colspan="{{ ($esGlobal && !$dojo) ? 8 : 7 }}">
+                <td colspan="{{ ($esGlobal && !$dojo ? 1 : 0) + ($gradoFiltro ? 6 : 7) }}">
                     Total: {{ $alumnos->count() }} alumno(s)
                 </td>
             </tr>
