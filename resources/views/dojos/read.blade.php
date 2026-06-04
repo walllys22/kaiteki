@@ -226,6 +226,32 @@
 
 </div>
 
+{{-- Modal editar fecha fin --}}
+@if(!auth()->user()->dojo_id)
+<div class="modal fade" id="modal-editar-fecha-fin" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title"><i class="voyager-edit"></i> Editar Fecha Fin</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>Nueva fecha fin <span class="text-danger">*</span></label>
+                    <input type="date" id="fecha-fin-input" class="form-control">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-info" id="btn-confirmar-fecha-fin">
+                    <i class="voyager-check"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 {{-- Modal historial de pagos --}}
 <div class="modal fade" id="modal-pagos-mensualidad" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
@@ -357,11 +383,37 @@
         $.get(listUrl, function(html) {
             $('#panel-mensualidades').html(html);
             bindMensualidadActions();
+            actualizarModalNuevaMensualidad();
         });
     }
 
-    var pagoUrl = null;
+    function actualizarModalNuevaMensualidad() {
+        var ultimaFechaFin = $('#ultima-fecha-fin').val();
+        if (!ultimaFechaFin) return;
+
+        // Parse local — evita timezone shift de UTC
+        var p = ultimaFechaFin.split('-');
+        var ultima = new Date(+p[0], +p[1] - 1, +p[2]);
+
+        var inicio = new Date(ultima.getFullYear(), ultima.getMonth(), ultima.getDate() + 1);
+        var fin    = new Date(inicio.getFullYear(), inicio.getMonth() + 1, 0);
+
+        var fmt = function(d) {
+            return d.getFullYear() + '-' +
+                String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                String(d.getDate()).padStart(2, '0');
+        };
+
+        var fmtInicio = fmt(inicio);
+        var fmtFin    = fmt(fin);
+
+        $('input[name="fecha_inicio"]').val(fmtInicio).attr('min', fmtInicio);
+        $('input[name="fecha_fin"]').val(fmtFin).attr('min', fmtInicio);
+    }
+
+    var pagoUrl   = null;
     var pagoSaldo = 0;
+    var fechaFinUrl = null;
 
     function bindMensualidadActions() {
         $('.btn-pagar-mensualidad').off('click').on('click', function() {
@@ -416,6 +468,17 @@
             });
         });
 
+        $('.btn-editar-fecha-fin').off('click').on('click', function() {
+            var btn = $(this);
+            fechaFinUrl = btn.data('url');
+            var fechaActual = btn.data('fecha');
+            var minFecha    = btn.data('min');
+            $('#fecha-fin-input')
+                .val(fechaActual)
+                .attr('min', minFecha);
+            $('#modal-editar-fecha-fin').modal('show');
+        });
+
         $(document).off('click', '.btn-ver-pagos').on('click', '.btn-ver-pagos', function() {
             var btn = $(this);
             $('#pagos-periodo-label').text(btn.data('periodo'));
@@ -447,6 +510,29 @@
             });
         });
     }
+
+    $('#btn-confirmar-fecha-fin').on('click', function() {
+        var fechaFin = $('#fecha-fin-input').val();
+        if (!fechaFin) { toastr.error('Ingrese una fecha.'); return; }
+
+        var btn = $(this);
+        btn.prop('disabled', true);
+
+        $.ajax({
+            url: fechaFinUrl,
+            type: 'PUT',
+            data: { _token: '{{ csrf_token() }}', fecha_fin: fechaFin },
+            success: function(res) {
+                toastr.success(res.message);
+                $('#modal-editar-fecha-fin').modal('hide');
+                cargarMensualidades();
+            },
+            error: function(xhr) {
+                toastr.error(xhr.responseJSON ? xhr.responseJSON.error : 'Error al guardar.');
+            },
+            complete: function() { btn.prop('disabled', false); }
+        });
+    });
 
     $(document).ready(function() {
         cargarMensualidades();

@@ -2,6 +2,8 @@
     $isGlobalAdmin = !auth()->user()->dojo_id;
 @endphp
 
+<input type="hidden" id="ultima-fecha-fin" value="{{ $mensualidades->first()?->fecha_fin?->format('Y-m-d') ?? '' }}">
+
 @if($mensualidades->isEmpty())
     <div class="text-center" style="padding: 30px 0;">
         <p class="text-muted">No hay mensualidades registradas para esta sucursal.</p>
@@ -28,6 +30,7 @@
                         $estado    = $m->estadoPago();
                         $isVigente = $m->isVigente();
                         $saldo     = $m->saldo();
+                        $isUltima  = $loop->first;
                         $estadoClass = match($estado) {
                             'Pagado'  => 'success',
                             'Vencido' => 'danger',
@@ -56,6 +59,17 @@
                         </td>
                         @if($isGlobalAdmin)
                             <td style="text-align:center; vertical-align:middle; white-space:nowrap;">
+                                @if($isGlobalAdmin && $isUltima)
+                                    <button type="button"
+                                            class="btn btn-xs btn-info btn-editar-fecha-fin"
+                                            data-id="{{ $m->id }}"
+                                            data-url="{{ route('dojo.mensualidades.fecha-fin', $m->id) }}"
+                                            data-fecha="{{ $m->fecha_fin->format('Y-m-d') }}"
+                                            data-min="{{ $m->fecha_inicio->format('Y-m-d') }}"
+                                            title="Editar fecha fin">
+                                        <i class="voyager-edit"></i>
+                                    </button>
+                                @endif
                                 @if($saldo > 0)
                                     <button type="button"
                                             class="btn btn-xs btn-success btn-pagar-mensualidad"

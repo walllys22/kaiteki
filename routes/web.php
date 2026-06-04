@@ -177,6 +177,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system', 'dojo.me
     Route::get('dojos/{id}/mensualidades/list', [DojoMensualidadController::class, 'list'])->name('dojo.mensualidades.list');
     Route::post('dojos/{id}/mensualidades/store', [DojoMensualidadController::class, 'store'])->name('dojo.mensualidades.store');
     Route::put('dojos/mensualidades/{id}/pagar', [DojoMensualidadController::class, 'pagar'])->name('dojo.mensualidades.pagar');
+    Route::put('dojos/mensualidades/{id}/fecha-fin', [DojoMensualidadController::class, 'updateFechaFin'])->name('dojo.mensualidades.fecha-fin');
     Route::get('dojos/mensualidades/{id}/pagos', [DojoMensualidadController::class, 'pagosList'])->name('dojo.mensualidades.pagos');
     Route::get('dojos/mensualidades/pagos/{id}/comprobante', [DojoMensualidadController::class, 'comprobante'])->name('dojo.mensualidades.pago.comprobante');
     Route::delete('dojos/mensualidades/{id}/delete', [DojoMensualidadController::class, 'destroy'])->name('dojo.mensualidades.destroy');

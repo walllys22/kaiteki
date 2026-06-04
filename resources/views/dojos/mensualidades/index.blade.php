@@ -3,19 +3,6 @@
 @section('page_title', 'Mensualidades')
 
 @section('page_header')
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="panel panel-bordered" style="margin-bottom:0;">
-                    <div class="panel-body" style="padding: 10px 15px; display:flex; align-items:center; justify-content:space-between;">
-                        <h1 class="page-title" style="margin:0; font-size:20px;">
-                            <i class="fa fa-file-invoice-dollar"></i> Mensualidades de Sucursales
-                        </h1>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 @stop
 
 @section('content')

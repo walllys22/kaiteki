@@ -84,7 +84,7 @@ class DojoMensualidadController extends Controller
             ->exists();
 
         if ($solapamiento) {
-            return back()->with(['message' => 'El rango se solapa con una mensualidad existente.', 'alert-type' => 'error']);
+            return back()->with(['message' => 'El rango se solapa con una mensualidad existente. La fecha inicio debe ser posterior al fin de la última mensualidad.', 'alert-type' => 'error']);
         }
 
         DojoMensualidad::create([
@@ -166,6 +166,30 @@ class DojoMensualidadController extends Controller
         }
 
         return view('dojos.mensualidades.comprobantePago', compact('pago'));
+    }
+
+    public function updateFechaFin(Request $request, $id)
+    {
+        $this->custom_authorize('edit_dojo_mensualidades');
+        $this->authorizeGlobalAdmin();
+
+        $mensualidad = DojoMensualidad::findOrFail($id);
+
+        $ultima = DojoMensualidad::where('dojo_id', $mensualidad->dojo_id)
+            ->orderBy('fecha_inicio', 'desc')
+            ->value('id');
+
+        if ((int) $ultima !== (int) $mensualidad->id) {
+            return response()->json(['error' => 'Solo se puede editar la última mensualidad.'], 422);
+        }
+
+        $request->validate([
+            'fecha_fin' => 'required|date|after_or_equal:' . $mensualidad->fecha_inicio->format('Y-m-d'),
+        ]);
+
+        $mensualidad->update(['fecha_fin' => $request->fecha_fin]);
+
+        return response()->json(['success' => true, 'message' => 'Fecha fin actualizada correctamente.']);
     }
 
     public function destroy($id)
