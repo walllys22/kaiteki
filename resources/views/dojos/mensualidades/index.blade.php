@@ -52,7 +52,7 @@
                 <div class="panel panel-bordered" style="border-left: 4px solid #22a7f0; margin-bottom: 16px;">
                     <div class="panel-body" style="padding: 14px 20px; display:flex; align-items:center; gap:16px;">
                         @if($dojo->logo)
-                            <img src="{{ asset($dojo->logo) }}" style="width:52px; height:52px; object-fit:contain; border-radius:6px; border:1px solid #e5e9ef;">
+                            <img src="{{ filter_var($dojo->logo, FILTER_VALIDATE_URL) ? $dojo->logo : Voyager::image($dojo->logo) }}" style="width:52px; height:52px; object-fit:contain; border-radius:6px; border:1px solid #e5e9ef;">
                         @else
                             <div style="width:52px; height:52px; background:#f0f4f8; border-radius:6px; display:flex; align-items:center; justify-content:center; border:1px solid #e1e8ed;">
                                 <i class="voyager-home" style="font-size:22px; color:#b0bec5;"></i>

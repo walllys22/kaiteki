@@ -41,7 +41,8 @@
                         {{-- Logo --}}
                         <div style="flex-shrink:0;">
                             @if($dojo->logo)
-                                <img src="{{ asset($dojo->logo) }}" alt="{{ $dojo->nombre }}"
+                                <img src="{{ filter_var($dojo->logo, FILTER_VALIDATE_URL) ? $dojo->logo : Voyager::image($dojo->logo) }}"
+                                     alt="{{ $dojo->nombre }}"
                                      style="width:100px; height:100px; object-fit:contain; border:1px solid #e5e9ef; border-radius:10px; padding:6px; background:#f8f9fa;">
                             @else
                                 <div style="width:100px; height:100px; background:#f0f4f8; border-radius:10px; display:flex; align-items:center; justify-content:center; border:1px solid #e1e8ed;">
