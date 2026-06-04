@@ -1,0 +1,454 @@
+@extends('voyager::master')
+
+@section('page_title', 'Ver Dojo')
+
+@section('page_header')
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-bordered" style="margin-bottom:0;">
+                    <div class="panel-body" style="padding: 10px 15px; display:flex; align-items:center; justify-content:space-between;">
+                        <h1 class="page-title" style="margin:0; font-size:20px;">
+                            <i class="voyager-home"></i> {{ $dojo->nombre ?? 'Sin nombre' }}
+                        </h1>
+                        <div>
+                            @if(auth()->user()->hasPermission('edit_dojos'))
+                                <a href="{{ route('voyager.dojos.edit', $dojo->id) }}" class="btn btn-info btn-sm">
+                                    <i class="voyager-edit"></i> Editar
+                                </a>
+                            @endif
+                            <a href="{{ route('voyager.dojos.index') }}" class="btn btn-warning btn-sm">
+                                <i class="voyager-list"></i> Volver
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@stop
+
+@section('content')
+<div class="page-content container-fluid">
+
+    {{-- Perfil del dojo --}}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-bordered" style="border-left: 4px solid #22a7f0; margin-bottom: 20px;">
+                <div class="panel-body" style="padding: 20px 25px;">
+                    <div style="display:flex; align-items:flex-start; gap:24px;">
+
+                        {{-- Logo --}}
+                        <div style="flex-shrink:0;">
+                            @if($dojo->logo)
+                                <img src="{{ asset($dojo->logo) }}" alt="{{ $dojo->nombre }}"
+                                     style="width:100px; height:100px; object-fit:contain; border:1px solid #e5e9ef; border-radius:10px; padding:6px; background:#f8f9fa;">
+                            @else
+                                <div style="width:100px; height:100px; background:#f0f4f8; border-radius:10px; display:flex; align-items:center; justify-content:center; border:1px solid #e1e8ed;">
+                                    <i class="voyager-home" style="font-size:38px; color:#b0bec5;"></i>
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- Info --}}
+                        <div style="flex:1; min-width:0;">
+                            <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:14px;">
+                                <h2 style="margin:0; font-size:22px; font-weight:700; color:#2d3748;">{{ $dojo->nombre ?? 'Sin nombre' }}</h2>
+                                @if($dojo->status == 1)
+                                    <span class="label label-success" style="font-size:11px; padding:4px 10px; vertical-align:middle;">Activo</span>
+                                @else
+                                    <span class="label label-danger" style="font-size:11px; padding:4px 10px; vertical-align:middle;">Inactivo</span>
+                                @endif
+                            </div>
+
+                            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:8px 32px; color:#555; font-size:13.5px;">
+                                @if($dojo->ciudad)
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <i class="fa fa-map-marker" style="width:14px; color:#22a7f0; text-align:center;"></i>
+                                    <span><strong style="color:#888; font-weight:600;">Ciudad:</strong> {{ $dojo->ciudad->nombre }}</span>
+                                </div>
+                                @endif
+                                @if($dojo->person)
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <i class="fa fa-user" style="width:14px; color:#22a7f0; text-align:center;"></i>
+                                    <span><strong style="color:#888; font-weight:600;">Responsable:</strong> {{ $dojo->person->first_name }}</span>
+                                </div>
+                                @endif
+                                @if($dojo->grado_responsable)
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <i class="fa fa-star" style="width:14px; color:#22a7f0; text-align:center;"></i>
+                                    <span><strong style="color:#888; font-weight:600;">Grado:</strong> {{ $dojo->grado_responsable }}</span>
+                                </div>
+                                @endif
+                                @if($dojo->phone)
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <i class="fa fa-phone" style="width:14px; color:#22a7f0; text-align:center;"></i>
+                                    <span>{{ $dojo->phone }}</span>
+                                </div>
+                                @endif
+                                @if($dojo->email)
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <i class="fa fa-envelope" style="width:14px; color:#22a7f0; text-align:center;"></i>
+                                    <span>{{ $dojo->email }}</span>
+                                </div>
+                                @endif
+                                @if($dojo->address)
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <i class="fa fa-home" style="width:14px; color:#22a7f0; text-align:center;"></i>
+                                    <span>{{ $dojo->address }}</span>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Usuarios del dojo --}}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-bordered">
+                <div class="panel-heading" style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3 class="panel-title" style="margin:0;">
+                        <i class="voyager-people"></i> Usuarios de la Sucursal
+                        <span class="label label-primary" style="margin-left:8px;">{{ $users->count() }}</span>
+                    </h3>
+                    @if(auth()->user()->hasPermission('add_users'))
+                        <a href="{{ route('voyager.users.create') }}" class="btn btn-primary btn-sm">
+                            <i class="voyager-plus"></i> Agregar Usuario
+                        </a>
+                    @endif
+                </div>
+                <div class="panel-body" style="padding:0;">
+                    @if($users->isEmpty())
+                        <div class="text-center" style="padding: 40px 0;">
+                            <i class="voyager-people" style="font-size:48px; color:#dee2e6;"></i>
+                            <p class="text-muted" style="margin-top:12px;">No hay usuarios registrados para esta sucursal.</p>
+                        </div>
+                    @else
+                        <div class="table-responsive">
+                            <table class="table table-hover" style="margin-bottom:0;">
+                                <thead style="background:#f8f9fa;">
+                                    <tr>
+                                        <th style="width:56px; text-align:center; border-top:none;"></th>
+                                        <th style="border-top:none;">Nombre</th>
+                                        <th style="border-top:none;">Persona vinculada</th>
+                                        <th style="border-top:none;">Email</th>
+                                        <th style="text-align:center; border-top:none;">Rol</th>
+                                        <th style="text-align:center; border-top:none;">Estado</th>
+                                        @if(auth()->user()->hasPermission('read_users') || auth()->user()->hasPermission('edit_users'))
+                                            <th style="text-align:center; border-top:none; width:110px;">Acciones</th>
+                                        @endif
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($users as $user)
+                                        <tr>
+                                            <td style="text-align:center; vertical-align:middle; padding: 10px 8px;">
+                                                <img src="{{ filter_var($user->avatar, FILTER_VALIDATE_URL) ? $user->avatar : Voyager::image($user->avatar) }}"
+                                                     style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #e9ecef; display:block; margin:0 auto;"
+                                                     alt="{{ $user->name }}">
+                                            </td>
+                                            <td style="vertical-align:middle;">
+                                                <strong>{{ $user->name }}</strong>
+                                            </td>
+                                            <td style="vertical-align:middle; color:#6c757d;">
+                                                {{ $user->person->first_name ?? '—' }}
+                                            </td>
+                                            <td style="vertical-align:middle; color:#6c757d;">
+                                                {{ $user->email }}
+                                            </td>
+                                            <td style="text-align:center; vertical-align:middle;">
+                                                @if($user->role)
+                                                    <span class="label label-primary">{{ $user->role->display_name }}</span>
+                                                @else
+                                                    <span class="text-muted" style="font-size:12px;">Sin rol</span>
+                                                @endif
+                                            </td>
+                                            <td style="text-align:center; vertical-align:middle;">
+                                                @if($user->status)
+                                                    <span class="label label-success">Habilitado</span>
+                                                @else
+                                                    <span class="label label-danger">Inhabilitado</span>
+                                                @endif
+                                            </td>
+                                            @if(auth()->user()->hasPermission('read_users') || auth()->user()->hasPermission('edit_users'))
+                                                <td style="text-align:center; vertical-align:middle;">
+                                                    @if(auth()->user()->hasPermission('read_users'))
+                                                        <a href="{{ route('voyager.users.show', $user->id) }}" class="btn btn-xs btn-warning" title="Ver">
+                                                            <i class="voyager-eye"></i>
+                                                        </a>
+                                                    @endif
+                                                    @if(auth()->user()->hasPermission('edit_users'))
+                                                        <a href="{{ route('voyager.users.edit', $user->id) }}" class="btn btn-xs btn-info" title="Editar">
+                                                            <i class="voyager-edit"></i>
+                                                        </a>
+                                                    @endif
+                                                </td>
+                                            @endif
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Mensualidades del dojo --}}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-bordered">
+                <div class="panel-heading" style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3 class="panel-title" style="margin:0;">
+                        <i class="voyager-dollar"></i> Mensualidades de la Sucursal
+                    </h3>
+                    @if(!auth()->user()->dojo_id && auth()->user()->hasPermission('edit_dojos'))
+                        <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modal-nueva-mensualidad">
+                            <i class="voyager-plus"></i> Nueva Mensualidad
+                        </button>
+                    @endif
+                </div>
+                <div class="panel-body" id="panel-mensualidades">
+                    <div class="text-center text-muted" style="padding:20px 0;">
+                        <i class="voyager-refresh"></i> Cargando...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{{-- Modal historial de pagos --}}
+<div class="modal fade" id="modal-pagos-mensualidad" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title"><i class="fa fa-list"></i> Pagos — <span id="pagos-periodo-label"></span></h4>
+            </div>
+            <div class="modal-body" id="modal-pagos-body" style="padding:0;">
+                <div class="text-center" style="padding:20px;"><i class="voyager-refresh"></i> Cargando...</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal pago parcial --}}
+@if(!auth()->user()->dojo_id)
+<div class="modal fade" id="modal-pagar-mensualidad" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title"><i class="voyager-dollar"></i> Registrar Pago</h4>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted" style="font-size:12px; margin-bottom:12px;" id="pago-periodo-label"></p>
+                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; text-align:center; margin-bottom:16px;">
+                    <div style="background:#f8f9fa; border-radius:6px; padding:8px;">
+                        <div style="font-size:11px; color:#888;">Total</div>
+                        <div style="font-weight:700;" id="pago-monto-label">—</div>
+                    </div>
+                    <div style="background:#f8f9fa; border-radius:6px; padding:8px;">
+                        <div style="font-size:11px; color:#888;">Pagado</div>
+                        <div style="font-weight:700; color:#27ae60;" id="pago-pagado-label">—</div>
+                    </div>
+                    <div style="background:#ffeaea; border-radius:6px; padding:8px;">
+                        <div style="font-size:11px; color:#888;">Saldo</div>
+                        <div style="font-weight:700; color:#e74c3c;" id="pago-saldo-label">—</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Monto a pagar <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-addon">Bs.</span>
+                        <input type="number" id="pago-monto-input" class="form-control"
+                               step="0.01" min="0.01" placeholder="0.00">
+                    </div>
+                    <small class="text-muted">Máximo: <span id="pago-max-label">—</span></small>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>Observación</label>
+                    <input type="text" id="pago-obs-input" class="form-control"
+                           maxlength="500" placeholder="Opcional...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="btn-confirmar-pago">
+                    <i class="voyager-dollar"></i> Confirmar Pago
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- Modal nueva mensualidad --}}
+@if(!auth()->user()->dojo_id && auth()->user()->hasPermission('edit_dojos'))
+<div class="modal fade" id="modal-nueva-mensualidad" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <form method="POST" action="{{ route('dojo.mensualidades.store', $dojo->id) }}">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title"><i class="voyager-dollar"></i> Nueva Mensualidad</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Fecha inicio <span class="text-danger">*</span></label>
+                                <input type="date" name="fecha_inicio" class="form-control" required
+                                       value="{{ date('Y-m-01') }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Fecha fin <span class="text-danger">*</span></label>
+                                <input type="date" name="fecha_fin" class="form-control" required
+                                       value="{{ date('Y-m-t') }}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Monto <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-addon">Bs.</span>
+                            <input type="number" name="monto" class="form-control" step="0.01" min="0" required
+                                   placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Observación</label>
+                        <textarea name="observacion" class="form-control" rows="2" maxlength="500"
+                                  placeholder="Notas opcionales..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="voyager-plus"></i> Registrar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
+
+@stop
+
+@section('javascript')
+<script>
+    var listUrl = '{{ route('dojo.mensualidades.list', $dojo->id) }}';
+
+    function cargarMensualidades() {
+        $.get(listUrl, function(html) {
+            $('#panel-mensualidades').html(html);
+            bindMensualidadActions();
+        });
+    }
+
+    var pagoUrl = null;
+    var pagoSaldo = 0;
+
+    function bindMensualidadActions() {
+        $('.btn-pagar-mensualidad').off('click').on('click', function() {
+            var btn = $(this);
+            pagoUrl   = btn.data('url');
+            pagoSaldo = parseFloat(btn.data('saldo'));
+
+            $('#pago-periodo-label').text('Período: ' + btn.data('periodo'));
+            $('#pago-monto-label').text(parseFloat(btn.data('monto')).toFixed(2));
+            $('#pago-pagado-label').text(parseFloat(btn.data('pagado')).toFixed(2));
+            $('#pago-saldo-label').text(pagoSaldo.toFixed(2));
+            $('#pago-max-label').text(pagoSaldo.toFixed(2));
+            $('#pago-monto-input').val(pagoSaldo.toFixed(2)).attr('max', pagoSaldo);
+
+            $('#modal-pagar-mensualidad').modal('show');
+        });
+
+        $('#btn-confirmar-pago').off('click').on('click', function() {
+            var monto = parseFloat($('#pago-monto-input').val());
+            var obs   = $('#pago-obs-input').val();
+            if (!monto || monto <= 0 || monto > pagoSaldo) {
+                toastr.error('Monto inválido. Debe ser entre 0.01 y ' + pagoSaldo.toFixed(2));
+                return;
+            }
+
+            var btn = $(this);
+            btn.prop('disabled', true);
+
+            $.ajax({
+                url: pagoUrl,
+                type: 'PUT',
+                data: { _token: '{{ csrf_token() }}', monto_pago: monto, observacion: obs },
+                success: function(res) {
+                    toastr.success(res.message);
+                    $('#modal-pagar-mensualidad').modal('hide');
+                    cargarMensualidades();
+
+                    if (res.comprobante_url) {
+                        setTimeout(function() {
+                            if (confirm('¿Imprimir comprobante del pago?')) {
+                                window.open(res.comprobante_url, '_blank');
+                            }
+                        }, 400);
+                    }
+                },
+                error: function(xhr) {
+                    toastr.error(xhr.responseJSON ? xhr.responseJSON.error : 'Error al registrar pago.');
+                },
+                complete: function() {
+                    btn.prop('disabled', false);
+                }
+            });
+        });
+
+        $(document).off('click', '.btn-ver-pagos').on('click', '.btn-ver-pagos', function() {
+            var btn = $(this);
+            $('#pagos-periodo-label').text(btn.data('periodo'));
+            $('#modal-pagos-body').html('<div class="text-center" style="padding:20px;"><i class="voyager-refresh"></i> Cargando...</div>');
+            $('#modal-pagos-mensualidad').modal('show');
+
+            $.get(btn.data('url'), function(html) {
+                $('#modal-pagos-body').html(html);
+            });
+        });
+
+        $('.btn-eliminar-mensualidad').off('click').on('click', function() {
+            var btn = $(this);
+            var url = btn.data('url');
+            var periodo = btn.data('periodo');
+            if (!confirm('¿Eliminar mensualidad de ' + periodo + '?')) return;
+
+            $.ajax({
+                url: url,
+                type: 'DELETE',
+                data: { _token: '{{ csrf_token() }}' },
+                success: function(res) {
+                    toastr.success(res.message);
+                    cargarMensualidades();
+                },
+                error: function() {
+                    toastr.error('Error al eliminar.');
+                }
+            });
+        });
+    }
+
+    $(document).ready(function() {
+        cargarMensualidades();
+    });
+</script>
+@endsection

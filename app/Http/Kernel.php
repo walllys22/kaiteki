@@ -65,8 +65,9 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         
 
-        'loggin' => \App\Http\Middleware\Loggin::class,
-        'system' => \App\Http\Middleware\System::class,
+        'loggin'           => \App\Http\Middleware\Loggin::class,
+        'system'           => \App\Http\Middleware\System::class,
+        'dojo.mensualidad' => \App\Http\Middleware\CheckDojoMensualidad::class,
 
 
     ];

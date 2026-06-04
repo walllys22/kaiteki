@@ -67,13 +67,22 @@
                                        value="{{ old('email', $dataTypeContent->email ?? '') }}">
                             </div>
 
+                            @php
+                                $selectedDojo = null;
+                                if ($dataTypeContent->getKey() && $dataTypeContent->dojo_id) {
+                                    $selectedDojo = method_exists($dataTypeContent, 'dojo')
+                                        ? $dataTypeContent->dojo
+                                        : \App\Models\Dojo::find($dataTypeContent->dojo_id);
+                                }
+                            @endphp
+
                             <div class="form-group">
                                 <label for="dojo_name_display">Sucursal / Dojo</label>
                                 @if(!$dataTypeContent->getKey())
                                     <input type="text" id="dojo_name_display" class="form-control" value="" placeholder="Se asignara automaticamente desde la persona seleccionada" readonly>
                                     <input type="hidden" name="dojo_id" id="dojo_id" value="">
                                 @else
-                                    <input type="text" id="dojo_name_display" class="form-control" value="{{ $dataTypeContent->dojo->nombre ?? 'Sin sucursal asignada' }}" readonly>
+                                    <input type="text" id="dojo_name_display" class="form-control" value="{{ $selectedDojo->nombre ?? 'Sin sucursal asignada' }}" readonly>
                                     <input type="hidden" name="dojo_id" id="dojo_id" value="{{ $dataTypeContent->dojo_id }}">
                                 @endif
                             </div>

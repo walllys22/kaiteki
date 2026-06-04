@@ -14,6 +14,8 @@ use App\Http\Controllers\AlumnoMensualidadController;
 use App\Http\Controllers\AsistenciaController;
 use App\Http\Controllers\ConsultaController;
 use App\Http\Controllers\GradoController;
+use App\Http\Controllers\DojoController;
+use App\Http\Controllers\DojoMensualidadController;
 use App\Http\Controllers\HorarioController;
 use Illuminate\Support\Facades\Artisan;
 use TCG\Voyager\Facades\Voyager;
@@ -46,7 +48,7 @@ Route::get('/comprobantes/mensualidades/pagos/{id}', [AlumnoMensualidadControlle
     ->name('alumno.mensualidades.pago.comprobante.public');
 // Route::get('/development', [ErrorController::class , 'error503'])->name('development');
 
-Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], function () {
+Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system', 'dojo.mensualidad']], function () {
     // Estas rutas deben ir ANTES de Voyager::routes() para evitar que grados/{id} las capture
     Route::get('grados/reorder', [GradoController::class, 'reorderView'])->name('grados.reorder.index');
     Route::post('grados/reorder', [GradoController::class, 'reorder'])->name('grados.reorder');
@@ -166,6 +168,18 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system']], functi
     // Roles
     Route::get('roles/ajax/list', [RoleController::class, 'list']);
 
+
+    // Mensualidades Dojo (historial)
+    Route::get('mensualidades', [DojoMensualidadController::class, 'index'])->name('mensualidades.index');
+
+    // Dojos
+    Route::get('dojos/{id}', [DojoController::class, 'show'])->name('voyager.dojos.show');
+    Route::get('dojos/{id}/mensualidades/list', [DojoMensualidadController::class, 'list'])->name('dojo.mensualidades.list');
+    Route::post('dojos/{id}/mensualidades/store', [DojoMensualidadController::class, 'store'])->name('dojo.mensualidades.store');
+    Route::put('dojos/mensualidades/{id}/pagar', [DojoMensualidadController::class, 'pagar'])->name('dojo.mensualidades.pagar');
+    Route::get('dojos/mensualidades/{id}/pagos', [DojoMensualidadController::class, 'pagosList'])->name('dojo.mensualidades.pagos');
+    Route::get('dojos/mensualidades/pagos/{id}/comprobante', [DojoMensualidadController::class, 'comprobante'])->name('dojo.mensualidades.pago.comprobante');
+    Route::delete('dojos/mensualidades/{id}/delete', [DojoMensualidadController::class, 'destroy'])->name('dojo.mensualidades.destroy');
 
     // Consulta Inter-Dojo (solo lectura)
     Route::get('consulta', [ConsultaController::class, 'index'])->name('consulta.index');

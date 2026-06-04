@@ -170,39 +170,35 @@
 @endphp
 
 @section('page_header')
-    <div class="page-content container-fluid dashboard-kaiteki-header">
-        <div class="row">
-            <div class="col-md-8">
-                <h1 class="page-title">
-                    <i class="voyager-dashboard"></i> Panel general del sistema
-                </h1>
-                <p class="text-muted">
-                    Resumen economico y operativo de {{ $selectedDojo ? $selectedDojo->nombre : 'la dojo seleccionado' }}.
-                </p>
+    <div class="page-content container-fluid dk-header">
+        <div class="dk-header-inner">
+            <div class="dk-header-left">
+                <div class="dk-header-title">Panel general</div>
+                <div class="dk-header-sub">
+                    @if($selectedDojo)
+                        <span class="dk-dojo-badge">
+                            <i class="voyager-location"></i>
+                            {{ $selectedDojo->nombre }}
+                        </span>
+                    @endif
+                </div>
             </div>
-            <div class="col-md-4">
+
+            <div class="dk-header-right">
                 @if ($userDojoId)
-                    <div class="dojo-fixed-box">
-                        <span class="text-muted">Dojo Asignado</span>
+                    <div class="dk-dojo-fixed">
+                        <i class="voyager-location"></i>
                         <strong>{{ optional($selectedDojo)->nombre ?? 'Sin Dojo' }}</strong>
                     </div>
                 @else
-                    <form method="GET" action="{{ url('/admin') }}" class="dojo-selector-form">
-                        <label for="dashboard-dojo-id">DOJO</label>
-                        <div class="input-group">
-                            <select name="dojo_id" id="dashboard-dojo-id" class="form-control" onchange="this.form.submit()">
-                                @foreach ($dojos as $dojo)
-                                    <option value="{{ $dojo->id }}" @selected((int) $selectedDojoId === (int) $dojo->id)>
-                                        {{ $dojo->nombre }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <span class="input-group-btn">
-                                <button class="btn btn-primary" type="submit">
-                                    <i class="voyager-search"></i>
-                                </button>
-                            </span>
-                        </div>
+                    <form method="GET" action="{{ url('/admin') }}" class="dk-dojo-form">
+                        <select name="dojo_id" class="dk-dojo-select" onchange="this.form.submit()">
+                            @foreach ($dojos as $dojo)
+                                <option value="{{ $dojo->id }}" @selected((int) $selectedDojoId === (int) $dojo->id)>
+                                    {{ $dojo->nombre }}
+                                </option>
+                            @endforeach
+                        </select>
                     </form>
                 @endif
             </div>
@@ -211,455 +207,432 @@
 @stop
 
 @section('content')
-    <div class="page-content container-fluid dashboard-kaiteki">
-        @include('voyager::alerts')
+<div class="page-content container-fluid dk-body">
+    @include('voyager::alerts')
 
-        @if (!$selectedDojo)
-            <div class="alert alert-warning">
-                No hay una dojo activo para mostrar informacion. Registra o activa un dojo primero.
-            </div>
-        @else
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="panel panel-bordered">
-                        <div class="panel-heading bg-primary text-white">
-                            <h3 class="panel-title"><i class="voyager-dollar"></i> Deudas de mensualidad por alumno</h3>
-                        </div>
-                        <div class="panel-body no-padding">
-                            <div class="table-responsive">
-                                <table class="table table-hover dashboard-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Alumno</th>
-                                            <th>Meses pendientes</th>
-                                            <th class="text-right">Saldo</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse ($alumnosConDeuda as $deuda)
-                                            <tr>
-                                                <td>{{ optional(optional($deuda['alumno'])->person)->first_name ?? 'Sin alumno' }}</td>
-                                                <td>{{ $deuda['meses'] }}</td>
-                                                <td class="text-right text-danger">{{ $money($deuda['total']) }}</td>
-                                                <td class="text-right">
-                                                    @if ($deuda['alumno'])
-                                                        <a href="{{ route('voyager.alumnos.show', ['id' => $deuda['alumno']->id]) }}" class="btn btn-xs btn-default">
-                                                            Ver
-                                                        </a>
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="4" class="empty-state">No hay deudas de mensualidad para este dojo.</td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
+    @if (!$selectedDojo)
+        <div class="alert alert-warning">
+            No hay un dojo activo para mostrar información. Registra o activa un dojo primero.
+        </div>
+    @else
+
+        {{-- ── STAT CARDS ── --}}
+        <div class="dk-stats">
+            <div class="dk-stat">
+                <div class="dk-stat-icon dk-stat-blue">
+                    <i class="voyager-people"></i>
+                </div>
+                <div class="dk-stat-body">
+                    <div class="dk-stat-value">{{ $alumnos->count() }}</div>
+                    <div class="dk-stat-label">Alumnos activos</div>
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="panel panel-bordered">
-                        <div class="panel-heading bg-info text-white">
-                            <h3 class="panel-title"><i class="voyager-warning"></i> Examenes pendientes de pago</h3>
-                        </div>
-                        <div class="panel-body no-padding">
-                            <div class="table-responsive">
-                                <table class="table table-hover dashboard-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Alumno</th>
-                                            <th>Grado</th>
-                                            <th>Fecha</th>
-                                            <th class="text-right">Saldo</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse ($deudasExamenes as $examen)
-                                            <tr>
-                                                <td>{{ optional(optional(optional($examen->alumnoGrado)->alumno)->person)->first_name ?? 'Sin alumno' }}</td>
-                                                <td>{{ optional(optional($examen->alumnoGrado)->grado)->nombre ?? 'Sin grado' }}</td>
-                                                <td>{{ $examen->fecha ? \Carbon\Carbon::parse($examen->fecha)->format('d/m/Y') : '-' }}</td>
-                                                <td class="text-right text-danger">{{ $money($debtOf($examen->monto, $examen->monto_pagado)) }}</td>
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="4" class="empty-state">No hay examenes pendientes.</td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+            <div class="dk-stat">
+                <div class="dk-stat-icon dk-stat-amber">
+                    <i class="voyager-calendar"></i>
+                </div>
+                <div class="dk-stat-body">
+                    <div class="dk-stat-value">{{ $money($mensualidadSaldo) }}</div>
+                    <div class="dk-stat-label">Deuda mensualidades</div>
+                </div>
+            </div>
+
+            <div class="dk-stat">
+                <div class="dk-stat-icon dk-stat-red">
+                    <i class="voyager-dollar"></i>
+                </div>
+                <div class="dk-stat-body">
+                    <div class="dk-stat-value">{{ $money($examenSaldo) }}</div>
+                    <div class="dk-stat-label">Deuda exámenes</div>
+                </div>
+            </div>
+
+            <div class="dk-stat">
+                <div class="dk-stat-icon dk-stat-green">
+                    <i class="voyager-check"></i>
+                </div>
+                <div class="dk-stat-body">
+                    <div class="dk-stat-value">{{ $money($pagosMensualidades->sum('monto')) }}</div>
+                    <div class="dk-stat-label">Pagos recientes</div>
+                </div>
+            </div>
+        </div>
+
+        {{-- ── DEUDAS MENSUALIDAD POR ALUMNO ── --}}
+        <div class="dk-card">
+            <div class="dk-card-header dk-accent-blue">
+                <span class="dk-card-title"><i class="voyager-dollar"></i> Deudas de mensualidad por alumno</span>
+                <span class="dk-badge">{{ $alumnosConDeuda->count() }}</span>
+            </div>
+            <div class="table-responsive">
+                <table class="dk-table">
+                    <thead>
+                        <tr>
+                            <th>Alumno</th>
+                            <th>Meses</th>
+                            <th class="text-right">Saldo total</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($alumnosConDeuda as $deuda)
+                            <tr>
+                                <td>{{ optional(optional($deuda['alumno'])->person)->first_name ?? 'Sin alumno' }}</td>
+                                <td><span class="dk-pill dk-pill-amber">{{ $deuda['meses'] }} {{ $deuda['meses'] === 1 ? 'mes' : 'meses' }}</span></td>
+                                <td class="text-right"><strong class="dk-debt">{{ $money($deuda['total']) }}</strong></td>
+                                <td class="text-right">
+                                    @if ($deuda['alumno'])
+                                        <a href="{{ route('voyager.alumnos.show', ['id' => $deuda['alumno']->id]) }}" class="dk-btn-sm">Ver</a>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="4" class="dk-empty">Sin deudas de mensualidad</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {{-- ── EXAMENES PENDIENTES ── --}}
+        <div class="dk-card">
+            <div class="dk-card-header dk-accent-red">
+                <span class="dk-card-title"><i class="voyager-warning"></i> Exámenes pendientes de pago</span>
+                <span class="dk-badge">{{ $deudasExamenes->count() }}</span>
+            </div>
+            <div class="table-responsive">
+                <table class="dk-table">
+                    <thead>
+                        <tr>
+                            <th>Alumno</th>
+                            <th>Grado</th>
+                            <th>Fecha</th>
+                            <th class="text-right">Saldo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($deudasExamenes as $examen)
+                            <tr>
+                                <td>{{ optional(optional(optional($examen->alumnoGrado)->alumno)->person)->first_name ?? 'Sin alumno' }}</td>
+                                <td>{{ optional(optional($examen->alumnoGrado)->grado)->nombre ?? 'Sin grado' }}</td>
+                                <td>{{ $examen->fecha ? \Carbon\Carbon::parse($examen->fecha)->format('d/m/Y') : '-' }}</td>
+                                <td class="text-right"><strong class="dk-debt">{{ $money($debtOf($examen->monto, $examen->monto_pagado)) }}</strong></td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="4" class="dk-empty">Sin exámenes pendientes</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {{-- ── MENSUALIDADES + ÚLTIMOS PAGOS ── --}}
+        <div class="row">
+            <div class="col-md-7">
+                <div class="dk-card">
+                    <div class="dk-card-header dk-accent-amber">
+                        <span class="dk-card-title"><i class="voyager-calendar"></i> Mensualidades pendientes</span>
+                        <span class="dk-badge">{{ $deudasMensualidades->count() }}</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="dk-table">
+                            <thead>
+                                <tr>
+                                    <th>Alumno</th>
+                                    <th>Período</th>
+                                    <th>Estado</th>
+                                    <th class="text-right">Total</th>
+                                    <th class="text-right">Pagado</th>
+                                    <th class="text-right">Saldo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($deudasMensualidades as $mensualidad)
+                                    <tr>
+                                        <td>{{ optional(optional($mensualidad->alumno)->person)->first_name ?? 'Sin alumno' }}</td>
+                                        <td class="dk-period">
+                                            {{ optional($mensualidad->periodo)->format('d/m/Y') }}
+                                            @if ($mensualidad->fecha_fin)
+                                                <span class="dk-sep">→</span>{{ optional($mensualidad->fecha_fin)->format('d/m/Y') }}
+                                            @endif
+                                        </td>
+                                        <td><span class="dk-pill dk-pill-amber">{{ $mensualidad->estadoPago() }}</span></td>
+                                        <td class="text-right">{{ $money($mensualidad->total()) }}</td>
+                                        <td class="text-right dk-paid">{{ $money($mensualidad->monto_pagado) }}</td>
+                                        <td class="text-right"><strong class="dk-debt">{{ $money($mensualidad->saldo()) }}</strong></td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="6" class="dk-empty">Sin mensualidades pendientes</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-md-7">
-                    <div class="panel panel-bordered">
-                        <div class="panel-heading bg-warning text-white">
-                            <h3 class="panel-title"><i class="voyager-calendar"></i> Mensualidades pendientes</h3>
-                        </div>
-                        <div class="panel-body no-padding">
-                            <div class="table-responsive">
-                                <table class="table table-hover dashboard-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Alumno</th>
-                                            <th>Periodo</th>
-                                            <th>Estado</th>
-                                            <th class="text-right">Total</th>
-                                            <th class="text-right">Pagado</th>
-                                            <th class="text-right">Saldo</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse ($deudasMensualidades as $mensualidad)
-                                            <tr>
-                                                <td>{{ optional(optional($mensualidad->alumno)->person)->first_name ?? 'Sin alumno' }}</td>
-                                                <td>
-                                                    {{ optional($mensualidad->periodo)->format('d/m/Y') }}
-                                                    @if ($mensualidad->fecha_fin)
-                                                        - {{ optional($mensualidad->fecha_fin)->format('d/m/Y') }}
-                                                    @endif
-                                                </td>
-                                                <td>{{ $mensualidad->estadoPago() }}</td>
-                                                <td class="text-right">{{ $money($mensualidad->total()) }}</td>
-                                                <td class="text-right text-success">{{ $money($mensualidad->monto_pagado) }}</td>
-                                                <td class="text-right text-danger">{{ $money($mensualidad->saldo()) }}</td>
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="6" class="empty-state">No hay mensualidades pendientes.</td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+            <div class="col-md-5">
+                <div class="dk-card">
+                    <div class="dk-card-header dk-accent-green">
+                        <span class="dk-card-title"><i class="voyager-check"></i> Últimos pagos de mensualidad</span>
+                        <span class="dk-badge">{{ $pagosMensualidades->count() }}</span>
                     </div>
-                </div>
-                <div class="col-md-5">
-                    <div class="panel panel-bordered">
-                        <div class="panel-heading bg-success text-white">
-                            <h3 class="panel-title"><i class="voyager-receipt"></i> Ultimos pagos de mensualidad</h3>
-                        </div>
-                        <div class="panel-body no-padding">
-                            <div class="table-responsive">
-                                <table class="table table-hover dashboard-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Alumno</th>
-                                            <th>Fecha</th>
-                                            <th class="text-right">Monto</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse ($pagosMensualidades as $pago)
-                                            <tr>
-                                                <td>{{ optional(optional($pago->alumno)->person)->first_name ?? 'Sin alumno' }}</td>
-                                                <td>{{ $pago->fecha ? \Carbon\Carbon::parse($pago->fecha)->format('d/m/Y') : '-' }}</td>
-                                                <td class="text-right text-success">{{ $money($pago->monto) }}</td>
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="3" class="empty-state">No hay pagos recientes de mensualidad.</td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                    <div class="table-responsive">
+                        <table class="dk-table">
+                            <thead>
+                                <tr>
+                                    <th>Alumno</th>
+                                    <th>Fecha</th>
+                                    <th class="text-right">Monto</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($pagosMensualidades as $pago)
+                                    <tr>
+                                        <td>{{ optional(optional($pago->alumno)->person)->first_name ?? 'Sin alumno' }}</td>
+                                        <td>{{ $pago->fecha ? \Carbon\Carbon::parse($pago->fecha)->format('d/m/Y') : '-' }}</td>
+                                        <td class="text-right dk-paid"><strong>{{ $money($pago->monto) }}</strong></td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="3" class="dk-empty">Sin pagos recientes</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-        @endif
-    </div>
+        </div>
+
+    @endif
+</div>
 @stop
 
 @section('css')
-    <style>
-        .dashboard-kaiteki-header .page-title {
-            margin-bottom: 4px;
-        }
+<style>
+    /* ── VARIABLES ── */
+    :root {
+        --dk-bg:      #f4f6f9;
+        --dk-card:    #ffffff;
+        --dk-border:  #e8ecf1;
+        --dk-text:    #1e2535;
+        --dk-muted:   #6b7a99;
+        --dk-blue:    #3b82f6;
+        --dk-amber:   #f59e0b;
+        --dk-red:     #ef4444;
+        --dk-green:   #22c55e;
+        --dk-radius:  10px;
+    }
 
-        .dojo-fixed-box,
-        .dojo-selector-form {
-            background: #fff;
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            padding: 14px;
-        }
+    /* ── HEADER ── */
+    .dk-header { padding: 18px 20px 14px; }
+    .dk-header-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    .dk-header-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--dk-text);
+        line-height: 1.2;
+    }
+    .dk-header-sub { margin-top: 4px; }
+    .dk-dojo-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        color: var(--dk-muted);
+    }
 
-        .dojo-fixed-box span,
-        .dojo-fixed-box strong,
-        .dojo-selector-form label {
-            display: block;
-        }
+    .dk-dojo-form { margin: 0; }
+    .dk-dojo-select {
+        padding: 7px 32px 7px 12px;
+        border: 1px solid var(--dk-border);
+        border-radius: 7px;
+        background: #fff;
+        font-size: 13px;
+        color: var(--dk-text);
+        min-width: 200px;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7a99' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+    }
+    .dk-dojo-select:focus { outline: none; border-color: var(--dk-blue); }
 
-        .dojo-fixed-box strong {
-            margin-top: 4px;
-            font-size: 16px;
-        }
+    .dk-dojo-fixed {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--dk-muted);
+        padding: 7px 12px;
+        border: 1px solid var(--dk-border);
+        border-radius: 7px;
+        background: #fff;
+    }
+    .dk-dojo-fixed strong { color: var(--dk-text); }
 
-        .dashboard-kaiteki .panel {
-            border-radius: 6px;
-            overflow: hidden;
-        }
+    /* ── BODY ── */
+    .dk-body { padding: 0 20px 24px; }
 
-        .metric-card .panel-body {
-            min-height: 126px;
-        }
+    /* ── STAT CARDS ── */
+    .dk-stats {
+        display: flex;
+        gap: 14px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    .dk-stat {
+        flex: 1;
+        min-width: 160px;
+        background: var(--dk-card);
+        border: 1px solid var(--dk-border);
+        border-radius: var(--dk-radius);
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+    .dk-stat-icon {
+        width: 42px; height: 42px;
+        border-radius: 9px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+    .dk-stat-blue   { background: rgba(59,130,246,.12); color: var(--dk-blue); }
+    .dk-stat-amber  { background: rgba(245,158,11,.12); color: var(--dk-amber); }
+    .dk-stat-red    { background: rgba(239,68,68,.12);  color: var(--dk-red); }
+    .dk-stat-green  { background: rgba(34,197,94,.12);  color: var(--dk-green); }
 
-        .metric-label,
-        .metric-help {
-            display: block;
-            color: #6b7280;
-        }
+    .dk-stat-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--dk-text);
+        line-height: 1.2;
+        white-space: nowrap;
+    }
+    .dk-stat-label {
+        font-size: 11px;
+        color: var(--dk-muted);
+        margin-top: 2px;
+    }
 
-        .metric-value {
-            display: block;
-            margin: 10px 0 8px;
-            font-size: 26px;
-            line-height: 1.1;
-            color: #111827;
-        }
+    /* ── CARDS ── */
+    .dk-card {
+        background: var(--dk-card);
+        border: 1px solid var(--dk-border);
+        border-radius: var(--dk-radius);
+        overflow: hidden;
+        margin-bottom: 16px;
+    }
 
-        .metric-total {
-            border-top: 4px solid #2563eb;
-        }
+    .dk-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 11px 16px;
+        border-bottom: 1px solid var(--dk-border);
+        border-left: 3px solid transparent;
+    }
+    .dk-accent-blue   { border-left-color: var(--dk-blue); }
+    .dk-accent-amber  { border-left-color: var(--dk-amber); }
+    .dk-accent-red    { border-left-color: var(--dk-red); }
+    .dk-accent-green  { border-left-color: var(--dk-green); }
 
-        .metric-aranceles {
-            border-top: 4px solid #2563eb;
-        }
+    .dk-card-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--dk-text);
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+    .dk-card-title i { color: var(--dk-muted); font-size: 15px; }
 
-        .metric-mensualidades {
-            border-top: 4px solid #f59e0b;
-        }
+    .dk-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 22px; height: 22px;
+        padding: 0 7px;
+        border-radius: 999px;
+        background: #f1f5f9;
+        color: var(--dk-muted);
+        font-size: 11px;
+        font-weight: 600;
+    }
 
-        .summary-panel .panel-title {
-            font-weight: 600;
-        }
+    /* ── TABLE ── */
+    .dk-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0;
+    }
+    .dk-table thead th {
+        padding: 9px 16px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .6px;
+        color: var(--dk-muted);
+        background: #f8fafc;
+        border-bottom: 1px solid var(--dk-border);
+        white-space: nowrap;
+    }
+    .dk-table tbody td {
+        padding: 10px 16px;
+        font-size: 13px;
+        color: var(--dk-text);
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+    .dk-table tbody tr:last-child td { border-bottom: none; }
+    .dk-table tbody tr:hover td { background: #fafbfd; }
 
-        .chart-panel .panel-body {
-            padding: 18px;
-        }
+    .dk-debt  { color: var(--dk-red); }
+    .dk-paid  { color: var(--dk-green); }
+    .dk-period { font-size: 12px; white-space: nowrap; }
+    .dk-sep { margin: 0 3px; color: var(--dk-muted); }
 
-        .donut-grid,
-        .donut-card,
-        .donut-legend,
-        .chart-row-header,
-        .chart-row-values {
-            display: flex;
-            gap: 16px;
-        }
+    .dk-empty {
+        text-align: center;
+        padding: 28px 16px !important;
+        color: var(--dk-muted);
+        font-size: 13px;
+    }
 
-        .donut-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 18px;
-            margin-bottom: 12px;
-        }
+    .dk-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+    .dk-pill-amber { background: rgba(245,158,11,.12); color: #b45309; }
 
-        .donut-card {
-            align-items: center;
-            min-height: 220px;
-            padding: 18px;
-            border: 1px solid #edf2f7;
-            border-radius: 6px;
-            background: #fbfdff;
-        }
+    .dk-btn-sm {
+        display: inline-flex;
+        padding: 3px 10px;
+        border-radius: 5px;
+        background: #f1f5f9;
+        color: var(--dk-muted);
+        font-size: 11px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: .15s;
+    }
+    .dk-btn-sm:hover { background: var(--dk-blue); color: #fff; text-decoration: none; }
 
-        .donut-chart {
-            position: relative;
-            flex: 0 0 178px;
-            width: 178px;
-            height: 178px;
-            border-radius: 50%;
-            box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.05);
-        }
-
-        .donut-total {
-            background:
-                conic-gradient(
-                    #2563eb 0 var(--aranceles),
-                    #f59e0b var(--aranceles) 100%
-                );
-        }
-
-        .donut-arancel {
-            background:
-                conic-gradient(
-                    #2563eb 0 var(--repasos),
-                    #7c3aed var(--repasos) 100%
-                );
-        }
-
-        .donut-empty {
-            background: #e5e7eb !important;
-        }
-
-        .donut-hole {
-            position: absolute;
-            inset: 28px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            background: #fff;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
-            text-align: center;
-        }
-
-        .donut-hole span,
-        .donut-copy p,
-        .chart-row-header span,
-        .chart-row-values {
-            color: #6b7280;
-            font-size: 12px;
-        }
-
-        .donut-hole strong {
-            display: block;
-            margin-top: 3px;
-            font-size: 28px;
-            color: #111827;
-            line-height: 1;
-        }
-
-        .donut-copy {
-            min-width: 0;
-        }
-
-        .donut-copy h4 {
-            margin: 0 0 6px;
-            font-weight: 700;
-            color: #111827;
-        }
-
-        .donut-legend {
-            flex-direction: column;
-            gap: 7px;
-            margin-top: 12px;
-            color: #4b5563;
-        }
-
-        .legend-dot {
-            display: inline-block;
-            width: 9px;
-            height: 9px;
-            margin-right: 5px;
-            border-radius: 50%;
-        }
-
-        .arancel-dot {
-            background: #2563eb;
-        }
-
-        .repaso-dot {
-            background: #2563eb;
-        }
-
-        .examen-dot {
-            background: #7c3aed;
-        }
-
-        .mensualidad-dot {
-            background: #f59e0b;
-        }
-
-        .chart-row {
-            padding: 12px 0;
-            border-top: 1px solid #f1f5f9;
-        }
-
-        .chart-row:first-child {
-            border-top: 0;
-        }
-
-        .chart-row-header {
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .chart-row-values {
-            justify-content: space-between;
-            margin-top: 6px;
-        }
-
-        @media (max-width: 991px) {
-            .donut-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .donut-card,
-            .chart-row-header,
-            .chart-row-values {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .donut-chart {
-                align-self: center;
-            }
-        }
-
-        .summary-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 8px 0;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        .summary-row:last-of-type {
-            border-bottom: 0;
-        }
-
-        .summary-footer {
-            margin-top: 12px;
-            padding: 10px;
-            border-radius: 4px;
-            background: #f8fafc;
-            color: #475569;
-            font-size: 12px;
-        }
-
-        .dashboard-table {
-            margin-bottom: 0;
-        }
-
-        .dashboard-table th {
-            white-space: nowrap;
-            color: #4b5563;
-            font-size: 12px;
-            text-transform: uppercase;
-        }
-
-        .dashboard-table td {
-            vertical-align: middle !important;
-        }
-
-        .empty-state {
-            padding: 24px !important;
-            text-align: center;
-            color: #6b7280;
-        }
-
-        .no-padding {
-            padding: 0 !important;
-        }
-    </style>
+    @media (max-width: 767px) {
+        .dk-stats { flex-direction: column; }
+        .dk-stat  { min-width: unset; }
+    }
+</style>
 @stop

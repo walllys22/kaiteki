@@ -40,7 +40,7 @@ class MicroServiceController extends Controller
 
         $id = 'dev';
         Http::post($servidor.'/send?id='.$id.'&token='.$token, [
-                    'phone' => '59167285914',
+                    'phone' => '59177149775',
                     'text' => 'Gracias por su preferencia!',
                 ]);
 

@@ -460,11 +460,76 @@ GET  admin/consulta/alumno/{id}        consulta.show
 
 ---
 
+## Dojos (`DojoController`)
+
+Custom read-only override for the Voyager dojos show page. Displays dojo info + users assigned to that branch.
+
+**Controller:** `app/Http/Controllers/DojoController.php`
+
+**View:** `resources/views/dojos/read.blade.php`
+
+**Route:**
+```
+GET  admin/dojos/{id}   voyager.dojos.show
+```
+
+**Security rules:**
+- Requires `read_dojos` permission.
+- Branch user (`dojo_id` set): can only view their own dojo (403 if `$id !== $userDojoId`).
+- Global admin (`dojo_id` null): can view any dojo.
+- Users table only shows users from that dojo; links to `voyager.users.show` when user has `read_users`.
+- "Agregar Usuario" button shows only when user has `add_users` permission.
+
+---
+
 ## WhatsApp microservice stub
 
 Route: `GET admin/whatsapp` (`whatsapp.message`) handled by `MicroServiceController::message()`.
 
 This is an authenticated admin route inside the `/admin` group. Current implementation is a local/dev stub: `tokenGenerator()` posts to `http://127.0.0.1:3005/api/tokens/generate`, `message()` posts to `http://127.0.0.1:3002/send`, and `id='dev'` plus the recipient phone are hardcoded. Do not treat this as production-ready without externalizing configuration and removing hardcoded recipients.
+
+---
+
+## Dojo Mensualidades (`DojoMensualidadController`)
+
+Monthly SaaS billing per branch. If a dojo has no vigente (paid + not expired) mensualidad, all its users are blocked from the admin panel.
+
+**Controller:** `app/Http/Controllers/DojoMensualidadController.php`
+
+**Model:** `App\Models\DojoMensualidad`, table: `dojo_mensualidades`
+
+**Fields:** `dojo_id`, `periodo` (date, first day of billing month), `fecha_vencimiento` (date), `monto`, `monto_pagado`, `observacion`.
+
+**Middleware:** `CheckDojoMensualidad` (`app/Http/Middleware/CheckDojoMensualidad.php`) — registered as `dojo.mensualidad` in Kernel, applied to the entire `/admin` group. Skips unauthenticated requests and global admins (`dojo_id = null`). Redirects blocked users to `/info/402`.
+
+**Blocking logic:** A mensualidad is "vigente" when `fecha_vencimiento >= today` AND `monto_pagado >= monto`. No grace period — blocking is immediate on expiry.
+
+**Error page:** `resources/views/errors/402.blade.php` — shown to blocked branch users.
+
+**Access rules:**
+- Global admin (`dojo_id = null`): never blocked, can create/pay/delete mensualidades for any dojo.
+- Branch operator (`dojo_id` set): read-only view of their own dojo mensualidades; cannot create or pay.
+
+**Panel:** Embedded in `resources/views/dojos/read.blade.php` via AJAX. Modal to create new mensualidad (global admin only).
+
+**Status values (computed, not stored):**
+- `Pagado` — `monto_pagado >= monto`
+- `Vencido` — `fecha_vencimiento < today` AND not paid
+- `Pendiente` — `fecha_vencimiento >= today` AND not paid
+
+**Routes:**
+```
+GET    admin/dojos/{id}/mensualidades/list        dojo.mensualidades.list
+POST   admin/dojos/{id}/mensualidades/store       dojo.mensualidades.store
+PUT    admin/dojos/mensualidades/{id}/pagar       dojo.mensualidades.pagar
+DELETE admin/dojos/mensualidades/{id}/delete      dojo.mensualidades.destroy
+```
+
+**Business rules:**
+- One mensualidad per period per dojo (enforced in controller, checked by year+month of `periodo`).
+- `pagar()` sets `monto_pagado = monto` (full payment only, no partials).
+- `destroy()` soft-deletes; no restriction on paid mensualidades (admin can always delete).
+- `monto = 0` counts as paid (free branch) — `0 >= 0` passes the vigente check.
 
 ---
 
