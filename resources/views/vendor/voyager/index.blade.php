@@ -7,6 +7,8 @@
     use App\Models\AlumnoMensualidad;
     use App\Models\AlumnoMensualidadPago;
     use App\Models\Dojo;
+    use App\Models\DojoMensualidad;
+    use Illuminate\Support\Carbon;
     use Illuminate\Support\Collection;
 
     $user = auth()->user();
@@ -153,6 +155,19 @@
         ->take(10)
         ->values();
 
+    // Mensualidades del dojo (SaaS billing) — solo para branch users
+    $dojoMensualidadVigente = null;
+    $dojoMensualidadSaldo   = 0;
+    if ($userDojoId) {
+        $dojoMensualidades = DojoMensualidad::where('dojo_id', $userDojoId)
+            ->orderBy('fecha_fin', 'desc')
+            ->get();
+        $dojoMensualidadVigente = $dojoMensualidades->first(fn($m) => $m->isVigente());
+        $dojoMensualidadSaldo   = $dojoMensualidades
+            ->filter(fn($m) => $m->isVigente())
+            ->sum(fn($m) => $m->saldo());
+    }
+
     $alumnosConDeuda = $mensualidades
         ->filter(fn($item) => $item->saldo() > 0)
         ->groupBy('alumno_id')
@@ -258,6 +273,53 @@
                 </div>
             </div>
         </div>
+
+        {{-- ── MENSUALIDAD DEL SISTEMA (solo branch users) ── --}}
+        @if($userDojoId)
+        <div class="dk-card" style="margin-bottom: 20px; border-left: 4px solid {{ $dojoMensualidadVigente ? '#22a7f0' : '#e74c3c' }};">
+            <div class="dk-card-header" style="background: {{ $dojoMensualidadVigente ? '#f0f8ff' : '#fff5f5' }}; display:flex; justify-content:space-between; align-items:center; padding: 12px 18px;">
+                <span style="font-weight:700; font-size:13px; color:#555;">
+                    <i class="fa fa-file-invoice-dollar" style="color: {{ $dojoMensualidadVigente ? '#22a7f0' : '#e74c3c' }};"></i>
+                    Mensualidad del Sistema
+                </span>
+                <span class="label label-{{ $dojoMensualidadVigente ? 'success' : 'danger' }}" style="font-size:12px; padding:4px 12px;">
+                    {{ $dojoMensualidadVigente ? 'Con servicio' : 'Con corte' }}
+                </span>
+            </div>
+            <div style="padding: 14px 18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+                <div style="display:flex; gap:30px; flex-wrap:wrap;">
+                    @if($dojoMensualidadVigente)
+                        <div>
+                            <div style="font-size:10px; color:#888; text-transform:uppercase; font-weight:600;">Vigente hasta</div>
+                            <div style="font-size:16px; font-weight:700; color:#22a7f0;">{{ $dojoMensualidadVigente->fecha_fin->format('d/m/Y') }}</div>
+                        </div>
+                        <div>
+                            <div style="font-size:10px; color:#888; text-transform:uppercase; font-weight:600;">Saldo pendiente</div>
+                            <div style="font-size:16px; font-weight:700; color: {{ $dojoMensualidadSaldo > 0 ? '#e74c3c' : '#27ae60' }};">
+                                Bs {{ number_format($dojoMensualidadSaldo, 2) }}
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size:10px; color:#888; text-transform:uppercase; font-weight:600;">Estado pago</div>
+                            <div style="font-size:14px; font-weight:600; margin-top:2px;">
+                                @php $ep = $dojoMensualidadVigente->estadoPago(); @endphp
+                                <span class="label label-{{ $ep === 'Pagado' ? 'success' : 'warning' }}">{{ $ep }}</span>
+                            </div>
+                        </div>
+                    @else
+                        <div>
+                            <div style="font-size:13px; color:#e74c3c;">No tiene una mensualidad vigente. Contacte al administrador.</div>
+                        </div>
+                    @endif
+                </div>
+                @if(auth()->user()->hasPermission('browse_dojo_mensualidades'))
+                    <a href="{{ route('mensualidades.index') }}" class="btn btn-default btn-sm">
+                        <i class="fa fa-list"></i> Ver historial
+                    </a>
+                @endif
+            </div>
+        </div>
+        @endif
 
         {{-- ── DEUDAS MENSUALIDAD POR ALUMNO ── --}}
         <div class="dk-card">

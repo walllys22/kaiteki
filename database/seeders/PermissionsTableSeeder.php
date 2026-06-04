@@ -267,6 +267,19 @@ class PermissionsTableSeeder extends Seeder
             ]);
         }
 
-        
+        //Mensualidades Dojo
+        $permissions = [
+            'browse_dojo_mensualidades' => 'Ver historial de mensualidades de la sucursal',
+            'edit_dojo_mensualidades'   => 'Registrar y gestionar pagos de mensualidades de dojos',
+        ];
+
+        foreach ($permissions as $key => $description) {
+            Permission::firstOrCreate([
+                'key'             => $key,
+                'keyDescription'  => $description,
+                'table_name'      => 'dojo_mensualidades',
+                'tableDescription'=> 'Mensualidades Dojo'
+            ]);
+        }
     }
 }

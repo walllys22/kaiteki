@@ -13,7 +13,7 @@ class DojoMensualidadController extends Controller
 {
     public function index()
     {
-        $this->custom_authorize('read_dojos');
+        $this->custom_authorize('browse_dojo_mensualidades');
 
         $userDojoId = Auth::user()->dojo_id;
 
@@ -51,7 +51,7 @@ class DojoMensualidadController extends Controller
 
     public function list($dojoId)
     {
-        $this->custom_authorize('read_dojos');
+        $this->custom_authorize('browse_dojo_mensualidades');
 
         $userDojoId = Auth::user()->dojo_id;
         if ($userDojoId && (int) $userDojoId !== (int) $dojoId) {
@@ -68,7 +68,7 @@ class DojoMensualidadController extends Controller
 
     public function store(Request $request, $dojoId)
     {
-        $this->custom_authorize('edit_dojos');
+        $this->custom_authorize('edit_dojo_mensualidades');
         $this->authorizeGlobalAdmin();
 
         $validated = $request->validate([
@@ -101,7 +101,7 @@ class DojoMensualidadController extends Controller
 
     public function pagar(Request $request, $id)
     {
-        $this->custom_authorize('edit_dojos');
+        $this->custom_authorize('edit_dojo_mensualidades');
         $this->authorizeGlobalAdmin();
 
         $mensualidad = DojoMensualidad::findOrFail($id);
@@ -142,7 +142,7 @@ class DojoMensualidadController extends Controller
 
     public function pagosList($id)
     {
-        $this->custom_authorize('read_dojos');
+        $this->custom_authorize('browse_dojo_mensualidades');
 
         $mensualidad = DojoMensualidad::with(['pagos.registerUser', 'dojo'])->findOrFail($id);
 
@@ -156,7 +156,7 @@ class DojoMensualidadController extends Controller
 
     public function comprobante($pagoId)
     {
-        $this->custom_authorize('read_dojos');
+        $this->custom_authorize('browse_dojo_mensualidades');
 
         $pago = DojoMensualidadPago::with(['mensualidad.dojo', 'registerUser'])->findOrFail($pagoId);
 
@@ -170,7 +170,7 @@ class DojoMensualidadController extends Controller
 
     public function destroy($id)
     {
-        $this->custom_authorize('edit_dojos');
+        $this->custom_authorize('edit_dojo_mensualidades');
         $this->authorizeGlobalAdmin();
 
         $mensualidad = DojoMensualidad::findOrFail($id);

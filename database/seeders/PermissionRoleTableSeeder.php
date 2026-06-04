@@ -37,6 +37,7 @@ class PermissionRoleTableSeeder extends Seeder
                                             table_name = "parentescos" or
                                             table_name = "ciudads" or
                                             table_name = "dojos" or
+                                            table_name = "dojo_mensualidades" or
                                             table_name = "grados" or
 
                                             table_name = "users" or
@@ -66,7 +67,9 @@ class PermissionRoleTableSeeder extends Seeder
 
                                             `key` = "browse_users" or
                                             `key` = "read_users" or
-                                            
+
+                                            `key` = "browse_dojo_mensualidades" or
+
                                             `key` = "browse_clear-cache"')->get();
         $role->permissions()->sync($permissions->pluck('id')->all());
     }
