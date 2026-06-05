@@ -5,18 +5,147 @@
 @section('page_header')
 @stop
 
+@section('css')
+<style>
+    .dojo-read-page {
+        overflow-x: hidden;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+    .dojo-read-page > .row {
+        margin-left: 0;
+        margin-right: 0;
+    }
+    .dojo-read-page > .row > [class*="col-"] {
+        padding-left: 0;
+        padding-right: 0;
+    }
+    .dojo-read-page .panel {
+        border: 0;
+        border-radius: 6px;
+        box-shadow: 0 4px 14px rgba(31, 45, 61, .06);
+        overflow: hidden;
+    }
+    .dojo-read-page .panel-heading {
+        background: #fff;
+        border-bottom: 1px solid #edf1f5;
+        min-height: 56px;
+        padding: 14px 18px;
+    }
+    .dojo-read-page .table-responsive {
+        border: 0;
+        margin-bottom: 0;
+        overflow-x: hidden;
+        width: 100%;
+    }
+    .dojo-read-page table {
+        table-layout: fixed;
+        width: 100%;
+    }
+    .dojo-read-page th,
+    .dojo-read-page td {
+        white-space: normal !important;
+        word-break: break-word;
+    }
+    .dojo-read-page .dojo-profile-body {
+        padding: 20px 24px;
+    }
+    .dojo-read-page .dojo-profile-layout {
+        align-items: flex-start;
+        display: flex;
+        gap: 22px;
+        min-width: 0;
+    }
+    .dojo-read-page .dojo-profile-logo {
+        flex: 0 0 auto;
+    }
+    .dojo-read-page .dojo-profile-info {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    .dojo-read-page .dojo-profile-head {
+        align-items: flex-start;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: space-between;
+        margin-bottom: 14px;
+    }
+    .dojo-read-page .dojo-profile-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .dojo-read-page .dojo-profile-grid {
+        color: #555;
+        display: grid;
+        font-size: 13.5px;
+        gap: 9px 22px;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    }
+    .dojo-read-page .dojo-info-item {
+        align-items: flex-start;
+        display: flex;
+        gap: 8px;
+        min-width: 0;
+    }
+    .dojo-read-page .dojo-info-item span {
+        min-width: 0;
+    }
+    #panel-mensualidades {
+        padding: 14px 20px 20px;
+    }
+    #panel-mensualidades .table > thead > tr > th,
+    #panel-mensualidades .table > tbody > tr > td {
+        vertical-align: middle;
+    }
+    #panel-mensualidades .bread-actions {
+        min-width: 112px;
+        white-space: nowrap !important;
+    }
+    #panel-mensualidades .bread-actions .btn,
+    #panel-mensualidades .form-whatsapp-comprobante .btn {
+        height: 34px;
+        margin: 2px;
+        width: 38px;
+    }
+    #panel-mensualidades .table .table {
+        font-size: 12px;
+    }
+    #panel-mensualidades .table .table th,
+    #panel-mensualidades .table .table td {
+        padding: 8px 6px;
+    }
+    @media (max-width: 900px) {
+        .dojo-read-page {
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+        .dojo-read-page .dojo-profile-layout {
+            flex-direction: column;
+        }
+        .dojo-read-page .dojo-profile-actions {
+            width: 100%;
+        }
+        .dojo-read-page .dojo-profile-actions .btn {
+            flex: 1 1 110px;
+        }
+    }
+</style>
+@stop
+
 @section('content')
-<div class="page-content container-fluid">
+<div class="page-content container-fluid dojo-read-page">
 
     {{-- Perfil del dojo --}}
     <div class="row">
         <div class="col-md-12">
             <div class="panel panel-bordered" style="border-left: 4px solid #22a7f0; margin-bottom: 20px;">
-                <div class="panel-body" style="padding: 20px 25px;">
-                    <div style="display:flex; align-items:flex-start; gap:24px;">
+                <div class="panel-body dojo-profile-body">
+                    <div class="dojo-profile-layout">
 
                         {{-- Logo --}}
-                        <div style="flex-shrink:0;">
+                        <div class="dojo-profile-logo">
                             @if($dojo->logo)
                                 <img src="{{ filter_var($dojo->logo, FILTER_VALIDATE_URL) ? $dojo->logo : Voyager::image($dojo->logo) }}"
                                      alt="{{ $dojo->nombre }}"
@@ -29,8 +158,8 @@
                         </div>
 
                         {{-- Info --}}
-                        <div style="flex:1; min-width:0;">
-                            <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+                        <div class="dojo-profile-info">
+                            <div class="dojo-profile-head">
                                 <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px;">
                                     <h2 style="margin:0; font-size:22px; font-weight:700; color:#2d3748;">{{ $dojo->nombre ?? 'Sin nombre' }}</h2>
                                     @if($dojo->status == 1)
@@ -39,7 +168,7 @@
                                         <span class="label label-danger" style="font-size:11px; padding:4px 10px; vertical-align:middle;">Inactivo</span>
                                     @endif
                                 </div>
-                                <div style="display:flex; gap:6px; align-items:center;">
+                                <div class="dojo-profile-actions">
                                     @if(auth()->user()->hasPermission('edit_dojos'))
                                         <a href="{{ route('voyager.dojos.edit', $dojo->id) }}" class="btn btn-info btn-sm">
                                             <i class="voyager-edit"></i> Editar
@@ -51,39 +180,39 @@
                                 </div>
                             </div>
 
-                            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:8px 32px; color:#555; font-size:13.5px;">
+                            <div class="dojo-profile-grid">
                                 @if($dojo->ciudad)
-                                <div style="display:flex; align-items:center; gap:8px;">
+                                <div class="dojo-info-item">
                                     <i class="fa fa-map-marker" style="width:14px; color:#22a7f0; text-align:center;"></i>
                                     <span><strong style="color:#888; font-weight:600;">Ciudad:</strong> {{ $dojo->ciudad->nombre }}</span>
                                 </div>
                                 @endif
                                 @if($dojo->person)
-                                <div style="display:flex; align-items:center; gap:8px;">
+                                <div class="dojo-info-item">
                                     <i class="fa fa-user" style="width:14px; color:#22a7f0; text-align:center;"></i>
                                     <span><strong style="color:#888; font-weight:600;">Responsable:</strong> {{ $dojo->person->first_name }}</span>
                                 </div>
                                 @endif
                                 @if($dojo->grado_responsable)
-                                <div style="display:flex; align-items:center; gap:8px;">
+                                <div class="dojo-info-item">
                                     <i class="fa fa-star" style="width:14px; color:#22a7f0; text-align:center;"></i>
                                     <span><strong style="color:#888; font-weight:600;">Grado:</strong> {{ $dojo->grado_responsable }}</span>
                                 </div>
                                 @endif
                                 @if($dojo->phone)
-                                <div style="display:flex; align-items:center; gap:8px;">
+                                <div class="dojo-info-item">
                                     <i class="fa fa-phone" style="width:14px; color:#22a7f0; text-align:center;"></i>
                                     <span>{{ $dojo->phone }}</span>
                                 </div>
                                 @endif
                                 @if($dojo->email)
-                                <div style="display:flex; align-items:center; gap:8px;">
+                                <div class="dojo-info-item">
                                     <i class="fa fa-envelope" style="width:14px; color:#22a7f0; text-align:center;"></i>
                                     <span>{{ $dojo->email }}</span>
                                 </div>
                                 @endif
                                 @if($dojo->address)
-                                <div style="display:flex; align-items:center; gap:8px;">
+                                <div class="dojo-info-item">
                                     <i class="fa fa-home" style="width:14px; color:#22a7f0; text-align:center;"></i>
                                     <span>{{ $dojo->address }}</span>
                                 </div>
@@ -115,7 +244,7 @@
                         </div>
                     @else
                         <div class="table-responsive">
-                            <table class="table table-hover" style="margin-bottom:0;">
+                            <table id="dataTable" class="table table-hover table-condensed" style="margin-bottom:0;">
                                 <thead style="background:#f8f9fa;">
                                     <tr>
                                         <th style="width:56px; text-align:center; border-top:none;"></th>
@@ -161,14 +290,14 @@
                                                 @endif
                                             </td>
                                             @if(auth()->user()->hasPermission('read_users') || auth()->user()->hasPermission('edit_users'))
-                                                <td style="text-align:center; vertical-align:middle;">
+                                                <td class="no-sort no-click bread-actions text-center">
                                                     @if(auth()->user()->hasPermission('read_users'))
-                                                        <a href="{{ route('voyager.users.show', $user->id) }}" class="btn btn-xs btn-warning" title="Ver">
+                                                        <a href="{{ route('voyager.users.show', $user->id) }}" class="btn btn-sm btn-warning" title="Ver">
                                                             <i class="voyager-eye"></i>
                                                         </a>
                                                     @endif
                                                     @if(auth()->user()->hasPermission('edit_users'))
-                                                        <a href="{{ route('voyager.users.edit', $user->id) }}" class="btn btn-xs btn-info" title="Editar">
+                                                        <a href="{{ route('voyager.users.edit', $user->id) }}" class="btn btn-sm btn-primary" title="Editar">
                                                             <i class="voyager-edit"></i>
                                                         </a>
                                                     @endif

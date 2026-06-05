@@ -101,7 +101,7 @@
         }
         .app-container .side-body {
             max-width: calc(100vw - 70px);
-            overflow-x: auto;
+            overflow-x: hidden;
         }
         .app-container.expanded .side-body {
             max-width: calc(100vw - 255px);

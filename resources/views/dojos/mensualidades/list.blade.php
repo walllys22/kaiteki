@@ -10,7 +10,7 @@
     </div>
 @else
     <div class="table-responsive">
-        <table class="table table-hover table-condensed" style="margin-bottom:0;">
+        <table id="dataTable" class="table table-hover table-condensed" style="margin-bottom:0;">
             <thead style="background:#f8f9fa;">
                 <tr>
                     <th style="border-top:none; width:16px;"></th>
@@ -69,10 +69,10 @@
                             <span class="label label-{{ $estadoClass }}">{{ $estado }}</span>
                         </td>
                         @if($isGlobalAdmin)
-                            <td class="no-sort no-click bread-actions" style="text-align:center;">
+                            <td class="no-sort no-click bread-actions text-center">
                                 @if($isUltima)
                                     <button type="button"
-                                            class="btn btn-xs btn-info btn-editar-fecha-fin"
+                                            class="btn btn-sm btn-primary btn-editar-fecha-fin"
                                             data-id="{{ $m->id }}"
                                             data-url="{{ route('dojo.mensualidades.fecha-fin', $m->id) }}"
                                             data-fecha="{{ $m->fecha_fin->format('Y-m-d') }}"
@@ -83,7 +83,7 @@
                                 @endif
                                 @if($saldo > 0)
                                     <button type="button"
-                                            class="btn btn-xs btn-success btn-pagar-mensualidad"
+                                            class="btn btn-sm btn-success btn-pagar-mensualidad"
                                             data-id="{{ $m->id }}"
                                             data-url="{{ route('dojo.mensualidades.pagar', $m->id) }}"
                                             data-pagos-url="{{ route('dojo.mensualidades.pagos', $m->id) }}"
@@ -95,7 +95,7 @@
                                     </button>
                                 @endif
                                 <button type="button"
-                                        class="btn btn-xs btn-danger btn-eliminar-mensualidad"
+                                        class="btn btn-sm btn-danger btn-eliminar-mensualidad"
                                         data-id="{{ $m->id }}"
                                         data-url="{{ route('dojo.mensualidades.destroy', $m->id) }}"
                                         data-periodo="{{ $m->fecha_inicio->format('d/m/Y') }} - {{ $m->fecha_fin->format('d/m/Y') }}">
@@ -107,7 +107,7 @@
 
                     @if($m->observacion)
                         <tr style="background:#fffdf0;">
-                            <td colspan="{{ $isGlobalAdmin ? 9 : 8 }}" style="border-top:none; color:#888; font-size:11px; padding: 3px 10px 5px 32px;">
+                            <td colspan="{{ $isGlobalAdmin ? 8 : 7 }}" style="border-top:none; color:#888; font-size:11px; padding: 3px 10px 5px 32px;">
                                 <i class="voyager-message"></i> {{ $m->observacion }}
                             </td>
                         </tr>
@@ -116,7 +116,7 @@
                     {{-- Fila expandible de pagos --}}
                     @if($tienePagos)
                     <tr id="mpagos-{{ $m->id }}" style="display:none; background:#f8fbff;">
-                        <td colspan="{{ $isGlobalAdmin ? 9 : 8 }}" style="padding: 0 0 0 28px; border-top:none;">
+                        <td colspan="{{ $isGlobalAdmin ? 8 : 7 }}" style="padding: 0 0 0 28px; border-top:none;">
                             <div style="padding: 8px 12px 12px 0;">
                                 <table class="table table-condensed" style="margin-bottom:0; background:transparent;">
                                     <thead>
@@ -150,7 +150,7 @@
                                                 <td style="text-align:center;">
                                                     <a href="{{ route('dojo.mensualidades.pago.comprobante', $pago->id) }}"
                                                        target="_blank"
-                                                       class="btn btn-xs btn-default"
+                                                       class="btn btn-sm btn-default"
                                                        title="Imprimir comprobante">
                                                         <i class="fa fa-print"></i>
                                                     </a>
@@ -160,7 +160,7 @@
                                                           style="display:inline;">
                                                         @csrf
                                                         <button type="submit"
-                                                                class="btn btn-xs btn-success"
+                                                                class="btn btn-sm btn-success"
                                                                 title="Enviar comprobante por WhatsApp">
                                                             <i class="voyager-paper-plane"></i>
                                                         </button>
