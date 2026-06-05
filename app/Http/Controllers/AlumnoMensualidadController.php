@@ -631,7 +631,7 @@ class AlumnoMensualidadController extends Controller
                 ->setPaper('letter');
             $pdfOutput = $pdf->output();
 
-            foreach (glob(storage_path('app/qr_alumno_' . $pago->id . '_*.png')) as $tmpQr) {
+            foreach (glob(public_path('tmp/qr_alumno_' . $pago->id . '_*.png')) as $tmpQr) {
                 @unlink($tmpQr);
             }
 
