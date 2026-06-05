@@ -36,8 +36,15 @@
             }
         }
     }
-    ob_start(); imagepng($qrImg); $qrPng = ob_get_clean(); imagedestroy($qrImg);
-    $qrDataUri = 'data:image/png;base64,' . base64_encode($qrPng);
+    if ($isPdf) {
+        $tmpQr = sys_get_temp_dir() . '/qr_dojo_mens_' . $numero . '.png';
+        imagepng($qrImg, $tmpQr);
+        imagedestroy($qrImg);
+        $qrSrc = 'file://' . $tmpQr;
+    } else {
+        ob_start(); imagepng($qrImg); $qrPng = ob_get_clean(); imagedestroy($qrImg);
+        $qrSrc = 'data:image/png;base64,' . base64_encode($qrPng);
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -65,6 +72,7 @@
         .info-table,
         .footer-table {
             border-collapse: collapse;
+            table-layout: fixed;
             width: 100%;
         }
         .header-table td,
@@ -238,7 +246,7 @@
                 </td>
                 <td width="25%" class="qr-footer">
                     <div class="qr-box">
-                        <img src="{{ $qrDataUri }}" width="120" height="120" alt="QR">
+                        <img src="{{ $qrSrc }}" width="120" height="120" alt="QR">
                     </div>
                 </td>
             </tr>
