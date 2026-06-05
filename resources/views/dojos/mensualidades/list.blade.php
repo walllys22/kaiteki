@@ -13,6 +13,7 @@
         <table class="table table-hover table-condensed" style="margin-bottom:0;">
             <thead style="background:#f8f9fa;">
                 <tr>
+                    <th style="border-top:none; width:16px;"></th>
                     <th style="border-top:none;">Fecha inicio</th>
                     <th style="border-top:none;">Fecha fin</th>
                     <th style="text-align:right; border-top:none;">Monto</th>
@@ -27,26 +28,36 @@
             <tbody>
                 @foreach($mensualidades as $m)
                     @php
-                        $estado    = $m->estadoPago();
-                        $isVigente = $m->isVigente();
-                        $saldo     = $m->saldo();
-                        $isUltima  = $loop->first;
+                        $estado      = $m->estadoPago();
+                        $isVigente   = $m->isVigente();
+                        $saldo       = $m->saldo();
+                        $isUltima    = $loop->first;
+                        $tienePagos  = $m->pagos->isNotEmpty() || (float) $m->monto_pagado > 0;
                         $estadoClass = match($estado) {
                             'Pagado'  => 'success',
                             'Vencido' => 'danger',
                             default   => 'warning',
                         };
                     @endphp
-                    <tr>
+
+                    {{-- Fila principal --}}
+                    <tr class="{{ $tienePagos ? 'clickable-mensualidad' : '' }}"
+                        style="{{ $tienePagos ? 'cursor:pointer;' : '' }}"
+                        @if($tienePagos) data-target="mpagos-{{ $m->id }}" @endif>
+                        <td style="vertical-align:middle; padding-left:10px;">
+                            @if($tienePagos)
+                                <i class="fa fa-chevron-right toggle-icon-m" style="font-size:9px; color:#aaa; transition:transform .2s;"></i>
+                            @endif
+                        </td>
                         <td style="vertical-align:middle;">
                             {{ $m->fecha_inicio->format('d/m/Y') }}
                             @if($isVigente)
-                                <span class="label label-success" style="margin-left:4px;">Vigente</span>
+                                <span class="label label-success" style="margin-left:4px; font-size:10px;">Vigente</span>
                             @endif
                         </td>
                         <td style="vertical-align:middle;">{{ $m->fecha_fin->format('d/m/Y') }}</td>
                         <td style="text-align:right; vertical-align:middle;">{{ number_format($m->monto, 2) }}</td>
-                        <td style="text-align:right; vertical-align:middle;">{{ number_format($m->monto_pagado, 2) }}</td>
+                        <td style="text-align:right; vertical-align:middle; color:#27ae60; font-weight:600;">{{ number_format($m->monto_pagado, 2) }}</td>
                         <td style="text-align:right; vertical-align:middle;">
                             @if($saldo > 0)
                                 <strong style="color:#e74c3c;">{{ number_format($saldo, 2) }}</strong>
@@ -58,10 +69,10 @@
                             <span class="label label-{{ $estadoClass }}">{{ $estado }}</span>
                         </td>
                         @if($isGlobalAdmin)
-                            <td style="text-align:center; vertical-align:middle; white-space:nowrap;">
-                                @if($isGlobalAdmin && $isUltima)
+                            <td class="no-sort no-click bread-actions" style="text-align:center;">
+                                @if($isUltima)
                                     <button type="button"
-                                            class="btn btn-xs btn-info btn-editar-fecha-fin"
+                                            class="btn btn-sm btn-info btn-editar-fecha-fin"
                                             data-id="{{ $m->id }}"
                                             data-url="{{ route('dojo.mensualidades.fecha-fin', $m->id) }}"
                                             data-fecha="{{ $m->fecha_fin->format('Y-m-d') }}"
@@ -72,7 +83,7 @@
                                 @endif
                                 @if($saldo > 0)
                                     <button type="button"
-                                            class="btn btn-xs btn-success btn-pagar-mensualidad"
+                                            class="btn btn-sm btn-success btn-pagar-mensualidad"
                                             data-id="{{ $m->id }}"
                                             data-url="{{ route('dojo.mensualidades.pagar', $m->id) }}"
                                             data-pagos-url="{{ route('dojo.mensualidades.pagos', $m->id) }}"
@@ -83,20 +94,8 @@
                                         <i class="voyager-dollar"></i> Pagar
                                     </button>
                                 @endif
-                                @if((float) $m->monto_pagado > 0 || $m->pagos_count > 0)
-                                    <button type="button"
-                                            class="btn btn-xs btn-default btn-ver-pagos"
-                                            data-url="{{ route('dojo.mensualidades.pagos', $m->id) }}"
-                                            data-periodo="{{ $m->fecha_inicio->format('d/m/Y') }} - {{ $m->fecha_fin->format('d/m/Y') }}"
-                                            title="Ver pagos registrados">
-                                        <i class="fa fa-list"></i>
-                                        @if($m->pagos_count > 0)
-                                            {{ $m->pagos_count }}
-                                        @endif
-                                    </button>
-                                @endif
                                 <button type="button"
-                                        class="btn btn-xs btn-danger btn-eliminar-mensualidad"
+                                        class="btn btn-sm btn-danger btn-eliminar-mensualidad"
                                         data-id="{{ $m->id }}"
                                         data-url="{{ route('dojo.mensualidades.destroy', $m->id) }}"
                                         data-periodo="{{ $m->fecha_inicio->format('d/m/Y') }} - {{ $m->fecha_fin->format('d/m/Y') }}">
@@ -105,13 +104,65 @@
                             </td>
                         @endif
                     </tr>
+
                     @if($m->observacion)
-                        <tr>
-                            <td colspan="{{ $isGlobalAdmin ? 7 : 6 }}" style="padding-top:0; padding-bottom:6px; border-top:none; color:#888; font-size:0.88em;">
-                                <i class="voyager-message" style="margin-right:4px;"></i>{{ $m->observacion }}
+                        <tr style="background:#fffdf0;">
+                            <td colspan="{{ $isGlobalAdmin ? 9 : 8 }}" style="border-top:none; color:#888; font-size:11px; padding: 3px 10px 5px 32px;">
+                                <i class="voyager-message"></i> {{ $m->observacion }}
                             </td>
                         </tr>
                     @endif
+
+                    {{-- Fila expandible de pagos --}}
+                    @if($tienePagos)
+                    <tr id="mpagos-{{ $m->id }}" style="display:none; background:#f8fbff;">
+                        <td colspan="{{ $isGlobalAdmin ? 9 : 8 }}" style="padding: 0 0 0 28px; border-top:none;">
+                            <div style="padding: 8px 12px 12px 0;">
+                                <table class="table table-condensed" style="margin-bottom:0; background:transparent;">
+                                    <thead>
+                                        <tr style="background:#eaf2fb;">
+                                            <th style="border-top:none; font-size:11px; color:#555;">#</th>
+                                            <th style="border-top:none; font-size:11px; color:#555;">Fecha</th>
+                                            <th style="text-align:right; border-top:none; font-size:11px; color:#555;">Monto</th>
+                                            <th style="border-top:none; font-size:11px; color:#555;">Cobrado por</th>
+                                            <th style="border-top:none; font-size:11px; color:#555;">Observación</th>
+                                            <th style="text-align:center; border-top:none; font-size:11px; color:#555;">Comprobante</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if($m->pagos->isEmpty() && (float) $m->monto_pagado > 0)
+                                            <tr style="background:#fffbe6;">
+                                                <td style="font-size:11px; color:#aaa;">—</td>
+                                                <td style="font-size:12px;">{{ $m->updated_at->format('d/m/Y') }}</td>
+                                                <td style="text-align:right; font-weight:700; color:#27ae60; font-size:12px;">Bs {{ number_format((float) $m->monto_pagado, 2) }}</td>
+                                                <td style="color:#aaa; font-size:11px;">—</td>
+                                                <td style="color:#888; font-size:11px;"><em>Pago anterior al sistema de seguimiento</em></td>
+                                                <td style="text-align:center; color:#aaa; font-size:11px;">—</td>
+                                            </tr>
+                                        @else
+                                            @foreach($m->pagos as $pago)
+                                            <tr>
+                                                <td style="font-size:11px; color:#aaa;">{{ str_pad($pago->id, 6, '0', STR_PAD_LEFT) }}</td>
+                                                <td style="font-size:12px;">{{ $pago->fecha->format('d/m/Y') }}</td>
+                                                <td style="text-align:right; font-weight:700; color:#27ae60; font-size:12px;">Bs {{ number_format((float) $pago->monto, 2) }}</td>
+                                                <td style="font-size:12px; color:#555;">{{ optional($pago->registerUser)->name ?: 'Sistema' }}</td>
+                                                <td style="font-size:11px; color:#888;">{{ $pago->observacion ?: '—' }}</td>
+                                                <td style="text-align:center;">
+                                                    <a href="{{ route('dojo.mensualidades.pago.comprobante', $pago->id) }}"
+                                                       target="_blank" class="btn btn-xs btn-default">
+                                                        <i class="fa fa-print"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            @endforeach
+                                        @endif
+                                    </tbody>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+                    @endif
+
                 @endforeach
             </tbody>
         </table>

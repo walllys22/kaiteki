@@ -58,7 +58,8 @@ class DojoMensualidadController extends Controller
             abort(403);
         }
 
-        $mensualidades = DojoMensualidad::withCount('pagos')
+        $mensualidades = DojoMensualidad::with(['pagos.registerUser'])
+            ->withCount('pagos')
             ->where('dojo_id', $dojoId)
             ->orderBy('fecha_inicio', 'desc')
             ->get();

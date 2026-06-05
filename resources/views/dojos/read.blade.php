@@ -452,6 +452,19 @@
             });
         });
 
+        $('.clickable-mensualidad').off('click').on('click', function() {
+            var target = $(this).data('target');
+            var icon   = $(this).find('.toggle-icon-m');
+            var $row   = $('#' + target);
+            if ($row.is(':visible')) {
+                $row.slideUp(180);
+                icon.css('transform', 'rotate(0deg)');
+            } else {
+                $row.slideDown(220);
+                icon.css('transform', 'rotate(90deg)');
+            }
+        });
+
         $('.btn-editar-fecha-fin').off('click').on('click', function() {
             var btn = $(this);
             fechaFinUrl = btn.data('url');
