@@ -64,6 +64,7 @@
                             </a>
                             <form method="POST"
                                   action="{{ route('dojo.mensualidades.pago.whatsapp', $pago->id) }}"
+                                  class="form-whatsapp-comprobante"
                                   style="display:inline;">
                                 @csrf
                                 <button type="submit"
