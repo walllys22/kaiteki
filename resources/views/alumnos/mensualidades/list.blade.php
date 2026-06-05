@@ -426,16 +426,24 @@
                                 @if($item->pagos->count())
                                     <div class="list-group" style="margin:8px 0 0;">
                                         @foreach($item->pagos as $pago)
-                                            <a href="{{ route('alumno.mensualidades.pago.comprobante', $pago->id) }}"
-                                               target="_blank"
-                                               class="list-group-item"
-                                               style="padding:7px 9px; font-size:12px;"
-                                               title="Imprimir comprobante">
-                                                <i class="fa-solid fa-print"></i>
-                                                {{ \Carbon\Carbon::parse($pago->fecha)->format('d/m/Y') }}
-                                                · Bs {{ number_format((float) $pago->monto, 2, '.', ',') }}
-                                                <span class="pull-right">#{{ str_pad($pago->id, 6, '0', STR_PAD_LEFT) }}</span>
-                                            </a>
+                                            <div class="list-group-item" style="padding:7px 9px; font-size:12px; display:flex; align-items:center; gap:6px;">
+                                                <a href="{{ route('alumno.mensualidades.pago.comprobante', $pago->id) }}"
+                                                   target="_blank"
+                                                   style="flex:1; color:inherit; text-decoration:none;"
+                                                   title="Imprimir comprobante">
+                                                    <i class="fa-solid fa-print"></i>
+                                                    {{ \Carbon\Carbon::parse($pago->fecha)->format('d/m/Y') }}
+                                                    · Bs {{ number_format((float) $pago->monto, 2, '.', ',') }}
+                                                    <span class="pull-right">#{{ str_pad($pago->id, 6, '0', STR_PAD_LEFT) }}</span>
+                                                </a>
+                                                <button type="button"
+                                                        class="btn btn-xs btn-whatsapp-comprobante"
+                                                        data-url="{{ route('alumno.mensualidades.pago.whatsapp', $pago->id) }}"
+                                                        title="Enviar por WhatsApp"
+                                                        style="background:#25d366; border:none; border-radius:4px; color:#fff; flex-shrink:0; padding:3px 7px;">
+                                                    <i class="fa-brands fa-whatsapp"></i>
+                                                </button>
+                                            </div>
                                         @endforeach
                                     </div>
                                 @else
@@ -979,3 +987,26 @@
 </form>
 
 @endif
+
+<script>
+$(document).off('click.whatsapp-comprobante').on('click.whatsapp-comprobante', '.btn-whatsapp-comprobante', function() {
+    var $btn = $(this);
+    var url = $btn.data('url');
+    $btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
+    $.ajax({
+        url: url,
+        method: 'POST',
+        data: { _token: '{{ csrf_token() }}' },
+        success: function(res) {
+            toastr.success(res.message || 'Comprobante enviado.');
+        },
+        error: function(xhr) {
+            var msg = xhr.responseJSON ? xhr.responseJSON.message : 'Error al enviar.';
+            toastr.error(msg);
+        },
+        complete: function() {
+            $btn.prop('disabled', false).html('<i class="fa-brands fa-whatsapp"></i>');
+        }
+    });
+});
+</script>

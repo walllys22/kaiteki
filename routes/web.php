@@ -88,6 +88,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system', 'dojo.me
     Route::put('alumnos/mensualidades/{id}/pagar', [AlumnoMensualidadController::class, 'pagar'])->name('alumno.mensualidades.pagar');
     Route::delete('alumnos/mensualidades/{id}/delete', [AlumnoMensualidadController::class, 'destroy'])->name('alumno.mensualidades.destroy');
     Route::get('alumnos/mensualidades/pagos/{id}/comprobante', [AlumnoMensualidadController::class, 'comprobantePago'])->name('alumno.mensualidades.pago.comprobante');
+    Route::post('alumnos/mensualidades/pagos/{id}/whatsapp', [AlumnoMensualidadController::class, 'enviarComprobanteWhatsapp'])->name('alumno.mensualidades.pago.whatsapp');
     Route::post('alumnos/tutores/store', [AlumnoController::class, 'storeAlumnoTutor'])->name('alumno.tutores.store');
     Route::post('alumnos/tutores/{id}/status', [AlumnoController::class, 'tutorUpdateStatus'])->name('alumno.tutores.status.update');
     Route::delete('alumnos/tutores/{id}/delete', [AlumnoController::class, 'tutorDestroy'])->name('alumno.tutores.destroy');

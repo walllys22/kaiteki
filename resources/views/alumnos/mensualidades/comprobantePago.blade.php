@@ -3,6 +3,7 @@
     $alumno = $pago->alumno;
     $person = optional($alumno)->person;
     $dojo = optional($alumno)->dojo;
+    $isPdf = $isPdf ?? false;
     $periodoInicio = optional($mensualidad)->periodo ? \Carbon\Carbon::parse($mensualidad->periodo)->startOfDay() : null;
     $periodoFin = $mensualidad && $mensualidad->fecha_fin
         ? \Carbon\Carbon::parse($mensualidad->fecha_fin)->startOfDay()
@@ -34,6 +35,36 @@
         'Pago: Bs ' . number_format((float) $pago->monto, 2, '.', ','),
         'Fecha pago: ' . \Carbon\Carbon::parse($pago->fecha)->format('d/m/Y'),
     ]);
+
+    $qrCode = \BaconQrCode\Encoder\Encoder::encode($qrText, \BaconQrCode\Common\ErrorCorrectionLevel::M(), 'UTF-8');
+    $matrix = $qrCode->getMatrix();
+    $matrixSize = $matrix->getWidth();
+    $margin = 4;
+    $scale = max(2, (int) floor(120 / ($matrixSize + ($margin * 2))));
+    $imageSize = ($matrixSize + ($margin * 2)) * $scale;
+    $qrImage = imagecreatetruecolor($imageSize, $imageSize);
+    $white = imagecolorallocate($qrImage, 255, 255, 255);
+    $black = imagecolorallocate($qrImage, 0, 0, 0);
+    imagefill($qrImage, 0, 0, $white);
+    for ($y = 0; $y < $matrixSize; $y++) {
+        for ($x = 0; $x < $matrixSize; $x++) {
+            if ($matrix->get($x, $y) === 1) {
+                imagefilledrectangle(
+                    $qrImage,
+                    ($x + $margin) * $scale,
+                    ($y + $margin) * $scale,
+                    (($x + $margin + 1) * $scale) - 1,
+                    (($y + $margin + 1) * $scale) - 1,
+                    $black
+                );
+            }
+        }
+    }
+    ob_start();
+    imagepng($qrImage);
+    $qrPng = ob_get_clean();
+    imagedestroy($qrImage);
+    $qrDataUri = 'data:image/png;base64,' . base64_encode($qrPng);
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -78,20 +109,15 @@
         .title { font-size: 18px; font-weight: 700; margin: 0 0 5px; }
         .subtitle { font-size: 12px; margin: 0; }
         .receipt-no { font-size: 13px; font-weight: 700; text-align: right; }
-        .receipt-no .qr-box,
-        .receipt-no .qr-hint { display: none; }
         .qr-box {
             border: 1px solid #111;
             display: inline-block;
             padding: 4px;
         }
-        .qr-box canvas,
         .qr-box img {
             display: block;
-            height: 124px !important;
-            image-rendering: crisp-edges;
-            image-rendering: pixelated;
-            width: 124px !important;
+            height: 124px;
+            width: 124px;
         }
         .qr-hint {
             font-size: 9px;
@@ -243,34 +269,26 @@
             </div>
             <div class="qr-footer">
                 <div class="qr-box">
-                    <div id="qr-comprobante"></div>
+                    <img src="{{ $qrDataUri }}" alt="QR">
                 </div>
                 <div class="qr-hint">Datos del pago</div>
             </div>
         </div>
     </div>
 
+    @unless($isPdf)
     <div class="actions">
         <button class="btn" onclick="window.print()">Imprimir</button>
         <button class="btn" onclick="window.close()">Cerrar</button>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
         window.addEventListener('load', function() {
-            if (window.QRCode) {
-                new QRCode(document.getElementById('qr-comprobante'), {
-                    text: @json($qrText),
-                    width: 124,
-                    height: 124,
-                    correctLevel: QRCode.CorrectLevel.M
-                });
-            }
-
             setTimeout(function() {
                 window.print();
             }, 350);
         });
     </script>
+    @endunless
 </body>
 </html>

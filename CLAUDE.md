@@ -407,6 +407,7 @@ PUT    admin/alumnos/mensualidades/plan/{id}/activar      alumno.mensualidades.p
 PUT    admin/alumnos/mensualidades/{id}/pagar             alumno.mensualidades.pagar
 DELETE admin/alumnos/mensualidades/{id}/delete            alumno.mensualidades.destroy
 GET    admin/alumnos/mensualidades/pagos/{id}/comprobante alumno.mensualidades.pago.comprobante
+POST   admin/alumnos/mensualidades/pagos/{id}/whatsapp   alumno.mensualidades.pago.whatsapp
 GET    /comprobantes/mensualidades/pagos/{id}             alumno.mensualidades.pago.comprobante.public (signed)
 ```
 

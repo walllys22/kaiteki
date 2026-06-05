@@ -9,7 +9,8 @@
       "Bash(php -r \"echo json_encode\\(getimagesize\\('/home/user/Escritorio/projects/kaiteki/public/images/dojos/ljp/certificados/examen.png'\\)\\);\")",
       "Bash(php -r \"echo json_encode\\(getimagesize\\('/home/user/Escritorio/projects/kaiteki/public/images/dojos/eka/certificados/examen.png'\\)\\);\")",
       "Bash(php -l /home/user/Escritorio/projects/kaiteki/app/Http/Controllers/DojoController.php)",
-      "Bash(php -l /home/user/Escritorio/projects/kaiteki/routes/web.php)"
+      "Bash(php -l /home/user/Escritorio/projects/kaiteki/routes/web.php)",
+      "Bash(php -l app/Http/Controllers/AlumnoMensualidadController.php)"
     ]
   }
 }
