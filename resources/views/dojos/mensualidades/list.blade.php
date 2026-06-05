@@ -72,7 +72,7 @@
                             <td class="no-sort no-click bread-actions" style="text-align:center;">
                                 @if($isUltima)
                                     <button type="button"
-                                            class="btn btn-sm btn-info btn-editar-fecha-fin"
+                                            class="btn btn-xs btn-info btn-editar-fecha-fin"
                                             data-id="{{ $m->id }}"
                                             data-url="{{ route('dojo.mensualidades.fecha-fin', $m->id) }}"
                                             data-fecha="{{ $m->fecha_fin->format('Y-m-d') }}"
@@ -83,7 +83,7 @@
                                 @endif
                                 @if($saldo > 0)
                                     <button type="button"
-                                            class="btn btn-sm btn-success btn-pagar-mensualidad"
+                                            class="btn btn-xs btn-success btn-pagar-mensualidad"
                                             data-id="{{ $m->id }}"
                                             data-url="{{ route('dojo.mensualidades.pagar', $m->id) }}"
                                             data-pagos-url="{{ route('dojo.mensualidades.pagos', $m->id) }}"
@@ -91,11 +91,11 @@
                                             data-pagado="{{ $m->monto_pagado }}"
                                             data-saldo="{{ $saldo }}"
                                             data-periodo="{{ $m->fecha_inicio->format('d/m/Y') }} - {{ $m->fecha_fin->format('d/m/Y') }}">
-                                        <i class="voyager-dollar"></i> Pagar
+                                        <i class="voyager-dollar"></i>
                                     </button>
                                 @endif
                                 <button type="button"
-                                        class="btn btn-sm btn-danger btn-eliminar-mensualidad"
+                                        class="btn btn-xs btn-danger btn-eliminar-mensualidad"
                                         data-id="{{ $m->id }}"
                                         data-url="{{ route('dojo.mensualidades.destroy', $m->id) }}"
                                         data-periodo="{{ $m->fecha_inicio->format('d/m/Y') }} - {{ $m->fecha_fin->format('d/m/Y') }}">
