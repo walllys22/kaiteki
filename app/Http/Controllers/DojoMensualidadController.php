@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class DojoMensualidadController extends Controller
@@ -178,12 +179,17 @@ class DojoMensualidadController extends Controller
 
         $pago = DojoMensualidadPago::with(['mensualidad.dojo', 'registerUser'])->findOrFail($pagoId);
 
+        $mensualidad = $pago->mensualidad;
+        if (!$mensualidad) {
+            return $this->whatsappResponse(false, 'No se encontró la mensualidad del pago.');
+        }
+
         $userDojoId = Auth::user()->dojo_id;
-        if ($userDojoId && (int) $userDojoId !== (int) $pago->mensualidad->dojo_id) {
+        if ($userDojoId && (int) $userDojoId !== (int) $mensualidad->dojo_id) {
             abort(403);
         }
 
-        $dojo = $pago->mensualidad->dojo;
+        $dojo = $mensualidad->dojo;
         if (!$dojo) {
             return $this->whatsappResponse(false, 'No se encontró el dojo del pago.');
         }
@@ -204,18 +210,18 @@ class DojoMensualidadController extends Controller
             return $this->whatsappResponse(false, 'Configure WHATSAPP_SEND_KEY en el archivo .env.');
         }
 
-        $isPdf = true;
-        $fileName = 'Comprobante-Dojo-' . str_pad($pago->id, 6, '0', STR_PAD_LEFT) . '.pdf';
-        $path = 'dojos/mensualidades/comprobantes/' . $fileName;
-        $pdf = Pdf::loadView('dojos.mensualidades.comprobantePago', compact('pago', 'isPdf'))
-            ->setPaper('letter');
-
-        Storage::disk('public')->put($path, $pdf->output());
-
-        $documentUrl = asset('storage/' . $path);
-        $message = $this->buildWhatsappMessage($pago);
-
         try {
+            $isPdf = true;
+            $fileName = 'Comprobante-Dojo-' . str_pad($pago->id, 6, '0', STR_PAD_LEFT) . '.pdf';
+            $path = 'dojos/mensualidades/comprobantes/' . $fileName;
+            $pdf = Pdf::loadView('dojos.mensualidades.comprobantePago', compact('pago', 'isPdf'))
+                ->setPaper('letter');
+
+            Storage::disk('public')->put($path, $pdf->output());
+
+            $documentUrl = asset('storage/' . $path);
+            $message = $this->buildWhatsappMessage($pago);
+
             $status = Http::timeout(15)->get($server . '/status?id=' . $session)->json();
 
             if (!($status['success'] ?? false)) {
@@ -238,6 +244,11 @@ class DojoMensualidadController extends Controller
                 ])
                 ->json();
         } catch (\Throwable $e) {
+            Log::error('Error enviando comprobante de dojo por WhatsApp', [
+                'pago_id' => $pago->id,
+                'message' => $e->getMessage(),
+            ]);
+
             return $this->whatsappResponse(false, 'No se pudo enviar por WhatsApp: ' . $e->getMessage());
         }
 
@@ -268,12 +279,12 @@ class DojoMensualidadController extends Controller
     {
         $mensualidad = $pago->mensualidad;
         $dojo = $mensualidad->dojo;
-        $periodo = $mensualidad->fecha_inicio->format('d/m/Y') . ' al ' . $mensualidad->fecha_fin->format('d/m/Y');
+        $periodo = optional($mensualidad->fecha_inicio)->format('d/m/Y') . ' al ' . optional($mensualidad->fecha_fin)->format('d/m/Y');
 
         return 'Hola ' . $dojo->nombre . ', le enviamos su comprobante de pago de mensualidad.' . "\n"
             . 'Periodo: ' . $periodo . "\n"
             . 'Monto: Bs ' . number_format((float) $pago->monto, 2) . "\n"
-            . 'Fecha: ' . $pago->fecha->format('d/m/Y') . "\n"
+            . 'Fecha: ' . optional($pago->fecha)->format('d/m/Y') . "\n"
             . 'Gracias por su preferencia.';
     }
 

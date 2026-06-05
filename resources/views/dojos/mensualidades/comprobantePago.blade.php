@@ -3,7 +3,7 @@
     $dojo        = optional($mensualidad)->dojo;
     $isPdf       = $isPdf ?? false;
     $periodo     = optional($mensualidad)->fecha_inicio
-        ? $mensualidad->fecha_inicio->format('d/m/Y') . ' al ' . $mensualidad->fecha_fin->format('d/m/Y')
+        ? optional($mensualidad->fecha_inicio)->format('d/m/Y') . ' al ' . optional($mensualidad->fecha_fin)->format('d/m/Y')
         : 'N/A';
     $logo        = ($dojo && $dojo->logo) ? asset($dojo->logo) : null;
     $cobrador    = optional($pago->registerUser)->name ?: 'Sistema';
@@ -14,7 +14,7 @@
         'Dojo: ' . optional($dojo)->nombre,
         'Período: ' . $periodo,
         'Pago: Bs ' . number_format((float) $pago->monto, 2),
-        'Fecha: ' . $pago->fecha->format('d/m/Y'),
+        'Fecha: ' . optional($pago->fecha)->format('d/m/Y'),
     ]);
 
     $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->generate($qrText);
@@ -150,7 +150,7 @@
             </div>
             <div>
                 <div class="label">Fecha de pago</div>
-                <div class="value">{{ $pago->fecha->format('d/m/Y') }}</div>
+                <div class="value">{{ optional($pago->fecha)->format('d/m/Y') ?: 'N/A' }}</div>
             </div>
             <div>
                 <div class="label">Cobrado por</div>
