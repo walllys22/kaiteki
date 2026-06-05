@@ -95,6 +95,34 @@
         .voyager .breadcrumb a{
             color:{{ config('voyager.primary_color','#22A7F0') }};
         }
+
+        .app-container .content-container > .container-fluid {
+            min-width: 0;
+        }
+        .app-container .side-body {
+            max-width: calc(100vw - 70px);
+            overflow-x: auto;
+        }
+        .app-container.expanded .side-body {
+            max-width: calc(100vw - 255px);
+        }
+        .page-content,
+        .page-content .panel,
+        .page-content .panel-body {
+            max-width: 100%;
+        }
+        .page-content .table-responsive {
+            width: 100%;
+        }
+        @media (max-width: 768px) {
+            .app-container .content-container .side-body,
+            .app-container.expanded .side-body,
+            .app-container .side-body {
+                margin-left: 10px !important;
+                margin-right: 10px !important;
+                max-width: calc(100vw - 20px);
+            }
+        }
     </style>
 
     @if(!empty(config('voyager.additional_css')))<!-- Additional CSS -->

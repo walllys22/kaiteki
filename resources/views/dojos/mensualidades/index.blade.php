@@ -5,6 +5,24 @@
 @section('page_header')
 @stop
 
+@section('css')
+<style>
+    @media (max-width: 768px) {
+        .dojo-summary-panel {
+            align-items: flex-start !important;
+        }
+        .dojo-summary-panel > div {
+            min-width: 0;
+        }
+        .dojo-summary-panel h4,
+        .dojo-summary-panel span {
+            white-space: normal;
+            word-break: break-word;
+        }
+    }
+</style>
+@stop
+
 @section('content')
 <div class="page-content container-fluid">
 
@@ -37,7 +55,7 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="panel panel-bordered" style="border-left: 4px solid #22a7f0; margin-bottom: 16px;">
-                    <div class="panel-body" style="padding: 14px 20px; display:flex; align-items:center; gap:16px;">
+                    <div class="panel-body dojo-summary-panel" style="padding: 14px 20px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
                         @if($dojo->logo)
                             <img src="{{ filter_var($dojo->logo, FILTER_VALIDATE_URL) ? $dojo->logo : Voyager::image($dojo->logo) }}" style="width:52px; height:52px; object-fit:contain; border-radius:6px; border:1px solid #e5e9ef;">
                         @else
