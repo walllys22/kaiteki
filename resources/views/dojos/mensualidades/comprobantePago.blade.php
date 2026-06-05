@@ -20,37 +20,8 @@
         'Fecha: ' . $fechaPago,
     ]);
 
-    $qrCode = \BaconQrCode\Encoder\Encoder::encode($qrText, \BaconQrCode\Common\ErrorCorrectionLevel::M(), 'UTF-8');
-    $matrix = $qrCode->getMatrix();
-    $matrixSize = $matrix->getWidth();
-    $margin = 4;
-    $scale = max(2, (int) floor(120 / ($matrixSize + ($margin * 2))));
-    $imageSize = ($matrixSize + ($margin * 2)) * $scale;
-    $qrImage = imagecreatetruecolor($imageSize, $imageSize);
-    $white = imagecolorallocate($qrImage, 255, 255, 255);
-    $black = imagecolorallocate($qrImage, 0, 0, 0);
-    imagefill($qrImage, 0, 0, $white);
-
-    for ($y = 0; $y < $matrixSize; $y++) {
-        for ($x = 0; $x < $matrixSize; $x++) {
-            if ($matrix->get($x, $y) === 1) {
-                imagefilledrectangle(
-                    $qrImage,
-                    ($x + $margin) * $scale,
-                    ($y + $margin) * $scale,
-                    (($x + $margin + 1) * $scale) - 1,
-                    (($y + $margin + 1) * $scale) - 1,
-                    $black
-                );
-            }
-        }
-    }
-
-    ob_start();
-    imagepng($qrImage);
-    $qrPng = ob_get_clean();
-    imagedestroy($qrImage);
-    $qrDataUri = 'data:image/png;base64,' . base64_encode($qrPng);
+    $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->generate($qrText);
+    $qrDataUri = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -176,8 +147,9 @@
 <body>
     <div class="receipt">
         <table class="header-table">
+            <colgroup><col width="60%"><col width="40%"></colgroup>
             <tr>
-                <td>
+                <td width="60%">
                     <h1 class="title">{{ $dojoNombre }}</h1>
                     @if(optional($dojo)->address)
                         <p class="subtitle">{{ $dojo->address }}</p>
@@ -186,7 +158,7 @@
                         <p class="subtitle">{{ $dojo->phone }}</p>
                     @endif
                 </td>
-                <td class="receipt-no">
+                <td width="40%" class="receipt-no">
                     COMPROBANTE DE MENSUALIDAD<br>
                     Nro. {{ $numero }}
                 </td>
@@ -197,22 +169,23 @@
 
         <div class="section-title">Información del pago</div>
         <table class="info-table">
+            <colgroup><col width="50%"><col width="50%"></colgroup>
             <tr>
-                <td>
+                <td width="50%">
                     <div class="label">Dojo / Sucursal</div>
                     <div class="value">{{ $dojoNombre }}</div>
                 </td>
-                <td>
+                <td width="50%">
                     <div class="label">Período</div>
                     <div class="value">{{ $periodo }}</div>
                 </td>
             </tr>
             <tr>
-                <td>
+                <td width="50%">
                     <div class="label">Fecha de pago</div>
                     <div class="value">{{ $fechaPago }}</div>
                 </td>
-                <td>
+                <td width="50%">
                     <div class="label">Cobrado por</div>
                     <div class="value">{{ $cobrador }}</div>
                 </td>
@@ -241,14 +214,15 @@
         @endif
 
         <table class="footer-table">
+            <colgroup><col width="75%"><col width="25%"></colgroup>
             <tr>
-                <td class="footer-note">
+                <td width="75%" class="footer-note">
                     Comprobante generado por Kaiteki.<br>
                     Escanee el QR para verificar datos del pago.
                 </td>
-                <td class="qr-footer">
+                <td width="25%" class="qr-footer">
                     <div class="qr-box">
-                        <img src="{{ $qrDataUri }}" alt="QR">
+                        <img src="{{ $qrDataUri }}" width="120" height="120" alt="QR">
                     </div>
                 </td>
             </tr>

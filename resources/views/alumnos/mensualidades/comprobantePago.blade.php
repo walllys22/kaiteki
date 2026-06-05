@@ -12,7 +12,6 @@
         ? $periodoInicio->format('d/m/Y') . ' al ' . $periodoFin->format('d/m/Y')
         : 'N/A';
     $total = $mensualidad ? $mensualidad->total() : 0;
-    $logo = optional($dojo)->logo ? asset('storage/' . $dojo->logo) : asset('images/default.jpg');
     $cobrador = optional($pago->registerUser)->name ?: 'Sistema';
     $pagadoHastaEstePago = $mensualidad
         ? $mensualidad->pagos
@@ -36,35 +35,8 @@
         'Fecha pago: ' . \Carbon\Carbon::parse($pago->fecha)->format('d/m/Y'),
     ]);
 
-    $qrCode = \BaconQrCode\Encoder\Encoder::encode($qrText, \BaconQrCode\Common\ErrorCorrectionLevel::M(), 'UTF-8');
-    $matrix = $qrCode->getMatrix();
-    $matrixSize = $matrix->getWidth();
-    $margin = 4;
-    $scale = max(2, (int) floor(120 / ($matrixSize + ($margin * 2))));
-    $imageSize = ($matrixSize + ($margin * 2)) * $scale;
-    $qrImage = imagecreatetruecolor($imageSize, $imageSize);
-    $white = imagecolorallocate($qrImage, 255, 255, 255);
-    $black = imagecolorallocate($qrImage, 0, 0, 0);
-    imagefill($qrImage, 0, 0, $white);
-    for ($y = 0; $y < $matrixSize; $y++) {
-        for ($x = 0; $x < $matrixSize; $x++) {
-            if ($matrix->get($x, $y) === 1) {
-                imagefilledrectangle(
-                    $qrImage,
-                    ($x + $margin) * $scale,
-                    ($y + $margin) * $scale,
-                    (($x + $margin + 1) * $scale) - 1,
-                    (($y + $margin + 1) * $scale) - 1,
-                    $black
-                );
-            }
-        }
-    }
-    ob_start();
-    imagepng($qrImage);
-    $qrPng = ob_get_clean();
-    imagedestroy($qrImage);
-    $qrDataUri = 'data:image/png;base64,' . base64_encode($qrPng);
+    $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->generate($qrText);
+    $qrDataUri = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -73,42 +45,48 @@
     <title>Comprobante de Mensualidad #{{ $pago->id }}</title>
     <style>
         * { box-sizing: border-box; }
+        @page { margin: 18px; }
         body {
             color: #111;
             font-family: Arial, Helvetica, sans-serif;
             font-size: 12px;
             margin: 0;
-            padding: 22px;
+            padding: 14px 0;
         }
         .receipt {
             border: 1px solid #111;
             margin: 0 auto;
-            max-width: 760px;
+            min-height: 520px;
             padding: 18px;
+            width: 760px;
         }
-        .header {
-            align-items: flex-start;
-            border-bottom: 1px solid #111;
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 14px;
-            padding-bottom: 12px;
+        .header-table,
+        .info-table,
+        .footer-table {
+            border-collapse: collapse;
+            width: 100%;
         }
-        .brand {
-            align-items: center;
-            display: flex;
-            gap: 12px;
+        .header-table td,
+        .info-table td,
+        .footer-table td {
+            border: none;
+            padding: 0;
+            vertical-align: top;
         }
-        .dojo-logo {
-            border: 1px solid #111;
-            filter: grayscale(100%);
-            height: 72px;
-            object-fit: cover;
-            width: 72px;
+        .title { font-size: 20px; font-weight: 700; margin: 0 0 7px; }
+        .subtitle { font-size: 12px; line-height: 1.15; margin: 0; }
+        .receipt-no {
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.25;
+            text-align: right;
+            text-transform: uppercase;
         }
-        .title { font-size: 18px; font-weight: 700; margin: 0 0 5px; }
-        .subtitle { font-size: 12px; margin: 0; }
-        .receipt-no { font-size: 13px; font-weight: 700; text-align: right; }
+        .divider {
+            border-top: 1px solid #111;
+            height: 1px;
+            margin: 14px 0 12px;
+        }
         .qr-box {
             border: 1px solid #111;
             display: inline-block;
@@ -116,32 +94,17 @@
         }
         .qr-box img {
             display: block;
-            height: 124px;
-            width: 124px;
+            height: 120px;
+            width: 120px;
         }
-        .qr-hint {
-            font-size: 9px;
-            font-weight: 400;
-            margin-top: 4px;
-            max-width: 158px;
-            word-break: break-word;
-        }
-        .footer {
-            align-items: flex-end;
-            border-top: 1px solid #999;
-            display: flex;
-            justify-content: space-between;
-            margin-top: 16px;
-            padding-top: 10px;
-        }
-        .footer-note {
-            color: #444;
-            font-size: 11px;
-        }
-        .qr-footer {
+        .footer-note { color: #444; font-size: 11px; }
+        .thanks-note {
+            font-size: 13px;
+            font-weight: 700;
+            margin-top: 8px;
             text-align: center;
-            width: 136px;
         }
+        .qr-footer { text-align: right; width: 140px; }
         .section-title {
             border-bottom: 1px solid #999;
             font-size: 12px;
@@ -150,17 +113,32 @@
             padding-bottom: 4px;
             text-transform: uppercase;
         }
-        .grid {
-            display: grid;
-            gap: 8px 16px;
-            grid-template-columns: 1fr 1fr;
-        }
         .label { color: #444; font-size: 10px; font-weight: 700; text-transform: uppercase; }
-        .value { font-size: 13px; margin-top: 2px; }
-        table { border-collapse: collapse; margin-top: 8px; width: 100%; }
-        th, td { border: 1px solid #111; padding: 7px; }
-        th { background: #eee; text-align: left; }
+        .value { font-size: 13px; line-height: 1.25; margin-top: 2px; }
+        .info-table td {
+            padding: 0 0 9px;
+            width: 50%;
+        }
+        .detail-table {
+            border-collapse: collapse;
+            margin-top: 8px;
+            width: 100%;
+        }
+        .detail-table th,
+        .detail-table td {
+            border: 1px solid #111;
+            padding: 7px;
+        }
+        .detail-table th { background: #eee; text-align: left; }
+        .detail-table td { font-weight: 700; }
         .right { text-align: right; }
+        .observation-text { margin: 12px 0 18px; }
+        .footer-table {
+            border-top: 1px solid #999;
+            margin-top: 18px;
+            padding-top: 10px;
+        }
+        .footer-table td { padding-top: 10px; }
         .actions { margin: 16px auto 0; max-width: 760px; text-align: right; }
         .btn {
             background: #fff;
@@ -173,57 +151,73 @@
         }
         @media print {
             body { padding: 0; }
-            .receipt { border: 0; max-width: none; }
             .actions { display: none; }
         }
     </style>
 </head>
 <body>
     <div class="receipt">
-        <div class="header">
-            <div class="brand">
-                <img src="{{ $logo }}" class="dojo-logo" alt="Logo del dojo" onerror="this.style.display='none';">
-                <div>
+        <table class="header-table">
+            <colgroup><col width="60%"><col width="40%"></colgroup>
+            <tr>
+                <td width="60%">
                     <h1 class="title">{{ optional($dojo)->nombre ?: 'Dojo' }}</h1>
-                    <p class="subtitle">{{ optional($dojo)->address ?: '' }}</p>
-                    <p class="subtitle">
-                        {{ optional($dojo)->phone ?: '' }}
-                        @if(optional($dojo)->email) · {{ $dojo->email }} @endif
-                    </p>
-                </div>
-            </div>
-            <div class="receipt-no">
-                COMPROBANTE DE MENSUALIDAD<br>
-                Nro. {{ str_pad($pago->id, 6, '0', STR_PAD_LEFT) }}
-            </div>
-        </div>
+                    @if(optional($dojo)->address)
+                        <p class="subtitle">{{ $dojo->address }}</p>
+                    @endif
+                    @if(optional($dojo)->phone)
+                        <p class="subtitle">
+                            {{ $dojo->phone }}
+                            @if(optional($dojo)->email) · {{ $dojo->email }} @endif
+                        </p>
+                    @endif
+                </td>
+                <td width="40%" class="receipt-no">
+                    COMPROBANTE DE MENSUALIDAD<br>
+                    Nro. {{ str_pad($pago->id, 6, '0', STR_PAD_LEFT) }}
+                </td>
+            </tr>
+        </table>
 
-        <div class="section-title">Alumno</div>
-        <div class="grid">
-            <div>
-                <div class="label">Nombre</div>
-                <div class="value">{{ optional($person)->first_name ?: 'N/A' }}</div>
-            </div>
-            <div>
-                <div class="label">Documento</div>
-                <div class="value">{{ optional($person)->documentType ?: 'CI' }} {{ optional($person)->ci ?: 'N/A' }}</div>
-            </div>
-            <div>
-                <div class="label">Dojo</div>
-                <div class="value">{{ optional($dojo)->nombre ?: 'Sin dojo' }}</div>
-            </div>
-            <div>
-                <div class="label">Fecha de pago</div>
-                <div class="value">{{ \Carbon\Carbon::parse($pago->fecha)->format('d/m/Y') }}</div>
-            </div>
-            <div>
-                <div class="label">Cobrado por</div>
-                <div class="value">{{ $cobrador }}</div>
-            </div>
-        </div>
+        <div class="divider"></div>
+
+        <div class="section-title">Información del pago</div>
+        <table class="info-table">
+            <colgroup><col width="50%"><col width="50%"></colgroup>
+            <tr>
+                <td width="50%">
+                    <div class="label">Alumno</div>
+                    <div class="value">{{ optional($person)->first_name ?: 'N/A' }}</div>
+                </td>
+                <td width="50%">
+                    <div class="label">Documento</div>
+                    <div class="value">{{ optional($person)->documentType ?: 'CI' }} {{ optional($person)->ci ?: 'N/A' }}</div>
+                </td>
+            </tr>
+            <tr>
+                <td width="50%">
+                    <div class="label">Dojo / Sucursal</div>
+                    <div class="value">{{ optional($dojo)->nombre ?: 'Sin dojo' }}</div>
+                </td>
+                <td width="50%">
+                    <div class="label">Período</div>
+                    <div class="value">{{ $periodo }}</div>
+                </td>
+            </tr>
+            <tr>
+                <td width="50%">
+                    <div class="label">Fecha de pago</div>
+                    <div class="value">{{ \Carbon\Carbon::parse($pago->fecha)->format('d/m/Y') }}</div>
+                </td>
+                <td width="50%">
+                    <div class="label">Cobrado por</div>
+                    <div class="value">{{ $cobrador }}</div>
+                </td>
+            </tr>
+        </table>
 
         <div class="section-title">{{ $esPagoCompleto ? 'Detalle de mensualidad' : 'Pago parcial' }}</div>
-        <table>
+        <table class="detail-table">
             <thead>
                 <tr>
                     <th>Concepto</th>
@@ -250,7 +244,7 @@
                 </tr>
                 @else
                 <tr>
-                    <th>Pago recibido</th>
+                    <th>Pago recibido — {{ $periodo }}</th>
                     <th class="right">Bs {{ number_format((float) $pago->monto, 2, '.', ',') }}</th>
                 </tr>
                 @endif
@@ -259,20 +253,26 @@
 
         @if($pago->observacion)
             <div class="section-title">Observación</div>
-            <p>{{ $pago->observacion }}</p>
+            <p class="observation-text">{{ $pago->observacion }}</p>
         @endif
 
-        <div class="footer">
-            <div class="footer-note">
-                Comprobante generado por Kaiteki.<br>
-                Escanee el QR para ver alumno, mes y monto.
-            </div>
-            <div class="qr-footer">
-                <div class="qr-box">
-                    <img src="{{ $qrDataUri }}" alt="QR">
-                </div>
-                <div class="qr-hint">Datos del pago</div>
-            </div>
+        <table class="footer-table">
+            <colgroup><col width="75%"><col width="25%"></colgroup>
+            <tr>
+                <td width="75%" class="footer-note">
+                    Comprobante generado por Kaiteki.<br>
+                    Escanee el QR para ver alumno, mes y monto.
+                </td>
+                <td width="25%" class="qr-footer">
+                    <div class="qr-box">
+                        <img src="{{ $qrDataUri }}" width="120" height="120" alt="QR">
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="thanks-note">
+            Gracias por su preferencia.
         </div>
     </div>
 
