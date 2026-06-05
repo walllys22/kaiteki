@@ -180,6 +180,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system', 'dojo.me
     Route::put('dojos/mensualidades/{id}/fecha-fin', [DojoMensualidadController::class, 'updateFechaFin'])->name('dojo.mensualidades.fecha-fin');
     Route::get('dojos/mensualidades/{id}/pagos', [DojoMensualidadController::class, 'pagosList'])->name('dojo.mensualidades.pagos');
     Route::get('dojos/mensualidades/pagos/{id}/comprobante', [DojoMensualidadController::class, 'comprobante'])->name('dojo.mensualidades.pago.comprobante');
+    Route::post('dojos/mensualidades/pagos/{id}/whatsapp', [DojoMensualidadController::class, 'enviarComprobanteWhatsapp'])->name('dojo.mensualidades.pago.whatsapp');
     Route::delete('dojos/mensualidades/{id}/delete', [DojoMensualidadController::class, 'destroy'])->name('dojo.mensualidades.destroy');
 
     // Consulta Inter-Dojo (solo lectura)

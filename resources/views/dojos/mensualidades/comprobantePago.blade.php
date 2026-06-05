@@ -1,6 +1,7 @@
 @php
     $mensualidad = $pago->mensualidad;
     $dojo        = optional($mensualidad)->dojo;
+    $isPdf       = $isPdf ?? false;
     $periodo     = optional($mensualidad)->fecha_inicio
         ? $mensualidad->fecha_inicio->format('d/m/Y') . ' al ' . $mensualidad->fecha_fin->format('d/m/Y')
         : 'N/A';
@@ -76,6 +77,12 @@
             padding-top: 10px;
         }
         .footer-note { color: #444; font-size: 11px; }
+        .thanks-note {
+            font-size: 13px;
+            font-weight: 700;
+            margin-top: 14px;
+            text-align: center;
+        }
         .qr-footer { text-align: center; width: 136px; }
         .section-title {
             border-bottom: 1px solid #999;
@@ -183,17 +190,23 @@
                 </div>
             </div>
         </div>
+
+        <div class="thanks-note">
+            Gracias por su preferencia.
+        </div>
     </div>
 
-    <div class="actions">
-        <button class="btn" onclick="window.print()">Imprimir</button>
-        <button class="btn" onclick="window.close()">Cerrar</button>
-    </div>
+    @unless($isPdf)
+        <div class="actions">
+            <button class="btn" onclick="window.print()">Imprimir</button>
+            <button class="btn" onclick="window.close()">Cerrar</button>
+        </div>
 
-    <script>
-        window.addEventListener('load', function() {
-            setTimeout(function() { window.print(); }, 300);
-        });
-    </script>
+        <script>
+            window.addEventListener('load', function() {
+                setTimeout(function() { window.print(); }, 300);
+            });
+        </script>
+    @endunless
 </body>
 </html>

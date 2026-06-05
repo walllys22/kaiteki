@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Dojo;
 use App\Models\DojoMensualidad;
 use App\Models\DojoMensualidadPago;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 class DojoMensualidadController extends Controller
 {
@@ -167,6 +170,123 @@ class DojoMensualidadController extends Controller
         }
 
         return view('dojos.mensualidades.comprobantePago', compact('pago'));
+    }
+
+    public function enviarComprobanteWhatsapp($pagoId)
+    {
+        $this->custom_authorize('browse_dojo_mensualidades');
+
+        $pago = DojoMensualidadPago::with(['mensualidad.dojo', 'registerUser'])->findOrFail($pagoId);
+
+        $userDojoId = Auth::user()->dojo_id;
+        if ($userDojoId && (int) $userDojoId !== (int) $pago->mensualidad->dojo_id) {
+            abort(403);
+        }
+
+        $dojo = $pago->mensualidad->dojo;
+        if (!$dojo) {
+            return $this->whatsappResponse(false, 'No se encontró el dojo del pago.');
+        }
+
+        $phone = $this->normalizeWhatsappPhone($dojo->phone);
+        if (!$phone) {
+            return $this->whatsappResponse(false, 'El dojo no tiene un teléfono válido para WhatsApp.');
+        }
+
+        $server = rtrim((string) setting('whatsapp.servidores'), '/');
+        $session = (string) setting('whatsapp.session');
+
+        if (!$server || !$session) {
+            return $this->whatsappResponse(false, 'Configure el servidor y la sesión de WhatsApp en Ajustes.');
+        }
+
+        if (!env('WHATSAPP_SEND_KEY')) {
+            return $this->whatsappResponse(false, 'Configure WHATSAPP_SEND_KEY en el archivo .env.');
+        }
+
+        $isPdf = true;
+        $fileName = 'Comprobante-Dojo-' . str_pad($pago->id, 6, '0', STR_PAD_LEFT) . '.pdf';
+        $path = 'dojos/mensualidades/comprobantes/' . $fileName;
+        $pdf = Pdf::loadView('dojos.mensualidades.comprobantePago', compact('pago', 'isPdf'))
+            ->setPaper('letter');
+
+        Storage::disk('public')->put($path, $pdf->output());
+
+        $documentUrl = asset('storage/' . $path);
+        $message = $this->buildWhatsappMessage($pago);
+
+        try {
+            $status = Http::timeout(15)->get($server . '/status?id=' . $session)->json();
+
+            if (!($status['success'] ?? false)) {
+                return $this->whatsappResponse(false, 'El servidor de WhatsApp no respondió correctamente.');
+            }
+
+            if (!($status['status'] ?? false)) {
+                return $this->whatsappResponse(false, 'WhatsApp está desconectado. Conecte la sesión antes de enviar.');
+            }
+
+            $sendUrl = $server . '/send?id=' . $session . '&token=' . null;
+            $response = Http::withHeaders(['X-Api-Key' => env('WHATSAPP_SEND_KEY')])
+                ->timeout(25)
+                ->post($sendUrl, [
+                    'phone'        => '+' . $phone,
+                    'text'         => $message,
+                    'image_url'    => null,
+                    'document_url' => $documentUrl,
+                    'file_name'    => $fileName,
+                ])
+                ->json();
+        } catch (\Throwable $e) {
+            return $this->whatsappResponse(false, 'No se pudo enviar por WhatsApp: ' . $e->getMessage());
+        }
+
+        if (!($response['success'] ?? false)) {
+            return $this->whatsappResponse(false, 'WhatsApp respondió que no pudo enviar el comprobante.');
+        }
+
+        return $this->whatsappResponse(true, 'Comprobante enviado por WhatsApp correctamente.');
+    }
+
+    private function normalizeWhatsappPhone(?string $phone): ?string
+    {
+        $digits = preg_replace('/\D+/', '', (string) $phone);
+        $digits = ltrim($digits, '0');
+
+        if ($digits === '') {
+            return null;
+        }
+
+        if (str_starts_with($digits, '591')) {
+            return strlen($digits) >= 10 ? $digits : null;
+        }
+
+        return strlen($digits) >= 7 ? '591' . $digits : null;
+    }
+
+    private function buildWhatsappMessage(DojoMensualidadPago $pago): string
+    {
+        $mensualidad = $pago->mensualidad;
+        $dojo = $mensualidad->dojo;
+        $periodo = $mensualidad->fecha_inicio->format('d/m/Y') . ' al ' . $mensualidad->fecha_fin->format('d/m/Y');
+
+        return 'Hola ' . $dojo->nombre . ', le enviamos su comprobante de pago de mensualidad.' . "\n"
+            . 'Periodo: ' . $periodo . "\n"
+            . 'Monto: Bs ' . number_format((float) $pago->monto, 2) . "\n"
+            . 'Fecha: ' . $pago->fecha->format('d/m/Y') . "\n"
+            . 'Gracias por su preferencia.';
+    }
+
+    private function whatsappResponse(bool $success, string $message)
+    {
+        if (request()->expectsJson()) {
+            return response()->json(['success' => $success, 'message' => $message], $success ? 200 : 422);
+        }
+
+        return back()->with([
+            'message' => $message,
+            'alert-type' => $success ? 'success' : 'error',
+        ]);
     }
 
     public function updateFechaFin(Request $request, $id)

@@ -62,6 +62,16 @@
                                title="Imprimir comprobante">
                                 <i class="fa fa-print"></i> Imprimir
                             </a>
+                            <form method="POST"
+                                  action="{{ route('dojo.mensualidades.pago.whatsapp', $pago->id) }}"
+                                  style="display:inline;">
+                                @csrf
+                                <button type="submit"
+                                        class="btn btn-xs btn-success"
+                                        title="Enviar comprobante por WhatsApp">
+                                    <i class="voyager-phone"></i> WhatsApp
+                                </button>
+                            </form>
                         </td>
                     </tr>
                 @endforeach

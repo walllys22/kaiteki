@@ -149,9 +149,21 @@
                                                 <td style="font-size:11px; color:#888;">{{ $pago->observacion ?: '—' }}</td>
                                                 <td style="text-align:center;">
                                                     <a href="{{ route('dojo.mensualidades.pago.comprobante', $pago->id) }}"
-                                                       target="_blank" class="btn btn-xs btn-default">
+                                                       target="_blank"
+                                                       class="btn btn-xs btn-default"
+                                                       title="Imprimir comprobante">
                                                         <i class="fa fa-print"></i>
                                                     </a>
+                                                    <form method="POST"
+                                                          action="{{ route('dojo.mensualidades.pago.whatsapp', $pago->id) }}"
+                                                          style="display:inline;">
+                                                        @csrf
+                                                        <button type="submit"
+                                                                class="btn btn-xs btn-success"
+                                                                title="Enviar comprobante por WhatsApp">
+                                                            <i class="voyager-phone"></i>
+                                                        </button>
+                                                    </form>
                                                 </td>
                                             </tr>
                                             @endforeach
