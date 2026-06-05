@@ -64,12 +64,24 @@
             margin: 0;
             padding: 14px 0;
         }
+        .page-wrap {
+            border-collapse: collapse;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .page-wrap > tbody > tr > td {
+            border: none;
+            padding: 0;
+            text-align: center;
+        }
         .receipt {
             border: 1px solid #111;
+            display: inline-block;
             margin: 0 auto;
             min-height: 520px;
             padding: 18px;
-            width: 760px;
+            text-align: left;
+            width: 700px;
         }
         .header-table,
         .info-table,
@@ -155,7 +167,7 @@
         .footer-table td {
             padding-top: 10px;
         }
-        .actions { margin: 16px auto 0; max-width: 760px; text-align: right; }
+        .actions { margin: 16px auto 0; max-width: 700px; text-align: right; }
         .btn {
             background: #fff;
             border: 1px solid #111;
@@ -172,6 +184,9 @@
     </style>
 </head>
 <body>
+    <table class="page-wrap">
+        <tr>
+            <td>
     <div class="receipt">
         <table class="header-table">
             <colgroup><col width="60%"><col width="40%"></colgroup>
@@ -259,6 +274,9 @@
             Gracias por su preferencia.
         </div>
     </div>
+            </td>
+        </tr>
+    </table>
 
     @unless($isPdf)
         <div class="actions">
