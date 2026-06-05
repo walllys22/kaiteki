@@ -70,7 +70,7 @@
                                 <button type="submit"
                                         class="btn btn-xs btn-success"
                                         title="Enviar comprobante por WhatsApp">
-                                    <i class="voyager-chat"></i> WhatsApp
+                                    <i class="voyager-paper-plane"></i> WhatsApp
                                 </button>
                             </form>
                         </td>
