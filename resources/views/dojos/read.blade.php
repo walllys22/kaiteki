@@ -143,7 +143,8 @@
         white-space: nowrap !important;
     }
     #panel-mensualidades .bread-actions .btn,
-    #panel-mensualidades .form-whatsapp-comprobante .btn {
+    #panel-mensualidades .form-whatsapp-comprobante .btn,
+    #panel-mensualidades .form-whatsapp-recordatorio .btn {
         height: 30px;
         line-height: 18px;
         margin: 1px;
@@ -718,6 +719,43 @@
                     var message = xhr.responseJSON && xhr.responseJSON.message
                         ? xhr.responseJSON.message
                         : 'No se pudo enviar el comprobante por WhatsApp.';
+
+                    toastr.error(message);
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).html(originalHtml);
+                }
+            });
+        });
+
+        $(document).off('submit', '.form-whatsapp-recordatorio').on('submit', '.form-whatsapp-recordatorio', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (!confirm('¿Enviar recordatorio de saldo pendiente por WhatsApp?')) {
+                return;
+            }
+
+            var $form = $(this);
+            var $btn = $form.find('button[type="submit"]');
+            var originalHtml = $btn.html();
+
+            $btn.prop('disabled', true).html('<i class="voyager-refresh"></i>');
+
+            $.ajax({
+                url: $form.attr('action'),
+                type: 'POST',
+                data: $form.serialize(),
+                headers: {
+                    'Accept': 'application/json'
+                },
+                success: function(res) {
+                    toastr.success(res.message || 'Recordatorio enviado por WhatsApp correctamente.');
+                },
+                error: function(xhr) {
+                    var message = xhr.responseJSON && xhr.responseJSON.message
+                        ? xhr.responseJSON.message
+                        : 'No se pudo enviar el recordatorio por WhatsApp.';
 
                     toastr.error(message);
                 },

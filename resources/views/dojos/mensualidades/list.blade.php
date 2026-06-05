@@ -93,6 +93,17 @@
                                             data-periodo="{{ $m->fecha_inicio->format('d/m/Y') }} - {{ $m->fecha_fin->format('d/m/Y') }}">
                                         <i class="voyager-dollar"></i>
                                     </button>
+                                    <form method="POST"
+                                          action="{{ route('dojo.mensualidades.recordatorio-saldo', $m->id) }}"
+                                          class="form-whatsapp-recordatorio"
+                                          style="display:inline;">
+                                        @csrf
+                                        <button type="submit"
+                                                class="btn btn-xs btn-warning"
+                                                title="Enviar recordatorio de saldo por WhatsApp">
+                                            <i class="voyager-paper-plane"></i>
+                                        </button>
+                                    </form>
                                 @endif
                                 <button type="button"
                                         class="btn btn-xs btn-danger btn-eliminar-mensualidad"

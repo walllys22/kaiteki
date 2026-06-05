@@ -258,6 +258,81 @@ class DojoMensualidadController extends Controller
         return $this->whatsappResponse(true, 'Comprobante enviado por WhatsApp correctamente.');
     }
 
+    public function enviarRecordatorioSaldoWhatsapp($id)
+    {
+        $this->custom_authorize('browse_dojo_mensualidades');
+
+        $mensualidad = DojoMensualidad::with(['dojo', 'pagos'])->findOrFail($id);
+
+        $userDojoId = Auth::user()->dojo_id;
+        if ($userDojoId && (int) $userDojoId !== (int) $mensualidad->dojo_id) {
+            abort(403);
+        }
+
+        $dojo = $mensualidad->dojo;
+        if (!$dojo) {
+            return $this->whatsappResponse(false, 'No se encontró el dojo de la mensualidad.');
+        }
+
+        $saldo = $mensualidad->saldo();
+        if ($saldo <= 0) {
+            return $this->whatsappResponse(false, 'La mensualidad no tiene saldo pendiente.');
+        }
+
+        $phone = $this->normalizeWhatsappPhone($dojo->phone);
+        if (!$phone) {
+            return $this->whatsappResponse(false, 'El dojo no tiene un teléfono válido para WhatsApp.');
+        }
+
+        $server = rtrim((string) setting('whatsapp.servidores'), '/');
+        $session = (string) setting('whatsapp.session');
+
+        if (!$server || !$session) {
+            return $this->whatsappResponse(false, 'Configure el servidor y la sesión de WhatsApp en Ajustes.');
+        }
+
+        if (!env('WHATSAPP_SEND_KEY')) {
+            return $this->whatsappResponse(false, 'Configure WHATSAPP_SEND_KEY en el archivo .env.');
+        }
+
+        try {
+            $status = Http::timeout(15)->get($server . '/status?id=' . $session)->json();
+
+            if (!($status['success'] ?? false)) {
+                return $this->whatsappResponse(false, 'El servidor de WhatsApp no respondió correctamente.');
+            }
+
+            if (!($status['status'] ?? false)) {
+                return $this->whatsappResponse(false, 'WhatsApp está desconectado. Conecte la sesión antes de enviar.');
+            }
+
+            $sendUrl = $server . '/send?id=' . $session . '&token=' . null;
+            $response = Http::withHeaders(['X-Api-Key' => env('WHATSAPP_SEND_KEY')])
+                ->timeout(25)
+                ->post($sendUrl, [
+                    'phone'        => '+' . $phone,
+                    'text'         => $this->buildSaldoPendienteMessage($mensualidad),
+                    'image_url'    => null,
+                    'document_url' => null,
+                    'file_name'    => null,
+                ])
+                ->json();
+        } catch (\Throwable $e) {
+            Log::error('Error enviando recordatorio de saldo de dojo por WhatsApp', [
+                'mensualidad_id' => $mensualidad->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return $this->whatsappResponse(false, 'No se pudo enviar el recordatorio por WhatsApp: ' . $e->getMessage());
+        }
+
+        if (!($response['success'] ?? false)) {
+            return $this->whatsappResponse(false, 'WhatsApp respondió que no pudo enviar el recordatorio.');
+        }
+
+        return $this->whatsappResponse(true, 'Recordatorio de saldo enviado por WhatsApp correctamente.');
+    }
+
     private function normalizeWhatsappPhone(?string $phone): ?string
     {
         $digits = preg_replace('/\D+/', '', (string) $phone);
@@ -283,6 +358,42 @@ class DojoMensualidadController extends Controller
         return 'Hola ' . $dojo->nombre . ', le enviamos su comprobante de pago de mensualidad.' . "\n"
             . 'Periodo: ' . $periodo . "\n"
             . 'Gracias por su preferencia.';
+    }
+
+    private function buildSaldoPendienteMessage(DojoMensualidad $mensualidad): string
+    {
+        $dojo = $mensualidad->dojo;
+        $periodo = optional($mensualidad->fecha_inicio)->format('d/m/Y') . ' al ' . optional($mensualidad->fecha_fin)->format('d/m/Y');
+        $montoTotal = number_format((float) $mensualidad->monto, 2);
+        $totalPagado = number_format((float) $mensualidad->monto_pagado, 2);
+        $saldoPendiente = number_format($mensualidad->saldo(), 2);
+        $pagos = $mensualidad->pagos->map(function ($pago) {
+            return '- ' . optional($pago->fecha)->format('d/m/Y') . ': Bs ' . number_format((float) $pago->monto, 2);
+        })->implode("\n");
+
+        if ($pagos === '') {
+            $pagos = '- Sin pagos registrados en el historial.';
+        }
+
+        return 'AVISO DE SALDO PENDIENTE' . "\n"
+            . 'Kaiteki - Mensualidades de Sucursal' . "\n"
+            . '--------------------------------' . "\n"
+            . 'Hola ' . $dojo->nombre . ',' . "\n"
+            . 'Le recordamos cordialmente que su mensualidad registra un saldo pendiente.' . "\n\n"
+            . 'PERIODO' . "\n"
+            . $periodo . "\n\n"
+            . 'RESUMEN DEL PAGO' . "\n"
+            . 'Monto total: Bs ' . $montoTotal . "\n"
+            . 'Total pagado: Bs ' . $totalPagado . "\n"
+            . "\n"
+            . '*** SALDO PENDIENTE: Bs ' . $saldoPendiente . ' ***' . "\n\n"
+            . 'PAGOS REGISTRADOS' . "\n"
+            . $pagos . "\n\n"
+            . 'Monto por regularizar: Bs ' . $saldoPendiente . "\n"
+            . 'Por favor regularice el saldo pendiente para mantener su servicio al dia.' . "\n"
+            . 'Gracias por su preferencia.' . "\n\n"
+            . 'Solucion Digital' . "\n"
+            . 'https://soluciondigital.dev';
     }
 
     private function whatsappResponse(bool $success, string $message)
