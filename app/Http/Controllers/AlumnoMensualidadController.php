@@ -6,14 +6,10 @@ use App\Models\Alumno;
 use App\Models\AlumnoMensualidad;
 use App\Models\AlumnoMensualidadPago;
 use App\Models\AlumnoMensualidadPlan;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class AlumnoMensualidadController extends Controller
@@ -586,118 +582,6 @@ class AlumnoMensualidadController extends Controller
             return redirect()->back()
                 ->with(['message' => 'Error: ' . $th->getMessage(), 'alert-type' => 'error']);
         }
-    }
-
-    public function enviarComprobanteWhatsapp(int $id)
-    {
-        $this->custom_authorize('read_alumnos');
-
-        $userDojoId = Auth::user()->dojo_id;
-
-        $pago = AlumnoMensualidadPago::with([
-            'mensualidad.plan',
-            'mensualidad.pagos',
-            'alumno.person',
-            'alumno.dojo',
-            'registerUser',
-        ])
-            ->whereNull('deleted_at')
-            ->when($userDojoId, fn($q) => $q->where('dojo_id', $userDojoId))
-            ->findOrFail($id);
-
-        $person = optional($pago->alumno)->person;
-        $phone = $this->normalizeWhatsappPhone(optional($person)->phone);
-
-        if (!$phone) {
-            return response()->json(['success' => false, 'message' => 'El alumno no tiene un teléfono válido para WhatsApp.'], 422);
-        }
-
-        $server = rtrim((string) setting('whatsapp.servidores'), '/');
-        $session = (string) setting('whatsapp.session');
-
-        if (!$server || !$session) {
-            return response()->json(['success' => false, 'message' => 'Configure el servidor y la sesión de WhatsApp en Ajustes.'], 422);
-        }
-
-        if (!env('WHATSAPP_SEND_KEY')) {
-            return response()->json(['success' => false, 'message' => 'Configure WHATSAPP_SEND_KEY en el archivo .env.'], 422);
-        }
-
-        try {
-            $isPdf = true;
-            $fileName = 'Comprobante-Mensualidad-' . str_pad($pago->id, 6, '0', STR_PAD_LEFT) . '.pdf';
-            $path = 'alumnos/mensualidades/comprobantes/' . $fileName;
-            $pdf = Pdf::loadView('alumnos.mensualidades.comprobantePago', compact('pago', 'isPdf'))
-                ->setPaper('letter');
-            Storage::disk('public')->put($path, $pdf->output());
-
-            $documentUrl = asset('storage/' . $path);
-
-            $alumno = $pago->alumno;
-            $periodoInicio = optional($pago->mensualidad)->periodo
-                ? Carbon::parse($pago->mensualidad->periodo)->format('d/m/Y')
-                : null;
-            $periodoFin = $pago->mensualidad && $pago->mensualidad->fecha_fin
-                ? Carbon::parse($pago->mensualidad->fecha_fin)->format('d/m/Y')
-                : null;
-            $periodo = $periodoInicio && $periodoFin ? $periodoInicio . ' al ' . $periodoFin : 'N/A';
-
-            $message = 'Hola ' . optional(optional($alumno)->person)->first_name . ', le enviamos su comprobante de pago de mensualidad.' . "\n"
-                . 'Período: ' . $periodo . "\n"
-                . 'Monto pagado: Bs ' . number_format((float) $pago->monto, 2, '.', ',') . "\n"
-                . 'Gracias por su preferencia.';
-
-            $status = Http::timeout(15)->get($server . '/status?id=' . $session)->json();
-
-            if (!($status['success'] ?? false)) {
-                return response()->json(['success' => false, 'message' => 'El servidor de WhatsApp no respondió correctamente.'], 422);
-            }
-
-            if (!($status['status'] ?? false)) {
-                return response()->json(['success' => false, 'message' => 'WhatsApp está desconectado. Conecte la sesión antes de enviar.'], 422);
-            }
-
-            $sendUrl = $server . '/send?id=' . $session . '&token=' . null;
-            $response = Http::withHeaders(['X-Api-Key' => env('WHATSAPP_SEND_KEY')])
-                ->timeout(25)
-                ->post($sendUrl, [
-                    'phone'        => '+' . $phone,
-                    'text'         => $message,
-                    'image_url'    => null,
-                    'document_url' => $documentUrl,
-                    'file_name'    => $fileName,
-                ])
-                ->json();
-        } catch (\Throwable $e) {
-            Log::error('Error enviando comprobante de mensualidad alumno por WhatsApp', [
-                'pago_id' => $pago->id,
-                'message' => $e->getMessage(),
-            ]);
-
-            return response()->json(['success' => false, 'message' => 'No se pudo enviar por WhatsApp: ' . $e->getMessage()], 422);
-        }
-
-        if (!($response['success'] ?? false)) {
-            return response()->json(['success' => false, 'message' => 'WhatsApp respondió que no pudo enviar el comprobante.'], 422);
-        }
-
-        return response()->json(['success' => true, 'message' => 'Comprobante enviado por WhatsApp correctamente.']);
-    }
-
-    private function normalizeWhatsappPhone(?string $phone): ?string
-    {
-        $digits = preg_replace('/\D+/', '', (string) $phone);
-        $digits = ltrim($digits, '0');
-
-        if ($digits === '') {
-            return null;
-        }
-
-        if (str_starts_with($digits, '591')) {
-            return strlen($digits) >= 10 ? $digits : null;
-        }
-
-        return strlen($digits) >= 7 ? '591' . $digits : null;
     }
 
     public function comprobantePagoPublic(int $id)

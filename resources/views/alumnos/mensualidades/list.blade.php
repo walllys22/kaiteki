@@ -436,13 +436,6 @@
                                                     · Bs {{ number_format((float) $pago->monto, 2, '.', ',') }}
                                                     <span class="pull-right">#{{ str_pad($pago->id, 6, '0', STR_PAD_LEFT) }}</span>
                                                 </a>
-                                                <button type="button"
-                                                        class="btn btn-xs btn-whatsapp-comprobante"
-                                                        data-url="{{ route('alumno.mensualidades.pago.whatsapp', $pago->id) }}"
-                                                        title="Enviar por WhatsApp"
-                                                        style="background:#25d366; border:none; border-radius:4px; color:#fff; flex-shrink:0; padding:3px 7px;">
-                                                    <i class="fa-brands fa-whatsapp"></i>
-                                                </button>
                                             </div>
                                         @endforeach
                                     </div>
@@ -987,26 +980,3 @@
 </form>
 
 @endif
-
-<script>
-$(document).off('click.whatsapp-comprobante').on('click.whatsapp-comprobante', '.btn-whatsapp-comprobante', function() {
-    var $btn = $(this);
-    var url = $btn.data('url');
-    $btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
-    $.ajax({
-        url: url,
-        method: 'POST',
-        data: { _token: '{{ csrf_token() }}' },
-        success: function(res) {
-            toastr.success(res.message || 'Comprobante enviado.');
-        },
-        error: function(xhr) {
-            var msg = xhr.responseJSON ? xhr.responseJSON.message : 'Error al enviar.';
-            toastr.error(msg);
-        },
-        complete: function() {
-            $btn.prop('disabled', false).html('<i class="fa-brands fa-whatsapp"></i>');
-        }
-    });
-});
-</script>
