@@ -35,8 +35,29 @@
         'Fecha pago: ' . \Carbon\Carbon::parse($pago->fecha)->format('d/m/Y'),
     ]);
 
-    $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->generate($qrText);
-    $qrDataUri = 'data:image/svg+xml;base64,' . base64_encode($qrSvg);
+    $qrCode = \BaconQrCode\Encoder\Encoder::encode($qrText, \BaconQrCode\Common\ErrorCorrectionLevel::M(), 'UTF-8');
+    $matrix = $qrCode->getMatrix();
+    $matrixSize = $matrix->getWidth();
+    $scale = max(3, (int) floor(120 / $matrixSize));
+    $imgSize = $matrixSize * $scale + 16;
+    $qrImg = imagecreatetruecolor($imgSize, $imgSize);
+    $white = imagecolorallocate($qrImg, 255, 255, 255);
+    $black = imagecolorallocate($qrImg, 0, 0, 0);
+    imagefill($qrImg, 0, 0, $white);
+    $pad = 8;
+    for ($y = 0; $y < $matrixSize; $y++) {
+        for ($x = 0; $x < $matrixSize; $x++) {
+            if ($matrix->get($x, $y) === 1) {
+                imagefilledrectangle($qrImg, $pad + $x * $scale, $pad + $y * $scale, $pad + ($x + 1) * $scale - 1, $pad + ($y + 1) * $scale - 1, $black);
+            }
+        }
+    }
+    $qrTmpPath = storage_path('app/qr_alumno_' . $pago->id . '_' . time() . '.png');
+    imagepng($qrImg, $qrTmpPath);
+    imagedestroy($qrImg);
+    $qrSrc = $isPdf ? ('file://' . $qrTmpPath) : '';
+    $qrSvgRaw = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->generate($qrText);
+    $qrSvgInline = trim(preg_replace('/<\?xml[^?]*\?>/', '', $qrSvgRaw));
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -92,6 +113,7 @@
             display: inline-block;
             padding: 4px;
         }
+        .qr-box svg { display: block; height: 120px; width: 120px; }
         .qr-box img {
             display: block;
             height: 120px;
@@ -265,7 +287,11 @@
                 </td>
                 <td width="25%" class="qr-footer">
                     <div class="qr-box">
-                        <img src="{{ $qrDataUri }}" width="120" height="120" alt="QR">
+                        @if($isPdf)
+                            <img src="{{ $qrSrc }}" width="120" height="120" alt="QR">
+                        @else
+                            {!! $qrSvgInline !!}
+                        @endif
                     </div>
                 </td>
             </tr>

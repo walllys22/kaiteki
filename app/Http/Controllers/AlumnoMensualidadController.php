@@ -629,8 +629,13 @@ class AlumnoMensualidadController extends Controller
             $path = 'alumnos/mensualidades/comprobantes/' . $fileName;
             $pdf = Pdf::loadView('alumnos.mensualidades.comprobantePago', compact('pago', 'isPdf'))
                 ->setPaper('letter');
+            $pdfOutput = $pdf->output();
 
-            Storage::disk('public')->put($path, $pdf->output());
+            foreach (glob(storage_path('app/qr_alumno_' . $pago->id . '_*.png')) as $tmpQr) {
+                @unlink($tmpQr);
+            }
+
+            Storage::disk('public')->put($path, $pdfOutput);
 
             $documentUrl = asset('storage/' . $path);
 
