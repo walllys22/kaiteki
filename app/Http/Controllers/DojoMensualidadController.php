@@ -283,8 +283,6 @@ class DojoMensualidadController extends Controller
 
         return 'Hola ' . $dojo->nombre . ', le enviamos su comprobante de pago de mensualidad.' . "\n"
             . 'Periodo: ' . $periodo . "\n"
-            . 'Monto: Bs ' . number_format((float) $pago->monto, 2) . "\n"
-            . 'Fecha: ' . optional($pago->fecha)->format('d/m/Y') . "\n"
             . 'Gracias por su preferencia.';
     }
 
