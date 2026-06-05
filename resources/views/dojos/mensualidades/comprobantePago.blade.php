@@ -275,12 +275,6 @@
             <button class="btn" onclick="window.print()">Imprimir</button>
             <button class="btn" onclick="window.close()">Cerrar</button>
         </div>
-
-        <script>
-            window.addEventListener('load', function() {
-                setTimeout(function() { window.print(); }, 300);
-            });
-        </script>
     @endunless
 </body>
 </html>
