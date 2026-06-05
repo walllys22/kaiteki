@@ -212,7 +212,7 @@ class DojoMensualidadController extends Controller
 
         try {
             $isPdf = true;
-            $fileName = 'Comprobante-Dojo-' . str_pad($pago->id, 6, '0', STR_PAD_LEFT) . '.pdf';
+            $fileName = 'Comprobante-Dojo-' . str_pad($pago->id, 6, '0', STR_PAD_LEFT) . '-' . now()->format('YmdHis') . '.pdf';
             $path = 'dojos/mensualidades/comprobantes/' . $fileName;
             $pdf = Pdf::loadView('dojos.mensualidades.comprobantePago', compact('pago', 'isPdf'))
                 ->setPaper('letter');

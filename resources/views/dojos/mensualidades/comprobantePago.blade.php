@@ -20,7 +20,34 @@
         'Fecha: ' . $fechaPago,
     ]);
 
-    $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->generate($qrText);
+    $qrCode = \BaconQrCode\Encoder\Encoder::encode($qrText, \BaconQrCode\Common\ErrorCorrectionLevel::M(), 'UTF-8');
+    $matrix = $qrCode->getMatrix();
+    $matrixSize = $matrix->getWidth();
+    $scale = max(3, (int) floor(120 / $matrixSize));
+    $imgSize = $matrixSize * $scale + 16;
+    $qrImg = imagecreatetruecolor($imgSize, $imgSize);
+    imagefill($qrImg, 0, 0, imagecolorallocate($qrImg, 255, 255, 255));
+    $black = imagecolorallocate($qrImg, 0, 0, 0);
+    $pad = 8;
+    for ($y = 0; $y < $matrixSize; $y++) {
+        for ($x = 0; $x < $matrixSize; $x++) {
+            if ($matrix->get($x, $y) === 1) {
+                imagefilledrectangle(
+                    $qrImg,
+                    $pad + $x * $scale,
+                    $pad + $y * $scale,
+                    $pad + ($x + 1) * $scale - 1,
+                    $pad + ($y + 1) * $scale - 1,
+                    $black
+                );
+            }
+        }
+    }
+    ob_start();
+    imagepng($qrImg);
+    $qrPng = ob_get_clean();
+    imagedestroy($qrImg);
+    $qrDataUri = 'data:image/png;base64,' . base64_encode($qrPng);
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -77,7 +104,7 @@
             display: inline-block;
             padding: 4px;
         }
-        .qr-box svg {
+        .qr-box img {
             display: block;
             height: 120px;
             width: 120px;
@@ -222,7 +249,7 @@
                 </td>
                 <td width="25%" class="qr-footer">
                     <div class="qr-box">
-                        {!! $qrSvg !!}
+                        <img src="{{ $qrDataUri }}" alt="QR">
                     </div>
                 </td>
             </tr>
