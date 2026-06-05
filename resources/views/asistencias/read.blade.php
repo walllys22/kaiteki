@@ -83,6 +83,19 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="row" style="margin-top:5px;">
+                            <div class="col-md-12">
+                                <div class="alumno-data-card">
+                                    <div class="alumno-label">Registrado por</div>
+                                    <div class="alumno-value">
+                                        <strong>{{ optional($asistencia->register)->name ?: '—' }}</strong>
+                                        <br><small class="text-muted">
+                                            {{ $asistencia->created_at ? $asistencia->created_at->format('d/m/Y H:i') : '—' }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         @if($asistencia->observacion)
                             <div class="row" style="margin-top:5px;">
                                 <div class="col-md-12">

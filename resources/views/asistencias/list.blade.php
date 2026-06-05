@@ -9,6 +9,7 @@
                 <th style="width:80px; text-align:center;">Licencias</th>
                 <th style="width:80px; text-align:center;">Faltas</th>
                 <th style="width:80px; text-align:center;">Total</th>
+                <th style="width:140px; text-align:center;">Registrado por</th>
                 <th style="width:100px; text-align:center;">Acciones</th>
             </tr>
         </thead>
@@ -46,6 +47,16 @@
                         <span class="label label-default">{{ $total }}</span>
                     </td>
                     <td style="text-align:center; vertical-align:middle;">
+                        @if($item->register)
+                            <div style="font-size:12px; font-weight:600;">{{ $item->register->name }}</div>
+                        @else
+                            <div style="font-size:12px; font-weight:600;">—</div>
+                        @endif
+                        <div style="font-size:11px; color:#888; margin-top:2px;">
+                            {{ $item->created_at ? $item->created_at->format('d/m/Y H:i') : '—' }}
+                        </div>
+                    </td>
+                    <td style="text-align:center; vertical-align:middle;">
                         <a href="{{ route('voyager.asistencias.show', $item->id) }}"
                            class="btn btn-info btn-xs" title="Ver detalle">
                             <i class="voyager-eye"></i>
@@ -64,7 +75,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="8" class="text-center text-muted">Sin registros de asistencia.</td>
+                    <td colspan="9" class="text-center text-muted">Sin registros de asistencia.</td>
                 </tr>
             @endforelse
         </tbody>

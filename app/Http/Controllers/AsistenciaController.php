@@ -31,7 +31,7 @@ class AsistenciaController extends Controller
         $paginate   = request('paginate', 10);
         $userDojoId = auth()->user()->dojo_id;
 
-        $data = Asistencia::with(['dojo', 'horario', 'detalles'])
+        $data = Asistencia::with(['dojo', 'horario', 'detalles', 'register'])
             ->when($userDojoId, fn($q) => $q->where('dojo_id', $userDojoId))
             ->when($search, function ($q, $search) {
                 $q->where(function ($sq) use ($search) {
@@ -195,7 +195,7 @@ class AsistenciaController extends Controller
         $this->custom_authorize('read_asistencias');
 
         $userDojoId  = auth()->user()->dojo_id;
-        $asistencia  = Asistencia::with(['dojo', 'horario', 'detalles.alumno.person'])
+        $asistencia  = Asistencia::with(['dojo', 'horario', 'detalles.alumno.person', 'register'])
             ->when($userDojoId, fn($q) => $q->where('dojo_id', $userDojoId))
             ->whereNull('deleted_at')
             ->findOrFail($id);

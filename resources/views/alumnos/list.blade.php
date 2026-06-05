@@ -80,7 +80,7 @@
                             <div style="font-size:12px; font-weight:600;">{{ $item->register->name }}</div>
                         @endif
                         <div style="font-size:11px; color:#888; margin-top:2px;">
-                            {{ $item->created_at ? $item->created_at->format('d/m/Y') : '—' }}
+                            {{ $item->created_at ? $item->created_at->format('d/m/Y H:i') : '—' }}
                         </div>
                     </td>
                     <td style="text-align: center">

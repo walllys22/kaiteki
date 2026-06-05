@@ -33,4 +33,9 @@ class Asistencia extends Model
     {
         return $this->hasMany(AsistenciaAlumno::class, 'asistencia_id');
     }
+
+    public function register()
+    {
+        return $this->belongsTo(User::class, 'registerUser_id')->withTrashed();
+    }
 }
