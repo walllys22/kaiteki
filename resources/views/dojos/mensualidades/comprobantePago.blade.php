@@ -2,6 +2,9 @@
     $mensualidad = $pago->mensualidad;
     $dojo        = optional($mensualidad)->dojo;
     $isPdf       = $isPdf ?? false;
+    $numero      = str_pad($pago->id, 6, '0', STR_PAD_LEFT);
+    $fechaPago   = optional($pago->fecha)->format('d/m/Y') ?: 'N/A';
+    $dojoNombre  = optional($dojo)->nombre ?: 'Dojo';
     $periodo     = optional($mensualidad)->fecha_inicio
         ? optional($mensualidad->fecha_inicio)->format('d/m/Y') . ' al ' . optional($mensualidad->fecha_fin)->format('d/m/Y')
         : 'N/A';
@@ -10,11 +13,11 @@
 
     $qrText = implode("\n", [
         'COMPROBANTE MENSUALIDAD DOJO',
-        'Nro: ' . str_pad($pago->id, 6, '0', STR_PAD_LEFT),
-        'Dojo: ' . optional($dojo)->nombre,
+        'Nro: ' . $numero,
+        'Dojo: ' . $dojoNombre,
         'Período: ' . $periodo,
         'Pago: Bs ' . number_format((float) $pago->monto, 2),
-        'Fecha: ' . optional($pago->fecha)->format('d/m/Y'),
+        'Fecha: ' . $fechaPago,
     ]);
 
     $qrSvg = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->generate($qrText);
@@ -23,41 +26,51 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <title>Comprobante Dojo #{{ str_pad($pago->id, 6, '0', STR_PAD_LEFT) }}</title>
+    <title>Comprobante Dojo #{{ $numero }}</title>
     <style>
         * { box-sizing: border-box; }
+        @page { margin: 18px; }
         body {
             color: #111;
             font-family: Arial, Helvetica, sans-serif;
             font-size: 12px;
             margin: 0;
-            padding: 22px;
+            padding: 14px 0;
         }
         .receipt {
             border: 1px solid #111;
             margin: 0 auto;
-            max-width: 760px;
+            min-height: 520px;
             padding: 18px;
+            width: 760px;
         }
-        .header {
-            align-items: flex-start;
-            border-bottom: 1px solid #111;
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 14px;
-            padding-bottom: 12px;
+        .header-table,
+        .info-table,
+        .footer-table {
+            border-collapse: collapse;
+            width: 100%;
         }
-        .brand { align-items: center; display: flex; gap: 12px; }
-        .dojo-logo {
-            border: 1px solid #111;
-            filter: grayscale(100%);
-            height: 72px;
-            object-fit: contain;
-            width: 72px;
+        .header-table td,
+        .info-table td,
+        .footer-table td {
+            border: none;
+            padding: 0;
+            vertical-align: top;
         }
-        .title { font-size: 18px; font-weight: 700; margin: 0 0 5px; }
-        .subtitle { font-size: 12px; margin: 0; }
-        .receipt-no { font-size: 13px; font-weight: 700; text-align: right; }
+        .title { font-size: 20px; font-weight: 700; margin: 0 0 7px; }
+        .subtitle { font-size: 12px; line-height: 1.15; margin: 0; }
+        .receipt-no {
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1.25;
+            text-align: right;
+            text-transform: uppercase;
+        }
+        .divider {
+            border-top: 1px solid #111;
+            height: 1px;
+            margin: 14px 0 12px;
+        }
         .qr-box {
             border: 1px solid #111;
             display: inline-block;
@@ -65,25 +78,17 @@
         }
         .qr-box svg {
             display: block;
-            width: 120px;
             height: 120px;
-        }
-        .footer {
-            align-items: flex-end;
-            border-top: 1px solid #999;
-            display: flex;
-            justify-content: space-between;
-            margin-top: 16px;
-            padding-top: 10px;
+            width: 120px;
         }
         .footer-note { color: #444; font-size: 11px; }
         .thanks-note {
             font-size: 13px;
             font-weight: 700;
-            margin-top: 14px;
+            margin-top: 8px;
             text-align: center;
         }
-        .qr-footer { text-align: center; width: 136px; }
+        .qr-footer { text-align: right; width: 140px; }
         .section-title {
             border-bottom: 1px solid #999;
             font-size: 12px;
@@ -92,13 +97,36 @@
             padding-bottom: 4px;
             text-transform: uppercase;
         }
-        .grid { display: grid; gap: 8px 16px; grid-template-columns: 1fr 1fr; }
         .label { color: #444; font-size: 10px; font-weight: 700; text-transform: uppercase; }
-        .value { font-size: 13px; margin-top: 2px; }
-        table { border-collapse: collapse; margin-top: 8px; width: 100%; }
-        th, td { border: 1px solid #111; padding: 7px; }
-        th { background: #eee; text-align: left; }
+        .value { font-size: 13px; line-height: 1.25; margin-top: 2px; }
+        .info-table td {
+            padding: 0 0 9px;
+            width: 50%;
+        }
+        .detail-table {
+            border-collapse: collapse;
+            margin-top: 8px;
+            width: 100%;
+        }
+        .detail-table th,
+        .detail-table td {
+            border: 1px solid #111;
+            padding: 7px;
+        }
+        .detail-table th { background: #eee; text-align: left; }
+        .detail-table td { font-weight: 700; }
         .right { text-align: right; }
+        .observation-text {
+            margin: 12px 0 18px;
+        }
+        .footer-table {
+            border-top: 1px solid #999;
+            margin-top: 18px;
+            padding-top: 10px;
+        }
+        .footer-table td {
+            padding-top: 10px;
+        }
         .actions { margin: 16px auto 0; max-width: 760px; text-align: right; }
         .btn {
             background: #fff;
@@ -111,55 +139,58 @@
         }
         @media print {
             body { padding: 0; }
-            .receipt { border: 0; max-width: none; }
             .actions { display: none; }
         }
     </style>
 </head>
 <body>
     <div class="receipt">
-        <div class="header">
-            <div class="brand">
-                @if($logo)
-                    <img src="{{ $logo }}" class="dojo-logo" alt="Logo" onerror="this.style.display='none';">
-                @endif
-                <div>
-                    <h1 class="title">{{ optional($dojo)->nombre ?: 'Dojo' }}</h1>
-                    <p class="subtitle">{{ optional($dojo)->address ?: '' }}</p>
-                    <p class="subtitle">
-                        {{ optional($dojo)->phone ?: '' }}
-                        @if(optional($dojo)->email) · {{ $dojo->email }} @endif
-                    </p>
-                </div>
-            </div>
-            <div class="receipt-no">
-                COMPROBANTE DE MENSUALIDAD<br>
-                Nro. {{ str_pad($pago->id, 6, '0', STR_PAD_LEFT) }}
-            </div>
-        </div>
+        <table class="header-table">
+            <tr>
+                <td>
+                    <h1 class="title">{{ $dojoNombre }}</h1>
+                    @if(optional($dojo)->address)
+                        <p class="subtitle">{{ $dojo->address }}</p>
+                    @endif
+                    @if(optional($dojo)->phone)
+                        <p class="subtitle">{{ $dojo->phone }}</p>
+                    @endif
+                </td>
+                <td class="receipt-no">
+                    COMPROBANTE DE MENSUALIDAD<br>
+                    Nro. {{ $numero }}
+                </td>
+            </tr>
+        </table>
+
+        <div class="divider"></div>
 
         <div class="section-title">Información del pago</div>
-        <div class="grid">
-            <div>
-                <div class="label">Dojo / Sucursal</div>
-                <div class="value">{{ optional($dojo)->nombre ?: 'N/A' }}</div>
-            </div>
-            <div>
-                <div class="label">Período</div>
-                <div class="value">{{ $periodo }}</div>
-            </div>
-            <div>
-                <div class="label">Fecha de pago</div>
-                <div class="value">{{ optional($pago->fecha)->format('d/m/Y') ?: 'N/A' }}</div>
-            </div>
-            <div>
-                <div class="label">Cobrado por</div>
-                <div class="value">{{ $cobrador }}</div>
-            </div>
-        </div>
+        <table class="info-table">
+            <tr>
+                <td>
+                    <div class="label">Dojo / Sucursal</div>
+                    <div class="value">{{ $dojoNombre }}</div>
+                </td>
+                <td>
+                    <div class="label">Período</div>
+                    <div class="value">{{ $periodo }}</div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="label">Fecha de pago</div>
+                    <div class="value">{{ $fechaPago }}</div>
+                </td>
+                <td>
+                    <div class="label">Cobrado por</div>
+                    <div class="value">{{ $cobrador }}</div>
+                </td>
+            </tr>
+        </table>
 
         <div class="section-title">Detalle</div>
-        <table>
+        <table class="detail-table">
             <thead>
                 <tr>
                     <th>Concepto</th>
@@ -176,20 +207,22 @@
 
         @if($pago->observacion)
             <div class="section-title">Observación</div>
-            <p>{{ $pago->observacion }}</p>
+            <p class="observation-text">{{ $pago->observacion }}</p>
         @endif
 
-        <div class="footer">
-            <div class="footer-note">
-                Comprobante generado por Kaiteki.<br>
-                Escanee el QR para verificar datos del pago.
-            </div>
-            <div class="qr-footer">
-                <div class="qr-box">
-                    {!! $qrSvg !!}
-                </div>
-            </div>
-        </div>
+        <table class="footer-table">
+            <tr>
+                <td class="footer-note">
+                    Comprobante generado por Kaiteki.<br>
+                    Escanee el QR para verificar datos del pago.
+                </td>
+                <td class="qr-footer">
+                    <div class="qr-box">
+                        {!! $qrSvg !!}
+                    </div>
+                </td>
+            </tr>
+        </table>
 
         <div class="thanks-note">
             Gracias por su preferencia.
