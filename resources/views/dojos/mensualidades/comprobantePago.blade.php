@@ -38,9 +38,7 @@
             }
         }
     }
-    $qrTmpDir = public_path('tmp');
-    if (!is_dir($qrTmpDir)) { mkdir($qrTmpDir, 0755, true); }
-    $qrTmpPath = $qrTmpDir . '/qr_dojo_' . $pago->id . '_' . time() . '.png';
+    $qrTmpPath = storage_path('app/qr_dojo_' . $pago->id . '_' . time() . '.png');
     imagepng($qrImg, $qrTmpPath);
     imagedestroy($qrImg);
     $qrSrc = $isPdf ? ('file://' . $qrTmpPath) : '';
