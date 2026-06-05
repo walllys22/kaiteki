@@ -12,7 +12,11 @@
       "Bash(php -l /home/user/Escritorio/projects/kaiteki/routes/web.php)",
       "Bash(php -l app/Http/Controllers/AlumnoMensualidadController.php)",
       "Bash(php -r \"echo extension_loaded\\('gd'\\) ? 'GD loaded' : 'GD NOT loaded'; echo PHP_EOL; echo gd_info\\(\\)['GD Version'] ?? 'no version';\")",
-      "Bash(php -r ' *)"
+      "Bash(php -r ' *)",
+      "Bash(cp /tmp/test_comprobante.pdf /home/user/Escritorio/projects/kaiteki/public/test_comprobante.pdf && echo \"copied to public\")"
+    ],
+    "additionalDirectories": [
+      "/tmp"
     ]
   }
 }
