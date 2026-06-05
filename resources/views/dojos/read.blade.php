@@ -3,29 +3,6 @@
 @section('page_title', 'Ver Dojo')
 
 @section('page_header')
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="panel panel-bordered" style="margin-bottom:0;">
-                    <div class="panel-body" style="padding: 10px 15px; display:flex; align-items:center; justify-content:space-between;">
-                        <h1 class="page-title" style="margin:0; font-size:20px;">
-                            <i class="voyager-home"></i> {{ $dojo->nombre ?? 'Sin nombre' }}
-                        </h1>
-                        <div>
-                            @if(auth()->user()->hasPermission('edit_dojos'))
-                                <a href="{{ route('voyager.dojos.edit', $dojo->id) }}" class="btn btn-info btn-sm">
-                                    <i class="voyager-edit"></i> Editar
-                                </a>
-                            @endif
-                            <a href="{{ route('voyager.dojos.index') }}" class="btn btn-warning btn-sm">
-                                <i class="voyager-list"></i> Volver
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 @stop
 
 @section('content')
@@ -53,13 +30,25 @@
 
                         {{-- Info --}}
                         <div style="flex:1; min-width:0;">
-                            <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:14px;">
-                                <h2 style="margin:0; font-size:22px; font-weight:700; color:#2d3748;">{{ $dojo->nombre ?? 'Sin nombre' }}</h2>
-                                @if($dojo->status == 1)
-                                    <span class="label label-success" style="font-size:11px; padding:4px 10px; vertical-align:middle;">Activo</span>
-                                @else
-                                    <span class="label label-danger" style="font-size:11px; padding:4px 10px; vertical-align:middle;">Inactivo</span>
-                                @endif
+                            <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+                                <div style="display:flex; align-items:center; flex-wrap:wrap; gap:8px;">
+                                    <h2 style="margin:0; font-size:22px; font-weight:700; color:#2d3748;">{{ $dojo->nombre ?? 'Sin nombre' }}</h2>
+                                    @if($dojo->status == 1)
+                                        <span class="label label-success" style="font-size:11px; padding:4px 10px; vertical-align:middle;">Activo</span>
+                                    @else
+                                        <span class="label label-danger" style="font-size:11px; padding:4px 10px; vertical-align:middle;">Inactivo</span>
+                                    @endif
+                                </div>
+                                <div style="display:flex; gap:6px; align-items:center;">
+                                    @if(auth()->user()->hasPermission('edit_dojos'))
+                                        <a href="{{ route('voyager.dojos.edit', $dojo->id) }}" class="btn btn-info btn-sm">
+                                            <i class="voyager-edit"></i> Editar
+                                        </a>
+                                    @endif
+                                    <a href="{{ route('voyager.dojos.index') }}" class="btn btn-warning btn-sm">
+                                        <i class="voyager-list"></i> Volver
+                                    </a>
+                                </div>
                             </div>
 
                             <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:8px 32px; color:#555; font-size:13.5px;">
@@ -117,11 +106,6 @@
                         <i class="voyager-people"></i> Usuarios de la Sucursal
                         <span class="label label-primary" style="margin-left:8px;">{{ $users->count() }}</span>
                     </h3>
-                    @if(auth()->user()->hasPermission('add_users'))
-                        <a href="{{ route('voyager.users.create') }}" class="btn btn-primary btn-sm">
-                            <i class="voyager-plus"></i> Agregar Usuario
-                        </a>
-                    @endif
                 </div>
                 <div class="panel-body" style="padding:0;">
                     @if($users->isEmpty())

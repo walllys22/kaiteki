@@ -114,6 +114,10 @@
                                             @endif
                                         </th>
                                         @endforeach
+                                        @if($dataType->slug === 'dojos')
+                                            <th>Mensualidad</th>
+                                            <th>Servicio</th>
+                                        @endif
                                         <th class="actions text-right dt-not-orderable">{{ __('voyager::generic.actions') }}</th>
                                     </tr>
                                 </thead>
@@ -265,6 +269,30 @@
                                                 @endif
                                             </td>
                                         @endforeach
+                                        @if($dataType->slug === 'dojos')
+                                            @php
+                                                $dojoMensualidades = \App\Models\DojoMensualidad::query()
+                                                    ->where('dojo_id', $data->id)
+                                                    ->whereNull('deleted_at')
+                                                    ->get();
+                                                $dojoSaldoMensualidad = $dojoMensualidades->sum(fn($mensualidad) => $mensualidad->saldo());
+                                                $dojoConServicio = $dojoMensualidades->contains(fn($mensualidad) => $mensualidad->isVigente());
+                                            @endphp
+                                            <td>
+                                                @if($dojoSaldoMensualidad > 0)
+                                                    <span class="label label-danger">Debe Bs {{ number_format($dojoSaldoMensualidad, 2) }}</span>
+                                                @else
+                                                    <span class="label label-success">Al día</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if($dojoConServicio)
+                                                    <span class="label label-success">Con servicio</span>
+                                                @else
+                                                    <span class="label label-danger">Con corte</span>
+                                                @endif
+                                            </td>
+                                        @endif
                                         <td class="no-sort no-click bread-actions">
                                             @foreach($actions as $action)
                                                 @if (!method_exists($action, 'massAction'))
@@ -384,6 +412,39 @@
                     ],
                     config('voyager.dashboard.data_tables', []))
                 , true) !!});
+
+                @if($dataType->slug === 'dojos')
+                    @php
+                        $statusColumnIndex = $dataType->browseRows->pluck('field')->search('status');
+                    @endphp
+                    var statusColumnIndex = {{ $statusColumnIndex === false ? 'null' : $statusColumnIndex }};
+                    if (statusColumnIndex !== null) {
+                        var $filter = $('#dataTable_filter');
+                        var $statusFilter = $(
+                            '<label style="margin-right:12px;">Estado: ' +
+                                '<select id="dojo-status-filter" class="form-control input-sm" style="display:inline-block; width:120px; margin-left:6px;">' +
+                                    '<option value="">Todos</option>' +
+                                    '<option value="Activo" selected>Activo</option>' +
+                                    '<option value="Inactivo">Inactivo</option>' +
+                                '</select>' +
+                            '</label>'
+                        );
+
+                        $filter.prepend($statusFilter);
+
+                        function applyDojoStatusFilter() {
+                            var status = $('#dojo-status-filter').val();
+                            var search = status ? '^\\s*' + status + '\\s*$' : '';
+                            table
+                                .column(statusColumnIndex)
+                                .search(search, true, false)
+                                .draw();
+                        }
+
+                        $('#dojo-status-filter').on('change', applyDojoStatusFilter);
+                        applyDojoStatusFilter();
+                    }
+                @endif
             @else
                 $('#search-input select').select2({
                     minimumResultsForSearch: Infinity
