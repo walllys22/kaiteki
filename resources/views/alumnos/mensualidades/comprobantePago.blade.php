@@ -41,9 +41,8 @@
     $scale = max(3, (int) floor(120 / $matrixSize));
     $imgSize = $matrixSize * $scale + 16;
     $qrImg = imagecreatetruecolor($imgSize, $imgSize);
-    $white = imagecolorallocate($qrImg, 255, 255, 255);
+    imagefill($qrImg, 0, 0, imagecolorallocate($qrImg, 255, 255, 255));
     $black = imagecolorallocate($qrImg, 0, 0, 0);
-    imagefill($qrImg, 0, 0, $white);
     $pad = 8;
     for ($y = 0; $y < $matrixSize; $y++) {
         for ($x = 0; $x < $matrixSize; $x++) {
@@ -52,10 +51,8 @@
             }
         }
     }
-    $qrTmpPath = storage_path('app/qr_alumno_' . $pago->id . '_' . time() . '.png');
-    imagepng($qrImg, $qrTmpPath);
-    imagedestroy($qrImg);
-    $qrSrc = $isPdf ? ('file://' . $qrTmpPath) : '';
+    ob_start(); imagepng($qrImg); $qrPng = ob_get_clean(); imagedestroy($qrImg);
+    $qrDataUri = 'data:image/png;base64,' . base64_encode($qrPng);
     $qrSvgRaw = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->generate($qrText);
     $qrSvgInline = trim(preg_replace('/<\?xml[^?]*\?>/', '', $qrSvgRaw));
 @endphp
@@ -288,7 +285,7 @@
                 <td width="25%" class="qr-footer">
                     <div class="qr-box">
                         @if($isPdf)
-                            <img src="{{ $qrSrc }}" width="120" height="120" alt="QR">
+                            <img src="{{ $qrDataUri }}" width="120" height="120" alt="QR">
                         @else
                             {!! $qrSvgInline !!}
                         @endif
