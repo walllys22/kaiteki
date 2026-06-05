@@ -39,7 +39,7 @@
         width: 100%;
     }
     .dojo-read-page table {
-        table-layout: fixed;
+        table-layout: auto;
         width: 100%;
     }
     .dojo-read-page th,
@@ -92,28 +92,86 @@
     .dojo-read-page .dojo-info-item span {
         min-width: 0;
     }
+    .dojo-read-page .users-table th:first-child,
+    .dojo-read-page .users-table td:first-child {
+        width: 64px;
+    }
+    .dojo-read-page .users-table > thead > tr > th {
+        background: #f7f9fc;
+        border-bottom: 1px solid #e6ebf1;
+        color: #52606d;
+        font-weight: 600;
+    }
+    .dojo-read-page .users-table > tbody > tr > td {
+        border-color: #edf1f5;
+        padding: 11px 8px;
+        vertical-align: middle;
+    }
+    .dojo-read-page .users-table th:last-child,
+    .dojo-read-page .users-table td:last-child {
+        width: 106px;
+    }
+    .dojo-read-page .users-table .btn {
+        height: 30px;
+        line-height: 18px;
+        margin: 1px;
+        padding: 5px 9px;
+        width: 34px;
+    }
     #panel-mensualidades {
-        padding: 14px 20px 20px;
+        padding: 12px 20px 18px;
     }
     #panel-mensualidades .table > thead > tr > th,
     #panel-mensualidades .table > tbody > tr > td {
         vertical-align: middle;
     }
+    #panel-mensualidades .mensualidades-table {
+        margin-bottom: 0;
+    }
+    #panel-mensualidades .mensualidades-table > thead > tr > th {
+        background: #f7f9fc;
+        border-bottom: 1px solid #e6ebf1;
+        color: #52606d;
+        font-weight: 600;
+    }
+    #panel-mensualidades .mensualidades-table > tbody > tr > td {
+        border-color: #edf1f5;
+        padding: 11px 8px;
+    }
     #panel-mensualidades .bread-actions {
-        min-width: 112px;
+        min-width: 102px;
         white-space: nowrap !important;
     }
     #panel-mensualidades .bread-actions .btn,
     #panel-mensualidades .form-whatsapp-comprobante .btn {
-        height: 34px;
-        margin: 2px;
-        width: 38px;
+        height: 30px;
+        line-height: 18px;
+        margin: 1px;
+        padding: 5px 8px;
+        width: 34px;
     }
-    #panel-mensualidades .table .table {
+    #panel-mensualidades .pagos-row > td {
+        background: #f8fbff;
+        padding: 0 12px 14px 28px !important;
+    }
+    #panel-mensualidades .pagos-box {
+        border-left: 3px solid #d8e8f8;
+        padding: 8px 0 0 12px;
+    }
+    #panel-mensualidades .pagos-table {
         font-size: 12px;
+        margin-bottom: 0;
     }
-    #panel-mensualidades .table .table th,
-    #panel-mensualidades .table .table td {
+    #panel-mensualidades .pagos-table thead tr {
+        background: #f7f9fc !important;
+    }
+    #panel-mensualidades .pagos-table th {
+        color: #697785 !important;
+        font-weight: 600;
+    }
+    #panel-mensualidades .pagos-table th,
+    #panel-mensualidades .pagos-table td {
+        border-color: #e8eef5;
         padding: 8px 6px;
     }
     @media (max-width: 900px) {
@@ -244,7 +302,7 @@
                         </div>
                     @else
                         <div class="table-responsive">
-                            <table id="dataTable" class="table table-hover table-condensed" style="margin-bottom:0;">
+                            <table class="table table-hover table-condensed users-table" style="margin-bottom:0;">
                                 <thead style="background:#f8f9fa;">
                                     <tr>
                                         <th style="width:56px; text-align:center; border-top:none;"></th>
