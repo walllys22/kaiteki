@@ -53,8 +53,6 @@
     }
     ob_start(); imagepng($qrImg); $qrPng = ob_get_clean(); imagedestroy($qrImg);
     $qrDataUri = 'data:image/png;base64,' . base64_encode($qrPng);
-    $qrSvgRaw = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->generate($qrText);
-    $qrSvgInline = trim(preg_replace('/<\?xml[^?]*\?>/', '', $qrSvgRaw));
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -110,7 +108,6 @@
             display: inline-block;
             padding: 4px;
         }
-        .qr-box svg { display: block; height: 120px; width: 120px; }
         .qr-box img {
             display: block;
             height: 120px;
@@ -284,11 +281,7 @@
                 </td>
                 <td width="25%" class="qr-footer">
                     <div class="qr-box">
-                        @if($isPdf)
-                            <img src="{{ $qrDataUri }}" width="120" height="120" alt="QR">
-                        @else
-                            {!! $qrSvgInline !!}
-                        @endif
+                        <img src="{{ $qrDataUri }}" width="120" height="120" alt="QR">
                     </div>
                 </td>
             </tr>
