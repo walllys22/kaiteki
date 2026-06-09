@@ -40,15 +40,16 @@
 
                     <div class="row">
                         <div class="form-group col-md-4">
-                            <label for="document_type_person">Tipo Documento <span class="text-danger">*</span></label>
-                            <select name="documentType" id="document_type_person" class="form-control" required>
-                                <option value="Ci" selected>CI</option>
+                            <label for="document_type_person">Tipo Documento</label>
+                            <select name="documentType" id="document_type_person" class="form-control">
+                                <option value="" selected>Seleccione</option>
+                                <option value="Ci">CI</option>
                                 <option value="Nit">NIT</option>
                             </select>
                         </div>
                         <div class="form-group col-md-8">
-                            <label for="ci_person">NIT/CI <span class="text-danger">*</span></label>
-                            <input type="text" id="ci_person" name="ci" class="form-control" placeholder="123456789" required>
+                            <label for="ci_person">NIT/CI</label>
+                            <input type="text" id="ci_person" name="ci" class="form-control" placeholder="123456789">
                         </div>
                     </div>
 

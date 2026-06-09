@@ -29,7 +29,7 @@
                 @endphp
                 <tr>
                     <td style="text-align: center">
-                        <strong>{{ $item->documentType }}</strong><br>
+                        <strong>{{ $item->documentType ?: 'Sin tipo' }}</strong><br>
                         <span>{{ $item->ci ?: 'Sin documento' }}</span>
                     </td>
                     <td>
@@ -101,6 +101,9 @@
                             <label class="label label-success">Activo</label>
                         @else
                             <label class="label label-warning">Inactivo</label>
+                        @endif
+                        @if (blank($item->ci))
+                            <br><label class="label label-danger" style="margin-top:5px; display:inline-block;">Datos incompletos</label>
                         @endif
                     </td>
                     <td style="width: 18%" class="no-sort no-click bread-actions text-right">

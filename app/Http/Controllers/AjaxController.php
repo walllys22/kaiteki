@@ -46,16 +46,17 @@ class AjaxController extends Controller
 
     public function personStore(Request $request){
         $dojoId = $this->resolveDojoIdFromContext($request);
+        $ci = $this->normalizeCi($request->ci);
 
         $request->validate([
-            'documentType' => 'required|string|in:Ci,Nit',
+            'documentType' => 'nullable|string|in:Ci,Nit',
             'dojo_id' => 'nullable|exists:dojos,id',
-            'ci' => 'required|string|max:255',
+            'ci' => 'nullable|string|max:255',
             'first_name' => 'required|string|max:255',
             'gender' => 'required|string|in:Masculino,Femenino',
         ]);
 
-        $person = Person::withTrashed()->where('ci', $request->ci)->first();
+        $person = $ci ? Person::withTrashed()->where('ci', $ci)->first() : null;
         if ($person) {
             return response()->json(['error' => 'El CI ya se encuentra registrado a nombre de: ' . $person->first_name]);
         }
@@ -64,7 +65,7 @@ class AjaxController extends Controller
             $person = Person::create([
                 'documentType' => $request->documentType,
                 'dojo_id' => $dojoId,
-                'ci' => $request->ci,
+                'ci' => $ci,
                 'first_name' => $request->first_name,
                 'birth_date' => $request->birth_date,
                 'email' => $request->email,
@@ -80,5 +81,12 @@ class AjaxController extends Controller
             DB::rollback();
             return response()->json(['error' => 'Ocurrió un error al guardar...']);
         }
+    }
+
+    protected function normalizeCi($ci): ?string
+    {
+        $ci = trim((string) $ci);
+
+        return $ci === '' ? null : $ci;
     }
 }

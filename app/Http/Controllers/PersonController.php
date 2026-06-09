@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Person;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class PersonController extends Controller
 {
@@ -64,23 +65,23 @@ class PersonController extends Controller
     {
         $this->custom_authorize('add_people');
         $dojoId = $this->resolveDojoIdFromContext($request);
+        $ci = $this->normalizeCi($request->ci);
 
         $request->validate([
-            'documentType' => 'required|string|in:Ci,Nit',
+            'documentType' => 'nullable|string|in:Ci,Nit',
             'dojo_id' => 'nullable|exists:dojos,id',
-            'ci' => 'required|string|max:255|unique:people,ci',
+            'ci' => ['nullable', 'string', 'max:255', Rule::unique('people', 'ci')],
             'gender' => 'required|string|in:Masculino,Femenino',
             'sangre' => 'nullable|string|max:255',
             'first_name' => 'required|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,bmp,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,bmp,webp|max:3072',
         ], [
-            'ci.required' => 'El numero de cedula es obligatorio',
             'ci.unique' => 'Esta cedula ya esta registrada',
             'first_name.required' => 'El nombre es obligatorio.',
             'dojo_id.exists' => 'La sucursal seleccionada no es valida.',
             'image.image' => 'El archivo debe ser una imagen.',
             'image.mimes' => 'La imagen debe tener uno de los siguientes formatos: jpeg, jpg, png, bmp, webp.',
-            'image.max' => 'La imagen no puede pesar mas de 2 megabytes (MB).',
+            'image.max' => 'La imagen no puede pesar mas de 3 megabytes (MB).',
         ]);
 
         DB::beginTransaction();
@@ -89,7 +90,7 @@ class PersonController extends Controller
             Person::create([
                 'documentType' => $request->documentType,
                 'dojo_id' => $dojoId,
-                'ci' => $request->ci,
+                'ci' => $ci,
                 'birth_date' => $request->birth_date,
                 'gender' => $request->gender,
                 'first_name' => $request->first_name,
@@ -115,25 +116,24 @@ class PersonController extends Controller
     public function update(Request $request, $id)
     {
         $this->custom_authorize('edit_people');
-        $ciValidationRule = 'required|string|max:255|unique:people,ci,' . $id;
+        $ci = $this->normalizeCi($request->ci);
         $dojoId = $this->resolveDojoIdFromContext($request);
 
         $request->validate([
-            'documentType' => 'required|string|in:Ci,Nit',
+            'documentType' => 'nullable|string|in:Ci,Nit',
             'dojo_id' => 'nullable|exists:dojos,id',
-            'ci' => $ciValidationRule,
+            'ci' => ['nullable', 'string', 'max:255', Rule::unique('people', 'ci')->ignore($id)],
             'gender' => 'required|string|in:Masculino,Femenino',
             'sangre' => 'nullable|string|max:255',
             'first_name' => 'required|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,bmp,webp|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,bmp,webp|max:3072',
         ], [
-            'ci.required' => 'El numero de cedula es obligatorio',
             'ci.unique' => 'Esta cedula ya esta registrada',
             'first_name.required' => 'El nombre es obligatorio.',
             'dojo_id.exists' => 'La sucursal seleccionada no es valida.',
             'image.image' => 'El archivo debe ser una imagen.',
             'image.mimes' => 'La imagen debe tener uno de los siguientes formatos: jpeg, jpg, png, bmp, webp.',
-            'image.max' => 'La imagen no puede pesar mas de 2 megabytes (MB).',
+            'image.max' => 'La imagen no puede pesar mas de 3 megabytes (MB).',
         ]);
 
         DB::beginTransaction();
@@ -142,7 +142,7 @@ class PersonController extends Controller
             $person = Person::findOrFail($id);
             $person->documentType = $request->documentType;
             $person->dojo_id = $dojoId;
-            $person->ci = $request->ci;
+            $person->ci = $ci;
             $person->birth_date = $request->birth_date;
             $person->gender = $request->gender;
             $person->first_name = $request->first_name;
@@ -181,5 +181,12 @@ class PersonController extends Controller
             ->findOrFail($id);
 
         return view('administrations.people.read', compact('person'));
+    }
+
+    protected function normalizeCi($ci): ?string
+    {
+        $ci = trim((string) $ci);
+
+        return $ci === '' ? null : $ci;
     }
 }
