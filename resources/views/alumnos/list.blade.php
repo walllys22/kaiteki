@@ -27,6 +27,7 @@
                     $grado = optional($ultimoAlumnoGrado)->grado;
                     $gradoLabel = trim(($grado->tipo ?? '') . ' ' . ($grado->numero ?? '') . ' ' . ($grado->nombre ?? ''));
                     $gradoStatus = optional($ultimoAlumnoGrado)->status;
+                    $tieneGradoActual = $ultimoAlumnoGrado && (string) $gradoStatus !== '1';
                     $horariosAsignados = $item->alumnoHorarios->filter(function ($alumnoHorario) {
                         return $alumnoHorario->horario;
                     });
@@ -90,11 +91,16 @@
                             <label class="label label-warning">Inactivo</label>
                         @endif
                     </td>
-                    <td style="width: 18%" class="no-sort no-click bread-actions text-right">
+                    <td style="width: 22%" class="no-sort no-click bread-actions text-right">
 
                             @if (auth()->user()->hasPermission('read_alumnos'))
-                            <a href="{{ route('voyager.alumnos.show', ['id' => $item->id]) }}" title="Ver" class="btn btn-sm btn-warning view">
+                            <a href="{{ route('voyager.alumnos.show', ['id' => $item->id]) }}" title="Ver" class="btn btn-sm btn-primary view">
                                 <i class="voyager-eye"></i> <span class="hidden-xs hidden-sm"></span>
+                            </a>
+                        @endif
+                        @if (auth()->user()->hasPermission('read_alumnos') && $tieneGradoActual)
+                            <a href="{{ route('alumno.grado.certificado.cursando', $ultimoAlumnoGrado->id) }}" target="_blank" title="Imprimir certificado actual" class="btn btn-sm btn-warning">
+                                <i class="fa-solid fa-print"></i> <span class="hidden-xs hidden-sm"></span>
                             </a>
                         @endif
                         @if (auth()->user()->hasPermission('delete_alumnos'))

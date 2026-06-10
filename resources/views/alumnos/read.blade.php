@@ -645,6 +645,7 @@
         var timeoutMensualidad = null;
         var shouldRestoreTutorModal = false;
         var pendingTutorPerson = null;
+        var shouldOpenExamen = new URLSearchParams(window.location.search).get('open') === 'examen';
 
         $(document).ready(function() {
             $('#modal-add-tutor, #modal-add-enfermedad, #modal-add-grado, #modal-add-horario').on('shown.bs.modal', function() {
@@ -884,6 +885,25 @@
                         $fechaInput.attr('min', minFecha).val(minFecha);
                     } else {
                         $fechaInput.removeAttr('min').val('{{ date('Y-m-d') }}');
+                    }
+
+                    if (shouldOpenExamen) {
+                        shouldOpenExamen = false;
+                        $('a[href="#tab-grados"]').tab('show');
+
+                        var url = new URL(window.location.href);
+                        url.searchParams.delete('open');
+                        window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+
+                        setTimeout(function() {
+                            if ($('#modal-add-examen').length) {
+                                $('#modal-add-examen').modal('show');
+                            } else if (window.toastr) {
+                                toastr.warning('Este alumno aun no esta listo para registrar examen final.');
+                            } else {
+                                alert('Este alumno aun no esta listo para registrar examen final.');
+                            }
+                        }, 150);
                     }
                 },
                 error: function() {

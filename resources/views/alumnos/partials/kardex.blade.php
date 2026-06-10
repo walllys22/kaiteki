@@ -11,8 +11,14 @@
     }
     $nombre   = optional($person)->first_name ?? 'Sin nombre';
     $ci       = optional($person)->ci ? (optional($person)->documentType ?? 'CI') . ': ' . $person->ci : 'No registrado';
-    $genero   = optional($person)->gender ?? null;
-    $generoLabel = $genero === 'M' ? 'Masculino' : ($genero === 'F' ? 'Femenino' : 'No registrado');
+    $genero   = trim((string) optional($person)->gender);
+    $generoKey = strtolower($genero);
+    $generoLabel = [
+        'm' => 'Masculino',
+        'masculino' => 'Masculino',
+        'f' => 'Femenino',
+        'femenino' => 'Femenino',
+    ][$generoKey] ?? ($genero !== '' ? $genero : 'No registrado');
     $nacimiento   = optional($person)->birth_date ? \Carbon\Carbon::parse($person->birth_date)->format('d/m/Y') : 'No registrado';
     $edad = optional($person)->birth_date ? \Carbon\Carbon::parse($person->birth_date)->age . ' año(s)' : 'No registrado';
     $telefono = optional($person)->phone ? (optional($person)->country_code ? '+' . $person->country_code . ' ' : '') . $person->phone : 'No registrado';

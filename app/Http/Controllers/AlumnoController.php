@@ -370,7 +370,8 @@ class AlumnoController extends Controller
         $grados = AlumnoGrado::with(['grado', 'repasos', 'examenes'])
             ->where('alumno_id', $id)
             ->whereNull('deleted_at')
-            ->orderBy('fecha')
+            ->orderByDesc('fecha')
+            ->orderByDesc('id')
             ->get();
 
         return view('alumnos.partials.historial-grados', compact('alumno', 'grados'));
