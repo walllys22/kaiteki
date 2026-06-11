@@ -151,11 +151,13 @@ class AlumnoGradoController extends Controller
 
         $request->validate([
             'alumno_grado_id' => 'required|exists:alumno_grados,id',
-            'fecha'           => 'required|date',
+            'fecha'           => 'required|date|before_or_equal:today',
             'aprobado'        => 'required|in:0,1',
             'monto'           => 'required|numeric|min:0|max:99999999.99',
             'estado_pago'     => 'required|in:pendiente,pagado',
             'observacion'     => 'nullable|string|max:500',
+        ], [
+            'fecha.before_or_equal' => 'La fecha del repaso no puede ser mayor a la fecha del sistema.',
         ]);
 
         $alumnoGrado = AlumnoGrado::with(['alumno', 'grado', 'repasos', 'examenes'])->findOrFail($request->alumno_grado_id);
@@ -236,6 +238,7 @@ class AlumnoGradoController extends Controller
 
         try {
             $monto = (float) $request->monto;
+            $estadoPago = $monto <= 0 ? 'pagado' : $request->estado_pago;
 
             AlumnoGradoRepaso::create([
                 'alumno_grado_id' => $request->alumno_grado_id,
@@ -243,7 +246,7 @@ class AlumnoGradoController extends Controller
                 'fecha'           => $request->fecha,
                 'aprobado'        => $request->aprobado,
                 'monto'           => $monto,
-                'monto_pagado'    => $request->estado_pago === 'pagado' ? $monto : 0,
+                'monto_pagado'    => $estadoPago === 'pagado' ? $monto : 0,
                 'observacion'     => $request->observacion,
             ]);
 
@@ -251,7 +254,7 @@ class AlumnoGradoController extends Controller
 
             return redirect()->route('voyager.alumnos.show', ['id' => $alumnoGrado->alumno_id])
                 ->with([
-                    'message' => $request->estado_pago === 'pagado' ? $msg . ' Pago registrado.' : $msg . ' El pago quedó pendiente.',
+                    'message' => $estadoPago === 'pagado' ? $msg . ' Pago registrado.' : $msg . ' El pago quedó pendiente.',
                     'alert-type' => 'success',
                 ]);
         } catch (\Throwable $th) {
@@ -331,16 +334,34 @@ class AlumnoGradoController extends Controller
             abort(403, 'Solo administradores globales pueden anular pagos de repasos.');
         }
 
-        $repaso = AlumnoGradoRepaso::with(['alumnoGrado.alumno'])
+        $repaso = AlumnoGradoRepaso::with(['alumnoGrado.alumno', 'arancel'])
             ->whereNull('deleted_at')
             ->findOrFail($id);
 
-        if ((float) ($repaso->monto_pagado ?? 0) <= 0) {
+        $esExonerado = (float) ($repaso->monto ?? 0) <= 0;
+
+        if (!$esExonerado && (float) ($repaso->monto_pagado ?? 0) <= 0) {
             return redirect()->back()
                 ->with(['message' => 'Este repaso no tiene pago registrado.', 'alert-type' => 'warning']);
         }
 
         try {
+            if ($esExonerado) {
+                $precioArancel = (float) optional($repaso->arancel)->precio;
+
+                if ($precioArancel <= 0) {
+                    return redirect()->back()
+                        ->with(['message' => 'No se puede restablecer la exoneración porque el arancel no tiene precio registrado.', 'alert-type' => 'warning']);
+                }
+
+                $repaso->monto = $precioArancel;
+                $repaso->monto_pagado = 0;
+                $repaso->save();
+
+                return redirect()->route('voyager.alumnos.show', ['id' => $repaso->alumnoGrado->alumno_id])
+                    ->with(['message' => 'Exoneración anulada. El repaso volvió a estado Pendiente.', 'alert-type' => 'success']);
+            }
+
             $repaso->monto_pagado = 0;
             $repaso->save();
 
@@ -370,9 +391,9 @@ class AlumnoGradoController extends Controller
             })
             ->findOrFail($id);
 
-        if ((float) ($repaso->monto_pagado ?? 0) > 0) {
+        if ((float) ($repaso->monto ?? 0) <= 0 || (float) ($repaso->monto_pagado ?? 0) > 0) {
             return redirect()->back()
-                ->with(['message' => 'No se puede editar una punta que ya tiene pagos registrados.', 'alert-type' => 'warning']);
+                ->with(['message' => 'Para editar esta punta primero debe anular el pago o la exoneración.', 'alert-type' => 'warning']);
         }
 
         try {
@@ -433,12 +454,14 @@ class AlumnoGradoController extends Controller
 
         $request->validate([
             'alumno_grado_id' => 'required|exists:alumno_grados,id',
-            'fecha'           => 'required|date',
+            'fecha'           => 'required|date|before_or_equal:today',
             'aprobado'        => 'required|in:0,1',
             'monto'           => 'required|numeric|min:0|max:99999999.99',
             'estado_pago'     => 'required|in:pendiente,pagado',
             'observacion'     => 'nullable|string|max:500',
             'next_grado_id'   => 'nullable|exists:grados,id',
+        ], [
+            'fecha.before_or_equal' => 'La fecha del examen no puede ser mayor a la fecha del sistema.',
         ]);
 
         $alumnoGrado = AlumnoGrado::with(['alumno', 'grado', 'repasos', 'examenes'])->findOrFail($request->alumno_grado_id);
@@ -529,6 +552,7 @@ class AlumnoGradoController extends Controller
 
         try {
             $monto = (float) $request->monto;
+            $estadoPago = $monto <= 0 ? 'pagado' : $request->estado_pago;
 
             AlumnoGradoExamen::create([
                 'alumno_grado_id' => $request->alumno_grado_id,
@@ -536,7 +560,7 @@ class AlumnoGradoController extends Controller
                 'fecha'           => $request->fecha,
                 'aprobado'        => $request->aprobado,
                 'monto'           => $monto,
-                'monto_pagado'    => $request->estado_pago === 'pagado' ? $monto : 0,
+                'monto_pagado'    => $estadoPago === 'pagado' ? $monto : 0,
                 'observacion'     => $request->observacion,
             ]);
 
@@ -578,7 +602,7 @@ class AlumnoGradoController extends Controller
 
             return redirect()->route('voyager.alumnos.show', ['id' => $alumnoGrado->alumno_id])
                 ->with([
-                    'message' => $request->estado_pago === 'pagado' ? $msg . ' Pago registrado.' : $msg . ' El pago quedó pendiente.',
+                    'message' => $estadoPago === 'pagado' ? $msg . ' Pago registrado.' : $msg . ' El pago quedó pendiente.',
                     'alert-type' => $type,
                 ]);
         } catch (\Throwable $th) {
@@ -744,9 +768,9 @@ class AlumnoGradoController extends Controller
             })
             ->findOrFail($id);
 
-        if ((float) ($examen->monto_pagado ?? 0) > 0) {
+        if ((float) ($examen->monto ?? 0) <= 0 || (float) ($examen->monto_pagado ?? 0) > 0) {
             return redirect()->back()
-                ->with(['message' => 'No se puede editar un examen que ya tiene pagos registrados.', 'alert-type' => 'warning']);
+                ->with(['message' => 'Para editar este examen primero debe anular el pago o la exoneración.', 'alert-type' => 'warning']);
         }
 
         try {
@@ -770,16 +794,34 @@ class AlumnoGradoController extends Controller
             abort(403, 'Solo administradores globales pueden anular pagos de examenes.');
         }
 
-        $examen = AlumnoGradoExamen::with(['alumnoGrado.alumno'])
+        $examen = AlumnoGradoExamen::with(['alumnoGrado.alumno', 'arancel'])
             ->whereNull('deleted_at')
             ->findOrFail($id);
 
-        if ((float) ($examen->monto_pagado ?? 0) <= 0) {
+        $esExonerado = (float) ($examen->monto ?? 0) <= 0;
+
+        if (!$esExonerado && (float) ($examen->monto_pagado ?? 0) <= 0) {
             return redirect()->back()
                 ->with(['message' => 'Este examen no tiene pago registrado.', 'alert-type' => 'warning']);
         }
 
         try {
+            if ($esExonerado) {
+                $precioArancel = (float) optional($examen->arancel)->precio;
+
+                if ($precioArancel <= 0) {
+                    return redirect()->back()
+                        ->with(['message' => 'No se puede restablecer la exoneración porque el arancel no tiene precio registrado.', 'alert-type' => 'warning']);
+                }
+
+                $examen->monto = $precioArancel;
+                $examen->monto_pagado = 0;
+                $examen->save();
+
+                return redirect()->route('voyager.alumnos.show', ['id' => $examen->alumnoGrado->alumno_id])
+                    ->with(['message' => 'Exoneración anulada. El examen volvió a estado Pendiente.', 'alert-type' => 'success']);
+            }
+
             $examen->monto_pagado = 0;
             $examen->save();
 

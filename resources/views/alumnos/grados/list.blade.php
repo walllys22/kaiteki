@@ -202,20 +202,15 @@
                                             </a>
                                             @if(auth()->user()->dojo_id === null && auth()->user()->hasPermission('edit_alumnos'))
                                                 @if((float) ($repaso->monto ?? 0) <= 0)
-                                                {{-- Exonerado: editar directo (monto_pagado ya es 0) --}}
-                                                <button type="button"
-                                                        class="btn btn-warning btn-xs btn-edit-repaso"
-                                                        title="Editar repaso exonerado (admin global)"
-                                                        data-toggle="modal"
-                                                        data-target="#modal-edit-repaso"
-                                                        data-id="{{ $repaso->id }}"
-                                                        data-monto="{{ number_format((float) ($repaso->monto ?? 0), 2, '.', '') }}"
-                                                        data-observacion="{{ $repaso->observacion ?? '' }}"
-                                                        data-url="{{ route('alumno.grado.repaso.update', $repaso->id) }}">
-                                                    <i class="fa-solid fa-pen"></i>
-                                                </button>
+                                                <form action="{{ route('alumno.grado.repaso.anular-pago', $repaso->id) }}" method="POST" style="display:inline;"
+                                                      onsubmit="return confirm('¿Anular la exoneración de este repaso? Se restablecerá el precio del arancel y volverá a estado Pendiente.');">
+                                                    @csrf
+                                                    @method('PUT')
+                                                    <button type="submit" class="btn btn-danger btn-xs" title="Anular exoneración (solo admin global)">
+                                                        <i class="fa-solid fa-rotate-left"></i>
+                                                    </button>
+                                                </form>
                                                 @else
-                                                {{-- Pagado: anular pago para volver a pendiente --}}
                                                 <form action="{{ route('alumno.grado.repaso.anular-pago', $repaso->id) }}" method="POST" style="display:inline;"
                                                       onsubmit="return confirm('¿Anular el pago de este repaso? Volverá a estado Pendiente.');">
                                                     @csrf
@@ -362,17 +357,14 @@
                                             </a>
                                             @if(auth()->user()->dojo_id === null && auth()->user()->hasPermission('edit_alumnos'))
                                                 @if((float) ($examen->monto ?? 0) <= 0)
-                                                <button type="button"
-                                                        class="btn btn-warning btn-xs btn-edit-examen"
-                                                        title="Editar examen exonerado (admin global)"
-                                                        data-toggle="modal"
-                                                        data-target="#modal-edit-examen"
-                                                        data-id="{{ $examen->id }}"
-                                                        data-monto="{{ number_format((float) ($examen->monto ?? 0), 2, '.', '') }}"
-                                                        data-observacion="{{ $examen->observacion ?? '' }}"
-                                                        data-url="{{ route('alumno.grado.examen.update', $examen->id) }}">
-                                                    <i class="fa-solid fa-pen"></i>
-                                                </button>
+                                                <form action="{{ route('alumno.grado.examen.anular-pago', $examen->id) }}" method="POST" style="display:inline;"
+                                                      onsubmit="return confirm('¿Anular la exoneración de este examen? Se restablecerá el precio del arancel y volverá a estado Pendiente.');">
+                                                    @csrf
+                                                    @method('PUT')
+                                                    <button type="submit" class="btn btn-danger btn-xs" title="Anular exoneración (solo admin global)">
+                                                        <i class="fa-solid fa-rotate-left"></i>
+                                                    </button>
+                                                </form>
                                                 @else
                                                 <form action="{{ route('alumno.grado.examen.anular-pago', $examen->id) }}" method="POST" style="display:inline;"
                                                       onsubmit="return confirm('¿Anular el pago de este examen? Volverá a estado Pendiente.');">
@@ -450,12 +442,14 @@
         // Fecha mínima para repaso: día siguiente al más reciente entre inicio del grado, último repaso y último examen
         $candidatosRepaso = array_filter([$fechaInicioGrado, $ultimoRepasoFechaRaw, $ultimoExamenFechaRaw]);
         $minFechaRepaso   = \Carbon\Carbon::parse(max($candidatosRepaso))->addDay()->format('Y-m-d');
-        $defaultFechaRepaso = $minFechaRepaso > date('Y-m-d') ? $minFechaRepaso : date('Y-m-d');
+        $maxFechaRepaso = date('Y-m-d');
+        $defaultFechaRepaso = $maxFechaRepaso;
 
         // Fecha mínima para examen: día siguiente al más reciente entre inicio del grado, último repaso y último examen
         $candidatosExamen = array_filter([$fechaInicioGrado, $ultimoRepasoFechaRaw, $ultimoExamenFechaRaw]);
         $minFechaExamen   = \Carbon\Carbon::parse(max($candidatosExamen))->addDay()->format('Y-m-d');
-        $defaultFechaExamen = $minFechaExamen > date('Y-m-d') ? $minFechaExamen : date('Y-m-d');
+        $maxFechaExamen = date('Y-m-d');
+        $defaultFechaExamen = $maxFechaExamen;
         $refExamenLabel = max($candidatosExamen);
     @endphp
 
@@ -477,6 +471,7 @@
                                 <input type="date" name="fecha" class="form-control"
                                        value="{{ $defaultFechaRepaso }}"
                                        @if($minFechaRepaso) min="{{ $minFechaRepaso }}" @endif
+                                       max="{{ $maxFechaRepaso }}"
                                        required>
                                 <small class="text-muted">
                                     Debe ser posterior al
@@ -491,6 +486,11 @@
                                         inicio del grado ({{ \Carbon\Carbon::parse($fechaInicioGrado)->format('d/m/Y') }})
                                     @endif
                                 </small>
+                                @if($minFechaRepaso > $maxFechaRepaso)
+                                    <small class="text-danger" style="display:block;">
+                                        Aún no se puede registrar el repaso porque la fecha mínima permitida es {{ \Carbon\Carbon::parse($minFechaRepaso)->format('d/m/Y') }}.
+                                    </small>
+                                @endif
                             </div>
                             <div class="form-group col-md-6">
                                 <label>Resultado <span class="text-danger">*</span></label>
@@ -579,6 +579,7 @@
                                 <input type="date" name="fecha" class="form-control"
                                        value="{{ $defaultFechaExamen }}"
                                        min="{{ $minFechaExamen }}"
+                                       max="{{ $maxFechaExamen }}"
                                        required>
                                 <small class="text-muted">
                                     Debe ser posterior al
@@ -590,6 +591,11 @@
                                         inicio del grado ({{ \Carbon\Carbon::parse($fechaInicioGrado)->format('d/m/Y') }})
                                     @endif
                                 </small>
+                                @if($minFechaExamen > $maxFechaExamen)
+                                    <small class="text-danger" style="display:block;">
+                                        Aún no se puede registrar el examen porque la fecha mínima permitida es {{ \Carbon\Carbon::parse($minFechaExamen)->format('d/m/Y') }}.
+                                    </small>
+                                @endif
                             </div>
                             <div class="form-group col-md-6">
                                 <label>Resultado <span class="text-danger">*</span></label>
@@ -1006,19 +1012,16 @@
                                                             </a>
                                                             @if(auth()->user()->dojo_id === null && auth()->user()->hasPermission('edit_alumnos'))
                                                                 @if((float) ($r->monto ?? 0) <= 0)
-                                                                <button type="button"
-                                                                        class="btn btn-warning btn-xs btn-edit-repaso"
-                                                                        title="Editar repaso exonerado"
-                                                                        data-toggle="modal" data-target="#modal-edit-repaso"
-                                                                        data-id="{{ $r->id }}"
-                                                                        data-monto="{{ number_format((float) ($r->monto ?? 0), 2, '.', '') }}"
-                                                                        data-observacion="{{ $r->observacion ?? '' }}"
-                                                                        data-url="{{ route('alumno.grado.repaso.update', $r->id) }}">
-                                                                    <i class="fa-solid fa-pen"></i>
-                                                                </button>
+                                                                <form action="{{ route('alumno.grado.repaso.anular-pago', $r->id) }}" method="POST" style="display:inline;"
+                                                                      onsubmit="return confirm('¿Anular la exoneración de este repaso? Se restablecerá el precio del arancel y volverá a estado Pendiente.');">
+                                                                    @csrf @method('PUT')
+                                                                    <button type="submit" class="btn btn-danger btn-xs" title="Anular exoneración">
+                                                                        <i class="fa-solid fa-rotate-left"></i>
+                                                                    </button>
+                                                                </form>
                                                                 @else
                                                                 <form action="{{ route('alumno.grado.repaso.anular-pago', $r->id) }}" method="POST" style="display:inline;"
-                                                                      onsubmit="return confirm('¿Anular el pago de este repaso?');">
+                                                                      onsubmit="return confirm('¿Anular el pago de este repaso? Volverá a estado Pendiente.');">
                                                                     @csrf @method('PUT')
                                                                     <button type="submit" class="btn btn-danger btn-xs" title="Anular pago">
                                                                         <i class="fa-solid fa-rotate-left"></i>
@@ -1110,19 +1113,16 @@
                                                             </a>
                                                             @if(auth()->user()->dojo_id === null && auth()->user()->hasPermission('edit_alumnos'))
                                                                 @if((float) ($e->monto ?? 0) <= 0)
-                                                                <button type="button"
-                                                                        class="btn btn-warning btn-xs btn-edit-examen"
-                                                                        title="Editar examen exonerado"
-                                                                        data-toggle="modal" data-target="#modal-edit-examen"
-                                                                        data-id="{{ $e->id }}"
-                                                                        data-monto="{{ number_format((float) ($e->monto ?? 0), 2, '.', '') }}"
-                                                                        data-observacion="{{ $e->observacion ?? '' }}"
-                                                                        data-url="{{ route('alumno.grado.examen.update', $e->id) }}">
-                                                                    <i class="fa-solid fa-pen"></i>
-                                                                </button>
+                                                                <form action="{{ route('alumno.grado.examen.anular-pago', $e->id) }}" method="POST" style="display:inline;"
+                                                                      onsubmit="return confirm('¿Anular la exoneración de este examen? Se restablecerá el precio del arancel y volverá a estado Pendiente.');">
+                                                                    @csrf @method('PUT')
+                                                                    <button type="submit" class="btn btn-danger btn-xs" title="Anular exoneración">
+                                                                        <i class="fa-solid fa-rotate-left"></i>
+                                                                    </button>
+                                                                </form>
                                                                 @else
                                                                 <form action="{{ route('alumno.grado.examen.anular-pago', $e->id) }}" method="POST" style="display:inline;"
-                                                                      onsubmit="return confirm('¿Anular el pago de este examen?');">
+                                                                      onsubmit="return confirm('¿Anular el pago de este examen? Volverá a estado Pendiente.');">
                                                                     @csrf @method('PUT')
                                                                     <button type="submit" class="btn btn-danger btn-xs" title="Anular pago">
                                                                         <i class="fa-solid fa-rotate-left"></i>
