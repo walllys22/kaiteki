@@ -129,6 +129,16 @@ Most list views are loaded via AJAX. The controller has two methods:
 ### Student detail (read)
 The alumno detail page (`alumnos/read.blade.php`) is the hub for managing: tutors (`AlumnoTutor`), health conditions (`AlumnoEnfermedad`), belt grades (`AlumnoGrado`), schedules (`AlumnoHorario`), attendance history, monthly payments, kardex, and grade history. Editing alumnos from the list is intentionally disabled — only creation and status toggle are allowed from the list.
 
+The tutors list (`alumnos/tutores/list.blade.php`) has a per-row "Ver" button (eye icon) that opens modal `#modal-ver-tutor` with the tutor person's full info (photo, document, parentesco, birth date, gender, blood type, phone, email, address, estado). Data comes from `data-*` attributes already loaded in `tutorList()` — no extra route. Modal + delegated click handler (`$(document).off().on('click', '.btn-ver-tutor')`) live inside the AJAX partial so they survive list reloads.
+
+### Alumno progression filter (report) — `AlumnoController::list()`
+The Alumnos browse list (`alumnos/browse.blade.php`) has a `#filter-estado` dropdown that passes an `estado` query param to `list()`:
+- `repaso` → alumnos whose **active** grade is Kyu (`usaRepasos()`) with puntas still incomplete (approved repasos `< Grado.puntas`) — i.e. still able to take a repaso/punta.
+- `examen` → alumnos whose active grade has puntas complete **or** is a Dan grade — i.e. ready for the final exam.
+- empty → all alumnos (normal list).
+
+Both branches stay dojo-scoped (`auth()->user()->dojo_id`). When `estado` is set, `list()` evaluates progression in PHP over the dojo-scoped collection (active grade = `ultimoGrado` with `status != '1'`; puntas = count of `repasos` with `aprobado=1`) and rebuilds a `LengthAwarePaginator` manually (no per-alumno asistencia query — date/arancel gating is irrelevant to the report). The list view (`alumnos/list.blade.php`) shows a puntas progress badge (`x/y puntas`, "Listo p/ examen", or "Examen directo") in the grade cell whenever the active grade's `repasos` relation is loaded.
+
 Inactive students (`Alumno.status != 1`) are read-only for operational actions, except debt collection. Existing unpaid repaso, exam, and mensualidad debts can still be paid while the alumno is inactive. Shared controller guard: `Controller::ensureAlumnoActivo()`. It also enforces dojo scope for branch users when it receives an alumno id. Do not use this guard in payment-only actions that must allow inactive alumnos; keep explicit dojo scoping instead.
 
 ### Student auxiliary routes

@@ -181,14 +181,16 @@ class AlumnoController extends Controller
 
         $search = request('search') ?? null;
         $paginate = request('paginate') ?? 10;
+        $estado = request('estado'); // '', 'repaso' (listos para punta), 'examen' (listos para examen)
         $userDojoId = auth()->user()->dojo_id;
 
-        $data = Alumno::query()
+        $query = Alumno::query()
             ->with([
                 'person',
                 'dojo',
                 'register',
                 'ultimoGrado.grado',
+                'ultimoGrado.repasos',
                 'alumnoHorarios' => function ($query) {
                     $query->with('horario')
                         ->orderByDesc('status')
@@ -208,10 +210,41 @@ class AlumnoController extends Controller
             })
             ->whereNotNull('person_id')
             ->whereNull('deleted_at')
-            ->orderBy('id', 'DESC')
-            ->paginate($paginate);
+            ->orderBy('id', 'DESC');
 
-        return view('alumnos.list', compact('data'));
+        if (in_array($estado, ['repaso', 'examen'], true)) {
+            // Filtro por estado de progresión del grado activo (calculado, dojo-scoped).
+            // repaso → grado Kyu activo con puntas incompletas (aún puede dar repaso/punta)
+            // examen → puntas completas o grado Dan (listo para examen final)
+            $filtered = $query->get()->filter(function ($item) use ($estado) {
+                $ag = $item->ultimoGrado;
+                if (!$ag || (string) $ag->status === '1' || !$ag->grado) {
+                    return false;
+                }
+                $usaRepasos   = $ag->grado->usaRepasos();
+                $req          = (int) $ag->grado->puntas;
+                $aprob        = $ag->repasos->where('aprobado', 1)->count();
+                $cumplePuntas = $usaRepasos ? ($aprob >= $req) : true;
+
+                return $estado === 'repaso'
+                    ? ($usaRepasos && !$cumplePuntas)
+                    : $cumplePuntas;
+            })->values();
+
+            $page  = (int) (request('page') ?? 1);
+            $items = $filtered->forPage($page, $paginate)->values();
+            $data  = new \Illuminate\Pagination\LengthAwarePaginator(
+                $items,
+                $filtered->count(),
+                $paginate,
+                $page,
+                ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+            );
+        } else {
+            $data = $query->paginate($paginate);
+        }
+
+        return view('alumnos.list', compact('data', 'estado'));
     }
 
     public function create()

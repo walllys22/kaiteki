@@ -42,7 +42,7 @@
                 <div class="panel panel-bordered">
                     <div class="panel-body">
                         <div class="row">
-                            <div class="col-sm-9">
+                            <div class="col-sm-4">
                                 <div class="dataTables_length" id="dataTable_length">
                                     <label>Mostrar <select id="select-paginate" class="form-control input-sm">
                                         <option value="10">10</option>
@@ -52,7 +52,14 @@
                                     </select> registros</label>
                                 </div>
                             </div>
-                            <div class="col-sm-3" style="margin-bottom: 10px">
+                            <div class="col-sm-4" style="margin-bottom: 10px">
+                                <select id="filter-estado" class="form-control input-sm" title="Reporte por estado de progresión">
+                                    <option value="">— Todos los alumnos —</option>
+                                    <option value="repaso">⭐ Listos para repaso/punta</option>
+                                    <option value="examen">🎓 Por dar examen</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-4" style="margin-bottom: 10px">
                                 <input type="text" id="input-search" placeholder="🔍 Buscar..." class="form-control">
                             </div>
                         </div>
@@ -464,6 +471,10 @@
                 list();
             });
 
+            $('#filter-estado').change(function(){
+                list();
+            });
+
             $('#input-search').on('input', function() {
                 clearTimeout(timeout);
                 timeout = setTimeout(function() {
@@ -554,9 +565,10 @@
 
             let url = '{{ url("admin/alumnos/ajax/list") }}';
             let search = $('#input-search').val() ? $('#input-search').val() : '';
+            let estado = $('#filter-estado').val() || '';
 
             $.ajax({
-                url: `${url}?search=${search}&paginate=${countPage}&page=${page}`,
+                url: `${url}?search=${search}&paginate=${countPage}&page=${page}&estado=${estado}`,
                 type: 'get',
                 success: function(result){
                     $("#div-results").html(result);

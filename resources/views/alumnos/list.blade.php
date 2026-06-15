@@ -28,6 +28,13 @@
                     $gradoLabel = trim(($grado->tipo ?? '') . ' ' . ($grado->numero ?? '') . ' ' . ($grado->nombre ?? ''));
                     $gradoStatus = optional($ultimoAlumnoGrado)->status;
                     $tieneGradoActual = $ultimoAlumnoGrado && (string) $gradoStatus !== '1';
+                    // Progreso de puntas del grado activo
+                    $usaRepasosGrado = $grado ? $grado->usaRepasos() : false;
+                    $puntasReq = (int) optional($grado)->puntas;
+                    $puntasAprob = ($ultimoAlumnoGrado && $ultimoAlumnoGrado->relationLoaded('repasos'))
+                        ? $ultimoAlumnoGrado->repasos->where('aprobado', 1)->count()
+                        : null;
+                    $cumplePuntas = $usaRepasosGrado ? ($puntasAprob !== null && $puntasAprob >= $puntasReq) : true;
                     $horariosAsignados = $item->alumnoHorarios->filter(function ($alumnoHorario) {
                         return $alumnoHorario->horario;
                     });
@@ -68,6 +75,19 @@
                                 <label class="label label-success">Completado</label>
                             @else
                                 <label class="label label-info">En progreso</label>
+                            @endif
+                            @if ($tieneGradoActual && $puntasAprob !== null)
+                                <br>
+                                @if ($usaRepasosGrado)
+                                    <small class="label {{ $cumplePuntas ? 'label-success' : 'label-warning' }}" style="font-size:11px;">
+                                        <i class="fa-solid fa-star"></i> {{ $puntasAprob }}/{{ $puntasReq }} puntas
+                                    </small>
+                                    @if ($cumplePuntas)
+                                        <br><small class="text-success" style="font-size:11px;"><i class="fa-solid fa-graduation-cap"></i> Listo p/ examen</small>
+                                    @endif
+                                @else
+                                    <br><small class="text-success" style="font-size:11px;"><i class="fa-solid fa-graduation-cap"></i> Examen directo</small>
+                                @endif
                             @endif
                         @else
                             <span class="text-muted">Sin grado registrado</span>
