@@ -284,6 +284,34 @@ class AlumnoController extends Controller
         }
     }
 
+    /**
+     * Edita la fecha de ingreso del alumno. Solo permitido para usuarios con rol 'admin'.
+     */
+    public function updateFechaIngreso(Request $request, $id)
+    {
+        $this->custom_authorize('edit_alumnos');
+
+        if (!in_array(optional(auth()->user()->role)->name, ['admin', 'administrador'], true)) {
+            abort(403, 'Solo el administrador puede editar la fecha de ingreso.');
+        }
+
+        $request->validate([
+            'fechaIngreso' => 'required|date|before_or_equal:today',
+        ], [
+            'fechaIngreso.before_or_equal' => 'La fecha de ingreso no puede ser mayor a la fecha del sistema.',
+        ]);
+
+        $userDojoId = auth()->user()->dojo_id;
+        $alumno = Alumno::when($userDojoId, fn($q) => $q->where('dojo_id', $userDojoId))
+            ->findOrFail($id);
+
+        $alumno->fechaIngreso = $request->fechaIngreso;
+        $alumno->save();
+
+        return redirect()->route('voyager.alumnos.show', ['id' => $alumno->id])
+            ->with(['message' => 'Fecha de ingreso actualizada exitosamente.', 'alert-type' => 'success']);
+    }
+
     public function show($id)
     {
         $this->custom_authorize('read_alumnos');

@@ -143,6 +143,71 @@ class AlumnoGradoController extends Controller
         }
     }
 
+    /**
+     * Edita la fecha de inicio de un grado, solo si aún no tiene repasos ni examenes.
+     * La fecha no puede ser mayor a la del sistema ni anterior al examen final
+     * aprobado del grado completado previo.
+     */
+    public function updateGradoFecha(Request $request, int $id)
+    {
+        $this->custom_authorize('edit_alumnos');
+
+        if (!in_array(optional(auth()->user()->role)->name, ['admin', 'administrador'], true)) {
+            abort(403, 'Solo el administrador puede editar la fecha del grado.');
+        }
+
+        $request->validate([
+            'fecha' => 'required|date|before_or_equal:today',
+        ], [
+            'fecha.before_or_equal' => 'La fecha del grado no puede ser mayor a la fecha del sistema.',
+        ]);
+
+        $alumnoGrado = AlumnoGrado::with(['repasos', 'examenes'])
+            ->whereNull('deleted_at')
+            ->findOrFail($id);
+
+        $alumno = $this->ensureAlumnoActivo($alumnoGrado->alumno_id);
+
+        // Solo grados en progreso (no completados)
+        if ($alumnoGrado->isCompletado()) {
+            return redirect()->route('voyager.alumnos.show', ['id' => $alumno->id])
+                ->with(['message' => 'No se puede editar la fecha de un grado completado.', 'alert-type' => 'error']);
+        }
+
+        // Bloquear si ya tiene repasos o examenes registrados
+        if ($alumnoGrado->repasos->isNotEmpty() || $alumnoGrado->examenes->isNotEmpty()) {
+            return redirect()->route('voyager.alumnos.show', ['id' => $alumno->id])
+                ->with(['message' => 'No se puede editar la fecha: el grado ya tiene repasos o examenes registrados.', 'alert-type' => 'error']);
+        }
+
+        // La fecha no puede ser anterior al examen final aprobado del grado completado previo
+        $ultimoCompletado = AlumnoGrado::where('alumno_id', $alumno->id)
+            ->where('status', '1')
+            ->whereNull('deleted_at')
+            ->orderByDesc('id')
+            ->first();
+
+        if ($ultimoCompletado) {
+            $fechaExamen = AlumnoGradoExamen::where('alumno_grado_id', $ultimoCompletado->id)
+                ->where('aprobado', 1)
+                ->whereNull('deleted_at')
+                ->orderByDesc('fecha')
+                ->value('fecha');
+
+            if ($fechaExamen && $request->fecha < $fechaExamen) {
+                $fechaFormateada = Carbon::parse($fechaExamen)->format('d/m/Y');
+                return redirect()->route('voyager.alumnos.show', ['id' => $alumno->id])
+                    ->with(['message' => "La fecha de inicio no puede ser anterior al examen final aprobado del grado previo ({$fechaFormateada}).", 'alert-type' => 'error']);
+            }
+        }
+
+        $alumnoGrado->fecha = $request->fecha;
+        $alumnoGrado->save();
+
+        return redirect()->route('voyager.alumnos.show', ['id' => $alumno->id])
+            ->with(['message' => 'Fecha del grado actualizada exitosamente.', 'alert-type' => 'success']);
+    }
+
     // ─── Repasos (Puntas) ─────────────────────────────────────────────────────
 
     public function storeRepaso(Request $request)

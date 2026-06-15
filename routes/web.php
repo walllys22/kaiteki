@@ -70,6 +70,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system', 'dojo.me
     Route::get('alumnos/{id}/historial-grados', [AlumnoController::class, 'historialGrados'])->name('alumnos.historial.grados');
     Route::get('alumnos/{id}/check-historial', [AlumnoController::class, 'checkHistorial'])->name('alumnos.check_historial');
     Route::post('alumnos/{id}/status', [AlumnoController::class, 'updateStatus'])->name('alumnos.status.update');
+    Route::put('alumnos/{id}/fecha-ingreso', [AlumnoController::class, 'updateFechaIngreso'])->name('alumnos.fecha_ingreso.update');
     Route::get('alumnos/check-registration/{person_id}', [AlumnoController::class, 'checkRegistration'])->name('alumnos.check_registration');
     Route::get('alumnos/imprimir/reporte', [AlumnoController::class, 'print'])->name('alumnos.print');
     
@@ -114,6 +115,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system', 'dojo.me
 
     // Rutas Alumno Grados
     Route::post('alumnos/grado/store', [AlumnoGradoController::class, 'storeGrado'])->name('alumno.grado.store');
+    Route::put('alumnos/grado/{id}/fecha', [AlumnoGradoController::class, 'updateGradoFecha'])->name('alumno.grado.fecha.update');
     Route::post('alumnos/grado/repaso/store', [AlumnoGradoController::class, 'storeRepaso'])->name('alumno.grado.repaso.store');
     Route::get('alumnos/grado/repaso/{id}/comprobante', [AlumnoGradoController::class, 'comprobanteRepaso'])->name('alumno.grado.repaso.comprobante');
     Route::put('alumnos/grado/repaso/{id}/pagar', [AlumnoGradoController::class, 'pagarRepaso'])->name('alumno.grado.repaso.pagar');

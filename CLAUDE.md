@@ -137,11 +137,14 @@ GET  admin/alumnos/{id}/kardex             alumnos.kardex
 GET  admin/alumnos/{id}/historial-grados   alumnos.historial.grados
 GET  admin/alumnos/{id}/check-historial    alumnos.check_historial
 POST admin/alumnos/{id}/status             alumnos.status.update
+PUT  admin/alumnos/{id}/fecha-ingreso      alumnos.fecha_ingreso.update
 GET  admin/alumnos/check-registration/{person_id} alumnos.check_registration
 GET  admin/alumnos/imprimir/reporte        alumnos.print
 ```
 
 `updateStatus()` cannot inactivate a student while they have an active monthly plan or a currently vigente mensualidad. `checkRegistration()` prevents registering a person already used as an alumno anywhere in the system and also detects when the selected person is the responsible person for the same dojo.
+
+`updateFechaIngreso()` edits `Alumno.fechaIngreso` and is restricted to users whose role is `admin` or `administrador` (`abort(403)` otherwise). Role `administrador_dojo` is NOT allowed. The new date cannot be after today. The edit pencil next to "Fecha de Ingreso" in `alumnos/read.blade.php` (modal `#modal-edit-fecha-ingreso`) is rendered only for those roles.
 
 ---
 
@@ -203,6 +206,7 @@ Belt grade advancement is enforced through a structured progression system.
 16. Pending repaso/exam payments can be marked paid later through `pagarRepaso()` / `pagarExamen()`, even when the alumno is inactive. Direct access is blocked if the item is already fully paid.
 17. Printed comprobantes are only available when the repaso or exam is fully paid.
 18. When an exam is approved and there are active unused grades after the current one (or grades with `orden=null`), `next_grado_id` is required and the controller creates the next `AlumnoGrado` with the same exam date and `status='0'`.
+19. The start date (`AlumnoGrado.fecha`) of an in-progress grade can be edited via `updateGradoFecha()` **only** by users with role `admin` or `administrador` (`abort(403)` otherwise; `administrador_dojo` is NOT allowed) and only while the grade has no repasos and no examenes. The new date cannot be after today (system date) and cannot be earlier than the approved final exam of the previous completed grade. The edit pencil in `alumnos/grados/list.blade.php` (modal `#modal-edit-grado-fecha`) renders only for those roles under the same conditions.
 
 ### Date validation rules for repasos and examenes
 All validated server-side in `storeRepaso()` and `storeExamen()`. Also enforced client-side via `min` attribute on date inputs in the modal.
@@ -272,6 +276,7 @@ Certificate support is currently configured only for `dojo_id = 3` (`L.J.P. Zaba
 ### Routes (`AlumnoGradoController`)
 ```
 POST   admin/alumnos/grado/store                       alumno.grado.store
+PUT    admin/alumnos/grado/{id}/fecha                   alumno.grado.fecha.update
 POST   admin/alumnos/grado/repaso/store                alumno.grado.repaso.store
 GET    admin/alumnos/grado/repaso/{id}/comprobante     alumno.grado.repaso.comprobante
 PUT    admin/alumnos/grado/repaso/{id}/pagar           alumno.grado.repaso.pagar

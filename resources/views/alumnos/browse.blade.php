@@ -14,7 +14,7 @@
                             </h1>
                         </div>
                         <div class="col-md-8 text-right" style="margin-top: 30px">
-                            <a href="#" class="btn btn-success" data-toggle="modal" data-target="#modal-print">
+                            <a href="#" class="btn btn-dark" data-toggle="modal" data-target="#modal-print">
                                 <i class="fa-solid fa-print"></i> <span>Imprimir</span>
                             </a>
                             @if (auth()->user()->hasPermission('add_alumnos'))

@@ -107,7 +107,18 @@
                                     </div>
                                     <div class="col-md-3 form-group">
                                         <label class="control-label" style="font-weight:bold;">Fecha de Ingreso</label>
-                                        <p class="form-control-static">{{ $alumno->fechaIngreso ? \Carbon\Carbon::parse($alumno->fechaIngreso)->format('d/m/Y') : 'No registrada' }}</p>
+                                        <p class="form-control-static">
+                                            {{ $alumno->fechaIngreso ? \Carbon\Carbon::parse($alumno->fechaIngreso)->format('d/m/Y') : 'No registrada' }}
+                                            @if(in_array(optional(auth()->user()->role)->name, ['admin', 'administrador']))
+                                                <button type="button"
+                                                        class="btn btn-warning btn-xs"
+                                                        data-toggle="modal"
+                                                        data-target="#modal-edit-fecha-ingreso"
+                                                        title="Editar fecha de ingreso (solo administrador)">
+                                                    <i class="fa-solid fa-pen"></i>
+                                                </button>
+                                            @endif
+                                        </p>
                                     </div>
                                     <div class="col-md-3 form-group">
                                         <label class="control-label" style="font-weight:bold;">Género</label>
@@ -536,6 +547,37 @@
             </div>
         </form>
 
+    @if(in_array(optional(auth()->user()->role)->name, ['admin', 'administrador']))
+    {{-- Modal: Editar fecha de ingreso (solo admin) --}}
+    <div class="modal fade" tabindex="-1" id="modal-edit-fecha-ingreso" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="{{ route('alumnos.fecha_ingreso.update', $alumno->id) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title"><i class="fa-solid fa-pen"></i> Editar Fecha de Ingreso</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="edit_fechaIngreso">Fecha de ingreso <span class="text-danger">*</span></label>
+                            <input type="date" id="edit_fechaIngreso" name="fechaIngreso" class="form-control"
+                                   value="{{ $alumno->fechaIngreso ? \Carbon\Carbon::parse($alumno->fechaIngreso)->format('Y-m-d') : '' }}"
+                                   max="{{ now()->format('Y-m-d') }}" required>
+                            <small class="text-muted">No puede ser mayor a la fecha del sistema.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-warning btn-submit">Guardar cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
+
     @include('partials.modal-registerPerson')
     </div>
 @stop
@@ -654,6 +696,21 @@
                     width: '100%'
                 });
             });
+
+            // Impedir seleccionar fecha de ingreso mayor a la del sistema (fecha local)
+            (function() {
+                var hoy = new Date();
+                var hoyLocal = new Date(hoy.getTime() - hoy.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+                var $fi = $('#edit_fechaIngreso');
+                if ($fi.length) {
+                    $fi.attr('max', hoyLocal);
+                    $fi.on('change input', function() {
+                        if (this.value && this.value > hoyLocal) {
+                            this.value = hoyLocal;
+                        }
+                    });
+                }
+            })();
 
             $('#modal-add-tutor').on('shown.bs.modal', function() {
                 var p = pendingTutorPerson;

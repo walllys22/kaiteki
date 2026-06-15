@@ -31,6 +31,15 @@
                     <h4 style="margin:0; font-size:15px; font-weight:700;">
                         <i class="fa-solid fa-award" style="color:#3498db;"></i>
                         Grado en Progreso: <span style="color:#2c3e50;">{{ $gradoLabel ?: 'Sin nombre' }}</span> - <strong>{{ \Carbon\Carbon::parse($activeGrado->fecha)->format('d/m/Y') }}</strong>
+                        @if(($alumnoActivo ?? true) && !$activeGrado->isCompletado() && $repasos->isEmpty() && $examenes->isEmpty() && in_array(optional(auth()->user()->role)->name, ['admin', 'administrador']))
+                            <button type="button"
+                                    class="btn btn-warning btn-xs"
+                                    data-toggle="modal"
+                                    data-target="#modal-edit-grado-fecha"
+                                    title="Editar fecha del grado">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                        @endif
                     </h4>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
@@ -431,6 +440,44 @@
             @endif
         </div>{{-- /panel-body --}}
     </div>{{-- /panel --}}
+
+    {{-- Modal: Editar fecha del grado (solo admin, sin repasos ni examenes) --}}
+    @if(($alumnoActivo ?? true) && !$activeGrado->isCompletado() && $repasos->isEmpty() && $examenes->isEmpty() && in_array(optional(auth()->user()->role)->name, ['admin', 'administrador']))
+    <div class="modal fade" tabindex="-1" id="modal-edit-grado-fecha" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="{{ route('alumno.grado.fecha.update', $activeGrado->id) }}" method="POST" class="form-edit-add">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                        <h4 class="modal-title"><i class="fa-solid fa-pen"></i> Editar Fecha del Grado</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Fecha de inicio del grado <span class="text-danger">*</span></label>
+                            <input type="date" name="fecha" class="form-control"
+                                   value="{{ \Carbon\Carbon::parse($activeGrado->fecha)->format('Y-m-d') }}"
+                                   @if(!empty($minFechaGrado)) min="{{ \Carbon\Carbon::parse($minFechaGrado)->format('Y-m-d') }}" @endif
+                                   max="{{ date('Y-m-d') }}"
+                                   required>
+                            <small class="text-muted">
+                                No puede ser mayor a la fecha del sistema
+                                @if(!empty($minFechaGrado))
+                                    ni anterior al examen del grado previo ({{ \Carbon\Carbon::parse($minFechaGrado)->format('d/m/Y') }})
+                                @endif.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-warning btn-submit">Guardar cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
 
     {{-- Modal: Agregar Repaso --}}
     @if(!$activeGrado->isCompletado())
@@ -1215,6 +1262,21 @@
         detailRow.style.display = isOpen ? 'none' : 'table-row';
         if (chevron) chevron.classList.toggle('open', !isOpen);
     });
+
+    // Impedir seleccionar fecha del grado mayor a la del sistema (fecha local)
+    (function() {
+        var hoy = new Date();
+        var hoyLocal = new Date(hoy.getTime() - hoy.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+        var input = document.querySelector('#modal-edit-grado-fecha input[name="fecha"]');
+        if (input) {
+            input.setAttribute('max', hoyLocal);
+            input.addEventListener('input', function() {
+                if (this.value && this.value > hoyLocal) {
+                    this.value = hoyLocal;
+                }
+            });
+        }
+    })();
 
     $('#modal-pagar-repaso').on('show.bs.modal', function(event) {
         var button = $(event.relatedTarget);
