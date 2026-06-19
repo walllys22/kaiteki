@@ -15,11 +15,12 @@ class StorageController extends Controller
         $this->middleware('auth');
     }
 
+
     public function store_image($file, $folder, $size = 1200)
     {
         try {
             $directory = $folder.'/'.date('F').date('Y');
-            Storage::disk('public')->makeDirectory($directory);
+            Storage::disk(env('FILESYSTEM_DRIVER'))->makeDirectory($directory);
     
             $base_name = Str::random(20).'day'.date('d').date('a');
     
@@ -37,9 +38,9 @@ class StorageController extends Controller
             // Liberar memoria
             $original->destroy();
     
-            if (env('FILESYSTEM_DRIVER') == 's3') {
-                return env('AWS_ENDPOINT').'/'.env('AWS_BUCKET').'/'.env('AWS_ROOT').'/'.$paths['normal'];
-            }
+            // if (env('FILESYSTEM_DRIVER') == 's3') {
+            //     return env('AWS_ENDPOINT').'/'.env('AWS_BUCKET').'/'.env('AWS_ROOT').'/'.$paths['normal'];
+            // }
     
             // Devolvemos la ruta de la imagen principal en formato AVIF
             return $paths['normal'];
@@ -115,7 +116,7 @@ class StorageController extends Controller
                 });
             }
     
-            Storage::disk('public')->put($path, $image->encode($config['format'], $config['quality']));
+            Storage::disk(env('FILESYSTEM_DRIVER'))->put($path, $image->encode($config['format'], $config['quality']));
             $image->destroy();
     
             $paths[$key] = $path;
