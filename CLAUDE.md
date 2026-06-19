@@ -116,6 +116,13 @@ Most list views are loaded via AJAX. The controller has two methods:
 ### Person quick-register modal
 `AjaxController@personStore` and `AjaxController@personList` provide AJAX endpoints used in the shared modal (`resources/views/partials/modal-registerPerson.blade.php`) to create/select people from any form without navigating away.
 
+### File storage (S3 / Contabo)
+`FILESYSTEM_DISK=s3` points to a Contabo S3-compatible bucket (`AWS_ENDPOINT=https://usc1.contabostorage.com`, `use_path_style_endpoint=true`, bucket `tenant:kaiteki`, `AWS_ROOT=demo`). The `s3` disk in `config/filesystems.php` sets `root => env('AWS_ROOT')` and `visibility => public`, so files written via `Storage::disk('s3')` get public-read ACL automatically. The adapter packages are `league/flysystem-aws-s3-v3` + `aws/aws-sdk-php`.
+
+- Public read is granted bucket-wide for the `demo/people/*` prefix via a `PutBucketPolicy` (`s3:GetObject`, `Principal: *`). For new prefixes (e.g. dojo logos, certificates) either rely on the per-disk `visibility=public` or extend the bucket policy.
+- Person images are stored as the original `.avif` plus a `-cropped.webp` variant (same key, `.avif` stripped). Views render the cropped variant: `Storage::disk('s3')->url(str_replace('.avif','',$item->image).'-cropped.webp')`, with `asset('images/default.jpg')` as the fallback and an `onerror` handler on `<img>` for legacy records not present on S3.
+- Legacy images referenced in the DB as `people/May2026/...` predate S3 and are not in the bucket — they fall back to the default image. Other views still using `asset('storage/...-cropped.webp')` read from local `public/storage`, not S3; migrate them to `Storage::disk('s3')->url(...)` when their images move to the bucket.
+
 ### View structure
 - `resources/views/administrations/people/` — People module
 - `resources/views/alumnos/` — Students module (browse, read, tutores/, grados/, enfermedades/, horarios/, asistencias/, mensualidades/)

@@ -17,12 +17,10 @@
                 @php
                     $image = asset('images/default.jpg');
                     if($item->image){
-                        $image = asset('storage/' . str_replace('.avif', '', $item->image) . '-cropped.webp');
+                        $cropped = str_replace('.avif', '', $item->image) . '-cropped.webp';
+                        $image = Storage::disk(env('FILESYSTEM_DRIVER'))->url($cropped);
                     }
-                    $image = asset('images/default.jpg');
-                    if($item->image){
-                        $image = asset('storage/' . str_replace('.avif', '', $item->image) . '-cropped.webp');
-                    }
+
                     $now = \Carbon\Carbon::now();
                     $birthday = new \Carbon\Carbon($item->birth_date);
                     $age = $birthday->diffInYears($now);
@@ -34,7 +32,7 @@
                     </td>
                     <td>
                         <div style="display: flex; align-items: center;">
-                            <img src="{{ $image }}" alt="{{ $item->first_name }}" class="image-expandable" style="width: 60px; height: 60px; border-radius: 30px; margin-right: 10px; object-fit: cover;">
+                            <img src="{{ $image }}" alt="{{ $item->first_name }}" class="image-expandable" onerror="this.onerror=null;this.src='{{ asset('images/default.jpg') }}';" style="width: 60px; height: 60px; border-radius: 30px; margin-right: 10px; object-fit: cover;">
                             <div>
                                 <strong>{{ strtoupper($item->first_name) }}</strong><br>
                                 @if($item->dojo)
