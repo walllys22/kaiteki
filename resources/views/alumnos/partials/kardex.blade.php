@@ -1,13 +1,10 @@
 @php
     $person   = $alumno->person;
     $dojo     = $alumno->dojo;
-    $logo     = $dojo && $dojo->logo ? asset('storage/' . $dojo->logo) : asset('images/default.jpg');
+    $logo     = $dojo && $dojo->logo ? \Storage::disk(env('FILESYSTEM_DRIVER'))->url($dojo->logo) : asset('images/default.jpg');
     $photo    = asset('images/default.jpg');
     if (optional($person)->image) {
-        $photoPath = public_path('storage/' . str_replace('.avif', '', $person->image) . '-cropped.webp');
-        $photo = file_exists($photoPath)
-            ? asset('storage/' . str_replace('.avif', '', $person->image) . '-cropped.webp')
-            : asset('storage/' . $person->image);
+        $photo = \Storage::disk(env('FILESYSTEM_DRIVER'))->url(str_replace('.avif', '', $person->image) . '-cropped.webp');
     }
     $nombre   = optional($person)->first_name ?? 'Sin nombre';
     $ci       = optional($person)->ci ? (optional($person)->documentType ?? 'CI') . ': ' . $person->ci : 'No registrado';

@@ -42,12 +42,12 @@
     $template = asset('images/dojos/eka/certificados/examen.png');
     $photo    = asset('images/default.jpg');
     if (optional($person)->image) {
-        $photo = asset('storage/' . str_replace('.avif', '', $person->image) . '-cropped.webp');
+        $photo = \Storage::disk(env('FILESYSTEM_DRIVER'))->url(str_replace('.avif', '', $person->image) . '-cropped.webp');
     }
 
     $gradoImage = null;
     if (optional($grado)->image) {
-        $gradoImage = asset('storage/' . $grado->image);
+        $gradoImage = \Storage::disk(env('FILESYSTEM_DRIVER'))->url($grado->image);
     }
 @endphp
 

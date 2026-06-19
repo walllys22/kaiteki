@@ -41,7 +41,7 @@
         $alumnoActivo = (int) $alumno->status === 1;
         $image = asset('images/default.jpg');
         if (optional($person)->image) {
-            $image = asset('storage/' . str_replace('.avif', '', $person->image) . '-cropped.webp');
+            $image = \Storage::disk(env('FILESYSTEM_DRIVER'))->url(str_replace('.avif', '', $person->image) . '-cropped.webp');
         }
     @endphp
 

@@ -9,7 +9,7 @@
     $pagado = (float) ($examen->monto_pagado ?? 0);
     $saldo = max(0, $monto - $pagado);
     $estadoPago = $monto <= 0 ? 'Sin monto' : ($pagado >= $monto ? 'Pagado' : 'Pendiente');
-    $logo = optional($dojo)->logo ? asset('storage/' . $dojo->logo) : asset('images/default.jpg');
+    $logo = optional($dojo)->logo ? \Storage::disk(env('FILESYSTEM_DRIVER'))->url($dojo->logo) : asset('images/default.jpg');
 @endphp
 
 <!DOCTYPE html>

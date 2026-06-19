@@ -27,7 +27,7 @@
                         </td>
                         <td style="vertical-align: middle;">
                             @if($item->image)
-                                @php $imgSrc = asset('storage/' . str_replace('.avif', '', $item->image) . '-cropped.webp'); @endphp
+                                @php $imgSrc = \Storage::disk(env('FILESYSTEM_DRIVER'))->url(str_replace('.avif', '', $item->image) . '-cropped.webp'); @endphp
                                 <img src="{{ $imgSrc }}" alt="{{ $gradoLabel }}" class="image-expandable"
                                      style="width:50px; height:50px; border-radius:6px; object-fit:cover;"
                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">

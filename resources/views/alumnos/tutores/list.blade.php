@@ -19,7 +19,7 @@
                         @php
                             $tutorImg = asset('images/default.jpg');
                             if(optional($item->tutor)->image){
-                                $tutorImg = asset('storage/' . str_replace('.avif', '', $item->tutor->image) . '-cropped.webp');
+                                $tutorImg = \Storage::disk(env('FILESYSTEM_DRIVER'))->url(str_replace('.avif', '', $item->tutor->image) . '-cropped.webp');
                             }
                         @endphp
                         <div style="display:flex; align-items:center;">

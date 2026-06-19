@@ -43,7 +43,7 @@
                             </div>
                             <div class="panel-body" style="padding-top:0;">
                                 @if(!empty($person->image))
-                                    <img src="{{ filter_var($person->image, FILTER_VALIDATE_URL) ? $person->image : Voyager::image($person->image) }}" style="width:100%; max-width:300px; border-radius: 5px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" />
+                                    <img src="{{ filter_var($person->image, FILTER_VALIDATE_URL) ? $person->image : \Storage::disk(env('FILESYSTEM_DRIVER'))->url(str_replace('.avif', '', $person->image) . '-cropped.webp') }}" onerror="this.onerror=null;this.src='{{ asset('images/default.jpg') }}';" style="width:100%; max-width:300px; border-radius: 5px; border: 1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" />
                                 @else
                                     <div style="width:100%; height:200px; background-color: #f8f9fa; display:flex; align-items:center; justify-content:center; border: 1px solid #ddd; border-radius: 5px; color:#999;">
                                         <i class="voyager-person" style="font-size: 50px;"></i>

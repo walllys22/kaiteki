@@ -21,7 +21,7 @@
                             @php
                                 $image = asset('images/default.jpg');
                                 if($item->person->image){
-                                    $image = asset('storage/' . str_replace('.avif', '', $item->person->image) . '-cropped.webp');
+                                    $image = \Storage::disk(env('FILESYSTEM_DRIVER'))->url(str_replace('.avif', '', $item->person->image) . '-cropped.webp');
                                 }
                             @endphp
                             <div style="display: flex; align-items: center;">

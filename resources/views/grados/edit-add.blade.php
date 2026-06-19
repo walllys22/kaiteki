@@ -54,7 +54,7 @@
                                 <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
                                     @if($grado->image)
                                         @php
-                                            $imgSrc = asset('storage/' . str_replace('.avif', '', $grado->image) . '-cropped.webp');
+                                            $imgSrc = \Storage::disk(env('FILESYSTEM_DRIVER'))->url(str_replace('.avif', '', $grado->image) . '-cropped.webp');
                                         @endphp
                                         <img src="{{ $imgSrc }}"
                                              onerror="this.style.display='none'"
