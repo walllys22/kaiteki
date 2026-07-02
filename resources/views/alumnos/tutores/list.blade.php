@@ -22,11 +22,20 @@
                                 $tutorImg = \Storage::disk(env('FILESYSTEM_DRIVER'))->url(str_replace('.avif', '', $item->tutor->image) . '-cropped.webp');
                             }
                         @endphp
+                        @php
+                            $tutorEdad = optional($item->tutor)->birth_date
+                                ? \Carbon\Carbon::parse($item->tutor->birth_date)->age
+                                : null;
+                        @endphp
                         <div style="display:flex; align-items:center;">
                             <img src="{{ $tutorImg }}" alt="{{ optional($item->tutor)->first_name }}"
                                  class="image-expandable"
                                  style="width:60px; height:60px; border-radius:30px; margin-right:10px; object-fit:cover;">
-                            <span>{{ optional($item->tutor)->first_name ?: 'Tutor no disponible' }}</span>
+                            <div>
+                                <span>{{ optional($item->tutor)->first_name ?: 'Tutor no disponible' }}</span>
+                                <br>
+                                <small class="text-muted">{{ !is_null($tutorEdad) ? $tutorEdad . ' años' : 'Edad no registrada' }}</small>
+                            </div>
                         </div>
                     </td>
                     <td>{{ optional($item->pariente)->nombre ?: 'No registrado' }}</td>
