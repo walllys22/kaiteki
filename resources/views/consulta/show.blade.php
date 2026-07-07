@@ -290,7 +290,7 @@
                                 <div style="font-size:13px; color:#555; margin-bottom:6px;">
                                     <i class="fa-solid fa-star" style="color:#f39c12;"></i>
                                     Puntas (Repasos aprobados)
-                                    <strong class="pull-right">{{ $progress['puntasObtenidas'] }} / {{ $progress['puntasRequeridas'] }}</strong>
+                                    <strong class="pull-right">{{ min($progress['puntasObtenidas'], $progress['puntasRequeridas']) }} / {{ $progress['puntasRequeridas'] }}</strong>
                                 </div>
                                 <div class="progress" style="height:12px; border-radius:6px; margin-bottom:4px;">
                                     <div class="progress-bar {{ $progress['cumplePuntas'] ? 'progress-bar-success' : 'progress-bar-warning' }}"
@@ -299,7 +299,12 @@
                                     </div>
                                 </div>
                                 @if($progress['cumplePuntas'])
-                                    <small class="text-success"><i class="fa-solid fa-check"></i> Puntas completadas</small>
+                                    <small class="text-success">
+                                        <i class="fa-solid fa-check"></i> Puntas completadas
+                                        @if($progress['puntasObtenidas'] > $progress['puntasRequeridas'])
+                                            · +{{ $progress['puntasObtenidas'] - $progress['puntasRequeridas'] }} adicional(es)
+                                        @endif
+                                    </small>
                                 @else
                                     <small class="text-muted">Faltan {{ $progress['puntasRequeridas'] - $progress['puntasObtenidas'] }} punta(s)</small>
                                 @endif

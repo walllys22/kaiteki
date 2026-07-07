@@ -291,7 +291,7 @@
                 </div>
                 <div style="display:flex; align-items:center; gap:10px;">
                     <div class="puntas-inline">
-                        Puntas: {{ $puntasObt }}/{{ $puntasReq }}
+                        Puntas: {{ min($puntasObt, $puntasReq) }}/{{ $puntasReq }}@if($puntasObt > $puntasReq) (+{{ $puntasObt - $puntasReq }} adic.)@endif
                         <div class="puntas-bar-wrap">
                             <div class="puntas-bar {{ $pct < 100 ? 'partial' : '' }}" style="width:{{ $pct }}%;"></div>
                         </div>

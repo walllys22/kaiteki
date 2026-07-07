@@ -80,7 +80,7 @@
                                 <br>
                                 @if ($usaRepasosGrado)
                                     <small class="label {{ $cumplePuntas ? 'label-success' : 'label-warning' }}" style="font-size:11px;">
-                                        <i class="fa-solid fa-star"></i> {{ $puntasAprob }}/{{ $puntasReq }} puntas
+                                        <i class="fa-solid fa-star"></i> {{ min($puntasAprob, $puntasReq) }}/{{ $puntasReq }} puntas
                                     </small>
                                     @if ($cumplePuntas)
                                         <br><small class="text-success" style="font-size:11px;"><i class="fa-solid fa-graduation-cap"></i> Listo p/ examen</small>

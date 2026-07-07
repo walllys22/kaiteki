@@ -213,7 +213,7 @@ Belt grade advancement is enforced through a structured progression system.
 1. A student cannot register a new grade while one is in progress (`status='0'`).
 2. Kyu grades require approved repasos equal to `Grado.puntas` before the final exam.
 3. Dan grades do not use puntas/repasos (`Grado::usaRepasos()` returns false) and can go directly to final exam.
-4. Once the puntas quota is met on a Kyu grade, no more repasos can be added — the exam must be taken next.
+4. Once the puntas quota is met on a Kyu grade, the final exam is enabled, but **additional repasos are still allowed** (extra paid practice). Repasos registered after the quota is chronologically met are labeled "Adicional" in the repasos table (computed in the view: repasos sorted by fecha+id; once the quota is reached, subsequent rows are adicionales — no DB flag). Extra approved repasos do not inflate the puntas counters in the UI (`min(obtenidas, requeridas)` is displayed, with a "+N punta(s) adicional(es)" note) and do not change exam eligibility. `storeRepaso()` reports "Repaso adicional registrado" when the quota was already met. All other repaso rules still apply (active alumno, active Repaso arancel, chronological date validation).
 5. The exam can be retaken any number of times if failed (aplazado).
 6. The grade is marked completed (`status='1'`) only when the exam is approved.
 7. The same grade cannot be registered twice for the same student (regardless of soft-deletes).

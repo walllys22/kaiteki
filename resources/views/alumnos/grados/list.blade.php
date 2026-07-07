@@ -19,6 +19,24 @@
         $porcentajePuntas = $progress['puntasRequeridas'] > 0
             ? min(100, round($progress['puntasObtenidas'] / $progress['puntasRequeridas'] * 100))
             : 100;
+        // Repasos adicionales: registrados después de cumplir la cuota de puntas (orden cronológico)
+        $idsRepasosAdicionales = [];
+        if ($usaRepasos && $progress['puntasRequeridas'] > 0) {
+            $aprobadasAcum = 0;
+            $cuotaCumplida = false;
+            foreach ($activeGrado->repasos->sortBy(fn($r) => [$r->fecha, $r->id])->values() as $r) {
+                if ($cuotaCumplida) {
+                    $idsRepasosAdicionales[] = $r->id;
+                    continue;
+                }
+                if ($r->aprobado) {
+                    $aprobadasAcum++;
+                }
+                if ($aprobadasAcum >= $progress['puntasRequeridas']) {
+                    $cuotaCumplida = true;
+                }
+            }
+        }
         $porcentajeDias = $progress['diasRequeridos'] > 0
             ? min(100, round($progress['diasTranscurridos'] / $progress['diasRequeridos'] * 100))
             : 100;
@@ -77,7 +95,7 @@
                         <div class="grado-progress-label">
                             <i class="fa-solid fa-star" style="color:#f39c12;"></i>
                             Puntas (Repasos aprobados)
-                            <strong class="pull-right">{{ $progress['puntasObtenidas'] }} / {{ $progress['puntasRequeridas'] }}</strong>
+                            <strong class="pull-right">{{ min($progress['puntasObtenidas'], $progress['puntasRequeridas']) }} / {{ $progress['puntasRequeridas'] }}</strong>
                         </div>
                         <div class="progress" style="margin-bottom:4px; height:12px;">
                             <div class="progress-bar {{ $progress['cumplePuntas'] ? 'progress-bar-success' : 'progress-bar-warning' }}"
@@ -87,7 +105,12 @@
                             </div>
                         </div>
                         @if($progress['cumplePuntas'])
-                            <small class="text-success"><i class="fa-solid fa-check"></i> Puntas completadas</small>
+                            <small class="text-success">
+                                <i class="fa-solid fa-check"></i> Puntas completadas
+                                @if($progress['puntasObtenidas'] > $progress['puntasRequeridas'])
+                                    · +{{ $progress['puntasObtenidas'] - $progress['puntasRequeridas'] }} punta(s) adicional(es)
+                                @endif
+                            </small>
                         @else
                             <small class="text-muted">Faltan {{ $progress['puntasRequeridas'] - $progress['puntasObtenidas'] }} punta(s)</small>
                         @endif
@@ -127,26 +150,31 @@
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
                         <h5 style="margin:0; font-weight:600;">
                             <i class="fa-solid fa-repeat" style="color:#8e44ad;"></i> Repasos
-                            <small class="text-muted">({{ $repasos->count() }} total · {{ $repasos->where('aprobado', 1)->count() }} aprobados)</small>
+                            <small class="text-muted">
+                                ({{ $repasos->count() }} total · {{ $repasos->where('aprobado', 1)->count() }} aprobados{{ count($idsRepasosAdicionales) ? ' · ' . count($idsRepasosAdicionales) . ' adicional(es)' : '' }})
+                            </small>
                         </h5>
-                        @if(($alumnoActivo ?? true) && !$activeGrado->isCompletado() && !$progress['cumplePuntas'])
+                        <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                        @if($progress['cumplePuntas'] && !$activeGrado->isCompletado())
+                        <span class="label label-info" style="font-size:11px; padding:4px 8px;">
+                            <i class="fa-solid fa-check"></i> Puntas completas — puede rendir examen; repasos adicionales permitidos
+                        </span>
+                        @endif
+                        @if(($alumnoActivo ?? true) && !$activeGrado->isCompletado())
                             @if($arancelRepaso)
                                 <button class="btn btn-primary btn-xs" data-toggle="modal" data-target="#modal-add-repaso">
-                                    <i class="voyager-plus"></i> Agregar Repaso
+                                    <i class="voyager-plus"></i> {{ $progress['cumplePuntas'] ? 'Agregar Repaso Adicional' : 'Agregar Repaso' }}
                                 </button>
                             @else
                                 <button type="button" class="btn btn-default btn-xs" disabled title="Debe registrar un arancel de Repaso para este grado y dojo.">
                                     <i class="voyager-plus"></i> Agregar Repaso
                                 </button>
                             @endif
-                        @elseif($progress['cumplePuntas'] && !$activeGrado->isCompletado())
-                        <span class="label label-success" style="font-size:11px; padding:4px 8px;">
-                            <i class="fa-solid fa-lock"></i> Puntas completas — debe rendir examen
-                        </span>
                         @endif
+                        </div>
                     </div>
 
-                    @if(!$arancelRepaso && !$activeGrado->isCompletado() && !$progress['cumplePuntas'])
+                    @if(!$arancelRepaso && !$activeGrado->isCompletado())
                         <div class="alert alert-warning" style="font-size:12px; padding:8px 10px; margin-bottom:8px;">
                             <i class="fa-solid fa-triangle-exclamation"></i>
                             Para agregar repasos debe registrar primero un arancel activo de tipo <strong>Repaso</strong>
@@ -184,6 +212,9 @@
                                             <span class="label label-success"><i class="fa-solid fa-star"></i> Punta</span>
                                         @else
                                             <span class="label label-default">No aprobado</span>
+                                        @endif
+                                        @if(in_array($repaso->id, $idsRepasosAdicionales))
+                                            <span class="label label-info" title="Registrado después de cumplir la cuota de puntas">Adicional</span>
                                         @endif
                                     </td>
                                     <td style="text-align:right;">Bs {{ number_format((float) ($repaso->monto ?? 0), 2, '.', ',') }}</td>
@@ -616,7 +647,7 @@
                         <div class="alert alert-info" style="font-size:13px;">
                             Grado: <strong>{{ $gradoLabel }}</strong> —
                             @if($usaRepasos)
-                                Puntas: <strong>{{ $progress['puntasObtenidas'] }}/{{ $progress['puntasRequeridas'] }}</strong> —
+                                Puntas: <strong>{{ min($progress['puntasObtenidas'], $progress['puntasRequeridas']) }}/{{ $progress['puntasRequeridas'] }}</strong> —
                             @endif
                             Días: <strong>{{ $progress['diasTranscurridos'] }}/{{ $progress['diasRequeridos'] }}</strong>
                         </div>

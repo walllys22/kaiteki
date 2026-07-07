@@ -238,12 +238,9 @@ class AlumnoGradoController extends Controller
                 ->with(['message' => 'Los grados tipo Dan no registran puntas ni repasos; solo examen final.', 'alert-type' => 'error']);
         }
 
-        // Bloquear si ya se alcanzó la cantidad de puntas aprobadas requeridas
+        // Con la cuota de puntas cumplida se permiten repasos adicionales (práctica extra)
         $progress = self::calcularProgreso($alumnoGrado);
-        if ($progress['cumplePuntas']) {
-            return redirect()->back()
-                ->with(['message' => 'Ya se cumplió con la cantidad de puntas requeridas. Debe rendir el examen final.', 'alert-type' => 'warning']);
-        }
+        $esAdicional = $progress['cumplePuntas'];
 
         // La fecha debe ser posterior al inicio del grado
         if ($request->fecha <= $alumnoGrado->fecha) {
@@ -315,7 +312,11 @@ class AlumnoGradoController extends Controller
                 'observacion'     => $request->observacion,
             ]);
 
-            $msg = $request->aprobado == 1 ? 'Repaso registrado como punta aprobada.' : 'Repaso registrado (no aprobado).';
+            if ($esAdicional) {
+                $msg = 'Repaso adicional registrado (cuota de puntas ya cumplida).';
+            } else {
+                $msg = $request->aprobado == 1 ? 'Repaso registrado como punta aprobada.' : 'Repaso registrado (no aprobado).';
+            }
 
             return redirect()->route('voyager.alumnos.show', ['id' => $alumnoGrado->alumno_id])
                 ->with([
