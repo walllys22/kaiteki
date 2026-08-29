@@ -46,7 +46,6 @@ class CertificadoValidacionController extends Controller
             'alumnoGrado' => $alumnoGrado,
             'fecha' => $examen->fecha,
             'regId' => $alumnoGrado->id,
-            'historial' => $this->historial($alumnoGrado->alumno_id, $alumnoGrado->id),
         ]);
     }
 
@@ -69,23 +68,6 @@ class CertificadoValidacionController extends Controller
             'alumnoGrado' => $alumnoGrado,
             'fecha' => $alumnoGrado->fecha,
             'regId' => $alumnoGrado->id,
-            'historial' => $this->historial($alumnoGrado->alumno_id, $alumnoGrado->id),
         ]);
-    }
-
-    /** Grados ya completados por el alumno, del mas nuevo al mas viejo. */
-    private function historial(int $alumnoId, int $excluirId)
-    {
-        return AlumnoGrado::with(['grado', 'examenes'])
-            ->where('alumno_id', $alumnoId)
-            ->where('status', '1')
-            ->where('id', '!=', $excluirId)
-            ->whereNull('deleted_at')
-            ->get()
-            ->sortByDesc(function ($alumnoGrado) {
-                return optional($alumnoGrado->examenes->where('aprobado', 1)->last())->fecha
-                    ?? $alumnoGrado->fecha;
-            })
-            ->values();
     }
 }

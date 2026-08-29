@@ -30,7 +30,7 @@ class CertificadoValidacionTest extends TestCase
         $res = $this->get(CertificadoValidacionController::urlExamen($examen->id));
 
         $res->assertOk();
-        $res->assertSee('CERTIFICADO VALIDO');
+        $res->assertSee('Certificado verificado');
         $res->assertSee(mb_strtoupper($alumno->person->first_name, 'UTF-8'), false);
         $res->assertSee($alumno->dojo->nombre, false);
         $this->assertGuest();
@@ -89,6 +89,61 @@ class CertificadoValidacionTest extends TestCase
         $this->get(CertificadoValidacionController::urlExamen($aplazado->id))->assertNotFound();
     }
 
+    public function test_la_cinta_dibuja_base_y_franja_por_separado()
+    {
+        // "Cinturon Blanco Franja Amarilla" debe salir blanca con franja amarilla,
+        // no amarilla entera.
+        $grado = \App\Models\Grado::where('nombre', 'like', '%Franja%')->first();
+
+        if (! $grado) {
+            $this->markTestSkipped('No hay grados con franja en la base');
+        }
+
+        $alumnoGrado = AlumnoGrado::where('grado_id', $grado->id)->whereNull('deleted_at')->first();
+
+        if (! $alumnoGrado) {
+            $this->markTestSkipped('Ningun alumno tiene ese grado');
+        }
+
+        $examen = AlumnoGradoExamen::where('alumno_grado_id', $alumnoGrado->id)
+            ->where('aprobado', 1)
+            ->whereNull('deleted_at')
+            ->first();
+
+        $url = $examen
+            ? CertificadoValidacionController::urlExamen($examen->id)
+            : CertificadoValidacionController::urlCursando($alumnoGrado->id);
+
+        $html = $this->get($url)->assertOk()->getContent();
+
+        $this->assertStringContainsString('#f2efe6', $html, 'Falta el blanco de la cinta');
+        $this->assertStringContainsString('#eab308', $html, 'Falta la franja amarilla');
+    }
+
+    public function test_la_pagina_es_usable_sin_javascript()
+    {
+        // El revelado por scroll solo aplica bajo html.js. Si el JS no corre,
+        // ningun bloque puede quedar oculto.
+        $examen = $this->examenAprobado();
+
+        $html = $this->get(CertificadoValidacionController::urlExamen($examen->id))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString('html.js .revelable', $html, 'El ocultamiento debe estar condicionado a html.js');
+
+        // Ninguna regla puede empezar con .revelable sin el prefijo html.js:
+        // eso ocultaria el bloque para siempre si el JS no corre.
+        $this->assertSame(
+            0,
+            preg_match('/^\s*\.revelable[^{]*\{/m', $html),
+            'Hay una regla .revelable sin calificar con html.js'
+        );
+
+        // Y el movimiento reducido tiene que apagar los efectos.
+        $this->assertStringContainsString('prefers-reduced-motion', $html);
+    }
+
     public function test_certificado_de_grado_en_curso()
     {
         $enCurso = AlumnoGrado::whereNull('deleted_at')
@@ -97,6 +152,6 @@ class CertificadoValidacionTest extends TestCase
 
         $this->get(CertificadoValidacionController::urlCursando($enCurso->id))
             ->assertOk()
-            ->assertSee('GRADO EN CURSO');
+            ->assertSee('Grado en curso');
     }
 }
