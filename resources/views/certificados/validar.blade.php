@@ -572,13 +572,26 @@
            Los tamanos ya escalan solos con clamp(); estos quiebres solo cambian
            lo que la escala fluida no puede: la disposicion. */
 
-        /* Celular: el rollo ocupa la pantalla completa, de borde a borde.
-           Como tarjeta flotante con margenes se ve chico y desaprovecha
-           el ancho, que es justo lo que sobra poco en un telefono. */
+        /* ---------- celular: toda la validacion en una pantalla ----------
+           La escala pasa a depender tambien de la ALTURA (svh), no solo del
+           ancho: asi el contenido se comprime hasta entrar sin scroll.
+           Se usa min-height, nunca height: si el contenido igual no entra
+           (nombre muy largo, pantalla muy baja), preferimos que scrollee
+           antes que recortar informacion del certificado. */
         @media (max-width: 700px) {
-            body {
-                padding: 0;
+            :root {
+                --pad:        clamp(11px, 2.4svh, 18px);
+                --pad-bloque: clamp(7px, 1.5svh, 14px);
+                --t-dojo:     clamp(14px, min(4.4vw, 1.9svh), 20px);
+                --t-nombre:   clamp(17px, min(5.6vw, 2.4svh), 25px);
+                --t-grado:    clamp(21px, min(7.4vw, 3.3svh), 31px);
+                --t-dato:     clamp(12px, min(3.4vw, 1.6svh), 14.5px);
+                --t-rotulo:   clamp(8px, min(2.5vw, 1.1svh), 9.5px);
+                --foto-an:    clamp(60px, min(18vw, 8.2svh), 88px);
+                --foto-al:    clamp(72px, min(21.5vw, 9.8svh), 104px);
             }
+
+            body { padding: 0; }
 
             .kakejiku {
                 border-radius: 0;
@@ -592,9 +605,58 @@
                 width: 100%;
             }
 
-            /* El pie empuja hacia abajo, asi la varilla inferior queda
-               apoyada en el fondo real de la pantalla. */
+            .kakejiku::before,
+            .kakejiku::after { flex: 0 0 auto; height: 7px; }
+
+            /* El pie empuja hacia abajo: la varilla inferior queda apoyada
+               en el fondo real de la pantalla. */
             .pie { margin-top: auto; }
+
+            /* La foto vuelve a la izquierda: apilada come mucho alto. */
+            .alumno {
+                flex-direction: row;
+                gap: clamp(10px, 3vw, 16px);
+                text-align: left;
+            }
+
+            .alumno::before {
+                left: var(--pad);
+                margin-left: 0;
+                top: var(--pad-bloque);
+            }
+
+            /* Dos columnas: en una sola, los cuatro datos ocupan el doble. */
+            .datos { grid-template-columns: 1fr 1fr; }
+            .dato:nth-child(odd) { border-right: 1px solid var(--linea); }
+
+            .obi { margin-bottom: 5px; max-width: min(180px, 44%); }
+            .veredicto .glosa { font-size: clamp(11.5px, 1.6svh, 13.5px); margin-top: 6px; }
+            .pie { font-size: clamp(10px, 1.4svh, 11.5px); line-height: 1.5; }
+        }
+
+        /* Pantallas bajas: se recorta lo secundario antes que hacer scroll. */
+        @media (max-width: 700px) and (max-height: 780px) {
+            .dato .valor small { display: none; }
+            .veredicto .glosa { display: none; }
+            .tategaki { display: none; }
+        }
+
+        /* Muy bajas (iPhone SE y similares): ultimo apriete. */
+        @media (max-width: 700px) and (max-height: 640px) {
+            :root {
+                --pad:        11px;
+                --pad-bloque: 7px;
+                --t-nombre:   clamp(16px, 5vw, 19px);
+                --t-grado:    clamp(19px, 6.4vw, 23px);
+                --foto-an:    62px;
+                --foto-al:    74px;
+            }
+
+            .obi { margin-bottom: 3px; max-width: 150px; }
+            .veredicto { padding-block: 12px 8px; }
+            .pie { padding-block: 9px 12px; }
+            .firma-sello { display: none; }
+            .alumno .registro { margin-top: 4px; }
         }
 
         /* El sello y el texto del veredicto dejan de competir por el ancho. */
@@ -604,27 +666,6 @@
 
         /* Celular: una sola columna. */
         @media (max-width: 520px) {
-            /* Una columna, y el retrato mas grande: en el celular sobra ancho
-               y la foto es lo primero que mira quien verifica el certificado. */
-            .alumno {
-                --foto-an: clamp(104px, 30vw, 132px);
-                --foto-al: clamp(126px, 36vw, 158px);
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .alumno::before {
-                border-radius: 50%;
-                height: var(--foto-al);
-                left: 50%;
-                margin-left: calc(var(--foto-an) / -2);
-                top: var(--pad-bloque);
-                width: var(--foto-an);
-            }
-
-            .datos { grid-template-columns: 1fr; }
-            .dato:nth-child(odd) { border-right: 0; }
-
             /* El veredicto se corre para no quedar debajo del sello. */
             .veredicto {
                 padding-right: calc(var(--pad) + clamp(58px, 17vw, 78px) * .55);
