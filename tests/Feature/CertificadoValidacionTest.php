@@ -51,15 +51,23 @@ class CertificadoValidacionTest extends TestCase
         }
     }
 
-    public function test_sin_firma_no_se_puede_enumerar_alumnos()
+    public function test_sin_firma_muestra_la_pagina_de_rechazo()
     {
         $examen = $this->examenAprobado();
 
-        $this->get("/validar/certificado/examen/{$examen->id}")->assertForbidden();
+        $res = $this->get("/validar/certificado/examen/{$examen->id}");
+
+        $res->assertForbidden();
+        $res->assertSee('Este certificado no pudo verificarse');
+        $res->assertSee('El enlace fue modificado.');
+        // No puede filtrar ningun dato del alumno.
+        $res->assertDontSee($examen->alumnoGrado->alumno->person->first_name, false);
     }
 
-    public function test_firma_de_otro_certificado_no_sirve()
+    public function test_cambiar_el_numero_de_examen_da_no_valido()
     {
+        // Caso real: alguien escanea su certificado y edita el numero en la URL
+        // para ver el de otro alumno.
         $examen = $this->examenAprobado();
         $otro = AlumnoGradoExamen::whereNull('deleted_at')
             ->where('aprobado', 1)
@@ -70,10 +78,24 @@ class CertificadoValidacionTest extends TestCase
             $this->markTestSkipped('Hace falta mas de un examen aprobado');
         }
 
-        $urlAjena = CertificadoValidacionController::urlExamen($examen->id);
-        $firma = parse_url($urlAjena, PHP_URL_QUERY);
+        $propia = CertificadoValidacionController::urlExamen($examen->id);
+        $firma = parse_url($propia, PHP_URL_QUERY);
 
-        $this->get("/validar/certificado/examen/{$otro->id}?{$firma}")->assertForbidden();
+        $res = $this->get("/validar/certificado/examen/{$otro->id}?{$firma}");
+
+        $res->assertForbidden();
+        $res->assertSee('El enlace fue modificado.');
+        $res->assertDontSee($otro->alumnoGrado->alumno->person->first_name, false);
+    }
+
+    public function test_certificado_inexistente_da_no_disponible()
+    {
+        $idLibre = (AlumnoGradoExamen::max('id') ?? 0) + 9999;
+
+        $res = $this->get(CertificadoValidacionController::urlExamen($idLibre));
+
+        $res->assertNotFound();
+        $res->assertSee('El registro no esta disponible.');
     }
 
     public function test_examen_aplazado_no_tiene_pagina_de_validacion()
@@ -86,7 +108,9 @@ class CertificadoValidacionTest extends TestCase
             $this->markTestSkipped('No hay examenes aplazados en la base');
         }
 
-        $this->get(CertificadoValidacionController::urlExamen($aplazado->id))->assertNotFound();
+        $this->get(CertificadoValidacionController::urlExamen($aplazado->id))
+            ->assertNotFound()
+            ->assertSee('El registro no esta disponible.');
     }
 
     public function test_la_cinta_dibuja_base_y_franja_por_separado()

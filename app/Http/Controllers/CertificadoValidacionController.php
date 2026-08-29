@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AlumnoGrado;
 use App\Models\AlumnoGradoExamen;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
 
 /**
@@ -28,8 +29,12 @@ class CertificadoValidacionController extends Controller
     }
 
     /** Certificado de examen aprobado. */
-    public function examen(int $id)
+    public function examen(Request $request, int $id)
     {
+        if (! $request->hasValidSignature()) {
+            return $this->noValido('enlace', $id);
+        }
+
         $examen = AlumnoGradoExamen::with([
             'alumnoGrado.grado',
             'alumnoGrado.alumno.person',
@@ -37,7 +42,11 @@ class CertificadoValidacionController extends Controller
         ])
             ->whereNull('deleted_at')
             ->where('aprobado', 1)
-            ->findOrFail($id);
+            ->find($id);
+
+        if (! $examen || ! $examen->alumnoGrado) {
+            return $this->noValido('inexistente', $id);
+        }
 
         $alumnoGrado = $examen->alumnoGrado;
 
@@ -50,8 +59,12 @@ class CertificadoValidacionController extends Controller
     }
 
     /** Certificado de grado en curso. */
-    public function cursando(int $id)
+    public function cursando(Request $request, int $id)
     {
+        if (! $request->hasValidSignature()) {
+            return $this->noValido('enlace', $id);
+        }
+
         $alumnoGrado = AlumnoGrado::with([
             'grado',
             'alumno.person',
@@ -61,7 +74,11 @@ class CertificadoValidacionController extends Controller
             ->where(function ($q) {
                 $q->whereNull('status')->orWhere('status', '0');
             })
-            ->findOrFail($id);
+            ->find($id);
+
+        if (! $alumnoGrado) {
+            return $this->noValido('inexistente', $id);
+        }
 
         return view('certificados.validar', [
             'tipo' => 'cursando',
@@ -69,5 +86,25 @@ class CertificadoValidacionController extends Controller
             'fecha' => $alumnoGrado->fecha,
             'regId' => $alumnoGrado->id,
         ]);
+    }
+
+    /**
+     * Pagina de rechazo.
+     *
+     * `enlace`      -> la firma no valida: alguien edito la URL (por ejemplo,
+     *                  cambio el numero de examen para ver otro certificado).
+     * `inexistente` -> la firma es buena pero el registro no existe, fue dado
+     *                  de baja o el examen no esta aprobado.
+     *
+     * Devuelve 403 / 404 de verdad: la pagina es un rechazo, no un resultado.
+     */
+    private function noValido(string $motivo, int $id)
+    {
+        $status = $motivo === 'enlace' ? 403 : 404;
+
+        return response()->view('certificados.invalido', [
+            'motivo' => $motivo,
+            'referencia' => $id,
+        ], $status);
     }
 }

@@ -50,11 +50,12 @@ Route::get('/comprobantes/mensualidades/pagos/{id}', [AlumnoMensualidadControlle
     ->name('alumno.mensualidades.pago.comprobante.public');
 // Validacion publica de certificados (destino del QR impreso). Sin auth, pero
 // firmadas para que no se puedan enumerar alumnos cambiando el id.
+// La firma se valida DENTRO del controlador (hasValidSignature) en vez de con el
+// middleware `signed`: asi un enlace manipulado muestra la pagina de rechazo con
+// su explicacion, y no el 403 pelado de Laravel.
 Route::get('/validar/certificado/examen/{id}', [CertificadoValidacionController::class, 'examen'])
-    ->middleware('signed')
     ->name('certificados.validar.examen');
 Route::get('/validar/certificado/cursando/{id}', [CertificadoValidacionController::class, 'cursando'])
-    ->middleware('signed')
     ->name('certificados.validar.cursando');
 
 // Route::get('/development', [ErrorController::class , 'error503'])->name('development');

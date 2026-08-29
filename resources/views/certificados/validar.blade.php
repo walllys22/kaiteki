@@ -116,9 +116,22 @@
             --jade:      #1f6b3f;
             --ambar:     #a5610a;
             --obi:       {{ $cinta['base'] }};
+
+            /* Escala fluida: el padding y los cuerpos de texto acompanan el
+               ancho del viewport, asi no hacen falta saltos por breakpoint. */
+            --pad:        clamp(15px, 5.2vw, 26px);
+            --pad-bloque: clamp(16px, 4.6vw, 24px);
+            --t-dojo:     clamp(17px, 4.6vw, 22px);
+            --t-nombre:   clamp(19px, 5.6vw, 26px);
+            --t-grado:    clamp(23px, 7.4vw, 33px);
+            --t-dato:     clamp(14px, 3.6vw, 15px);
+            --t-rotulo:   clamp(9px, 2.5vw, 10px);
         }
 
         * { box-sizing: border-box; }
+
+        /* Nada puede provocar scroll horizontal en celular. */
+        img, svg { height: auto; max-width: 100%; }
 
         html {
             -webkit-text-size-adjust: 100%;
@@ -134,8 +147,10 @@
             color: var(--sumi);
             font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
             margin: 0;
+            overflow-x: hidden;
             min-height: 100vh;
-            padding: 26px 14px 44px;
+            min-height: 100svh; /* evita el salto por la barra del navegador movil */
+            padding: clamp(12px, 4vw, 28px) clamp(8px, 3vw, 16px) clamp(28px, 8vw, 48px);
         }
 
         /* El rollo se despliega desde la varilla superior. */
@@ -189,7 +204,7 @@
             border-bottom: 1px solid var(--linea);
             display: flex;
             gap: 14px;
-            padding: 20px 24px 18px;
+            padding: var(--pad-bloque) var(--pad) calc(var(--pad-bloque) * .8);
         }
 
         .mon {
@@ -199,10 +214,10 @@
             border-radius: 50%;
             display: flex;
             flex: 0 0 auto;
-            height: 56px;
+            height: clamp(46px, 12vw, 56px);
             justify-content: center;
             overflow: hidden;
-            width: 56px;
+            width: clamp(46px, 12vw, 56px);
         }
 
         .mon img { height: 100%; object-fit: cover; width: 100%; }
@@ -220,16 +235,17 @@
         .torii .eyebrow {
             color: var(--sumi-2);
             font-family: ui-sans-serif, system-ui, sans-serif;
-            font-size: 10px;
+            font-size: var(--t-rotulo);
             letter-spacing: .22em;
             text-transform: uppercase;
         }
 
         .torii .dojo {
-            font-size: 21px;
+            font-size: var(--t-dojo);
             font-weight: 700;
             letter-spacing: .01em;
             line-height: 1.2;
+            overflow-wrap: anywhere;
             margin-top: 3px;
         }
 
@@ -250,7 +266,7 @@
 
         /* ---------- veredicto + sello ---------- */
         .veredicto {
-            padding: 26px 24px 20px;
+            padding: clamp(20px, 6vw, 28px) var(--pad) clamp(16px, 4.5vw, 22px);
             position: relative;
             text-align: center;
         }
@@ -283,15 +299,15 @@
             flex-direction: column;
             font-family: ui-sans-serif, system-ui, sans-serif;
             gap: 2px;
-            height: 76px;
+            height: clamp(58px, 17vw, 78px);
             justify-content: center;
             line-height: 1;
             opacity: .92;
             position: absolute;
-            right: 20px;
-            top: 12px;
+            right: clamp(10px, 3.5vw, 20px);
+            top: clamp(8px, 2.5vw, 12px);
             transform: rotate(-13deg);
-            width: 76px;
+            width: clamp(58px, 17vw, 78px);
             animation: estampar .5s cubic-bezier(.2, 1.3, .5, 1) .95s both;
         }
 
@@ -311,8 +327,8 @@
         }
 
         .hanko span { display: block; }
-        .hanko .hanko-linea { font-size: 12px; font-weight: 800; letter-spacing: .1em; }
-        .hanko .hanko-marca { font-size: 18px; line-height: 1; }
+        .hanko .hanko-linea { font-size: clamp(9px, 2.6vw, 12px); font-weight: 800; letter-spacing: .1em; }
+        .hanko .hanko-marca { font-size: clamp(13px, 4vw, 18px); line-height: 1; }
 
         @keyframes desplegar {
             0%   { clip-path: inset(0 0 100% 0); opacity: 0; transform: scaleY(.82); }
@@ -353,8 +369,8 @@
             align-items: center;
             border-top: 1px solid var(--linea);
             display: flex;
-            gap: 18px;
-            padding: 20px 24px;
+            gap: clamp(12px, 4vw, 18px);
+            padding: var(--pad-bloque) var(--pad);
         }
 
         .retrato {
@@ -364,16 +380,17 @@
             border-radius: 2px;
             box-shadow: 0 3px 10px rgba(27, 21, 18, .18);
             flex: 0 0 auto;
-            height: 106px;
+            height: clamp(96px, 26vw, 112px);
             object-fit: cover;
             padding: 4px;
             background: #fff;
-            width: 88px;
+            width: clamp(80px, 22vw, 94px);
         }
 
         .alumno .nombre {
-            font-size: 25px;
+            font-size: var(--t-nombre);
             font-weight: 700;
+            overflow-wrap: anywhere;
             letter-spacing: .01em;
             line-height: 1.2;
         }
@@ -420,7 +437,7 @@
         .rango {
             background: linear-gradient(180deg, var(--washi-2), var(--washi));
             border-block: 1px solid var(--linea);
-            padding: 22px 24px 24px;
+            padding: clamp(18px, 5vw, 24px) var(--pad);
             text-align: center;
         }
 
@@ -428,7 +445,7 @@
             display: block;
             height: auto;
             margin: 0 auto 12px;
-            max-width: 280px;
+            max-width: min(280px, 78%);
             transform-origin: 50% 30%;
             width: 100%;
             animation:
@@ -450,13 +467,13 @@
         .rango .rotulo {
             color: var(--sumi-2);
             font-family: ui-sans-serif, system-ui, sans-serif;
-            font-size: 10px;
+            font-size: var(--t-rotulo);
             letter-spacing: .2em;
             text-transform: uppercase;
         }
 
         .rango .grado {
-            font-size: 32px;
+            font-size: var(--t-grado);
             font-weight: 700;
             letter-spacing: .02em;
             line-height: 1.1;
@@ -477,7 +494,7 @@
 
         .dato {
             border-bottom: 1px solid var(--linea);
-            padding: 15px 24px;
+            padding: clamp(12px, 3.6vw, 16px) var(--pad);
             transition: background-color .3s ease;
         }
 
@@ -505,13 +522,13 @@
         .dato .rotulo {
             color: var(--sumi-2);
             font-family: ui-sans-serif, system-ui, sans-serif;
-            font-size: 10px;
+            font-size: var(--t-rotulo);
             letter-spacing: .14em;
             text-transform: uppercase;
         }
 
         .dato .valor {
-            font-size: 15px;
+            font-size: var(--t-dato);
             font-weight: 600;
             margin-top: 4px;
             word-break: break-word;
@@ -535,7 +552,7 @@
             font-family: ui-sans-serif, system-ui, sans-serif;
             font-size: 11px;
             line-height: 1.7;
-            padding: 16px 24px 22px;
+            padding: var(--pad-bloque) var(--pad) calc(var(--pad-bloque) * 1.2);
             text-align: center;
         }
 
@@ -549,18 +566,66 @@
             opacity: .55;
         }
 
-        @media (max-width: 470px) {
-            body { padding: 14px 8px 30px; }
-            .alumno { flex-direction: column; text-align: center; }
-            .alumno::before { left: 50%; margin-left: -46px; top: 16px; }
-            .retrato { height: 118px; width: 98px; }
+        /* ---------- adaptaciones por ancho ----------
+           Los tamanos ya escalan solos con clamp(); estos quiebres solo cambian
+           lo que la escala fluida no puede: la disposicion. */
+
+        /* Tablet y celular acostado: el rollo deja de pegarse a los bordes. */
+        @media (max-width: 700px) {
+            .kakejiku { border-radius: 2px; }
+        }
+
+        /* El sello y el texto del veredicto dejan de competir por el ancho. */
+        @media (max-width: 560px) {
+            .veredicto .glosa { max-width: 32ch; }
+        }
+
+        /* Celular: una sola columna. */
+        @media (max-width: 520px) {
+            .alumno {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .alumno::before {
+                left: 50%;
+                margin-left: calc(clamp(80px, 22vw, 94px) / -2);
+                top: 16px;
+                width: clamp(80px, 22vw, 94px);
+                height: clamp(96px, 26vw, 112px);
+                border-radius: 50%;
+            }
+
             .datos { grid-template-columns: 1fr; }
             .dato:nth-child(odd) { border-right: 0; }
-            .hanko { height: 64px; right: 12px; top: 10px; width: 64px; }
-            .hanko .hanko-linea { font-size: 10px; }
-            .hanko .hanko-marca { font-size: 15px; }
-            .rango .grado { font-size: 27px; }
+
+            /* El veredicto se corre para no quedar debajo del sello. */
+            .veredicto {
+                padding-right: calc(var(--pad) + clamp(58px, 17vw, 78px) * .55);
+                text-align: left;
+            }
+
+            .veredicto .glosa { margin-left: 0; }
+        }
+
+        /* Pantallas angostas de verdad (360px y menos). */
+        @media (max-width: 380px) {
             .tategaki { display: none; }
+            .torii { gap: 10px; }
+            .obi { max-width: 88%; }
+        }
+
+        /* Celular acostado: poca altura, se recorta el aire vertical. */
+        @media (max-height: 520px) and (orientation: landscape) {
+            body { padding-block: 10px 20px; }
+            .veredicto { padding-block: 16px 12px; }
+            .rango { padding-block: 14px; }
+            .alumno { padding-block: 14px; }
+        }
+
+        /* Monitores grandes: el rollo respira un poco mas. */
+        @media (min-width: 1100px) {
+            .kakejiku { max-width: 700px; }
         }
 
         /* Con movimiento reducido no se anima nada: todo entra ya visible. */
