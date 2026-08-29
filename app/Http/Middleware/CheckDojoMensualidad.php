@@ -16,7 +16,13 @@ class CheckDojoMensualidad
             return $next($request);
         }
 
-        $dojoId = Auth::user()->dojo_id;
+        // Usuario global (admin / administrador): nunca se bloquea, aunque tenga
+        // seleccionado en el sidebar un dojo con la mensualidad SaaS vencida.
+        if (Auth::user()->isGlobal()) {
+            return $next($request);
+        }
+
+        $dojoId = Auth::user()->getRawOriginal('dojo_id');
 
         if (!$dojoId) {
             return $next($request);

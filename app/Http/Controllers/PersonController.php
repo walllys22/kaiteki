@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Voyager\VoyagerBaseController;
 use App\Models\Person;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,13 +20,33 @@ class PersonController extends Controller
 
     protected function resolveDojoIdFromContext(Request $request)
     {
-        $userDojoId = auth()->user()->dojo_id;
+        $user = auth()->user();
 
-        if ($userDojoId) {
-            return $userDojoId;
+        // Operador de sucursal: su dojo real, no negociable.
+        if (! $user->isGlobal()) {
+            return $user->getRawOriginal('dojo_id');
         }
 
-        return $request->dojo_id;
+        // Admin global: gana el dojo elegido explicitamente en el formulario;
+        // si no mando ninguno, cae al dojo activo del sidebar (o null = todos).
+        return $request->dojo_id ?: $user->dojo_id;
+    }
+
+    /**
+     * Resuelve una persona respetando el aislamiento por sucursal.
+     * Un usuario de sucursal solo alcanza personas de su propio dojo; si el id
+     * pertenece a otra sucursal, 404. Un usuario global no queda restringido
+     * mas alla del dojo activo del sidebar.
+     */
+    protected function findPersonInDojo($id)
+    {
+        $userDojoId = auth()->user()->dojo_id;
+
+        return Person::query()
+            ->when($userDojoId, function ($query, $userDojoId) {
+                return $query->where('dojo_id', $userDojoId);
+            })
+            ->findOrFail($id);
     }
 
     public function index()
@@ -139,7 +160,7 @@ class PersonController extends Controller
         DB::beginTransaction();
 
         try {
-            $person = Person::findOrFail($id);
+            $person = $this->findPersonInDojo($id);
             $person->documentType = $request->documentType;
             $person->dojo_id = $dojoId;
             $person->ci = $ci;
@@ -167,6 +188,26 @@ class PersonController extends Controller
 
             return redirect()->route('voyager.people.index')->with(['message' => $th->getMessage(), 'alert-type' => 'error']);
         }
+    }
+
+    public function edit(Request $request, $id)
+    {
+        $this->custom_authorize('edit_people');
+        $this->findPersonInDojo($id);
+
+        return app(VoyagerBaseController::class)->edit($request, $id);
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        $this->custom_authorize('delete_people');
+
+        $ids = $id ? [$id] : explode(',', (string) $request->ids);
+        foreach (array_filter($ids) as $personId) {
+            $this->findPersonInDojo($personId);
+        }
+
+        return app(VoyagerBaseController::class)->destroy($request, $id);
     }
 
     public function show($id)

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ContextoDojoController;
 use App\Http\Controllers\ErrorController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\UserController;
@@ -48,7 +49,7 @@ Route::get('/comprobantes/mensualidades/pagos/{id}', [AlumnoMensualidadControlle
     ->name('alumno.mensualidades.pago.comprobante.public');
 // Route::get('/development', [ErrorController::class , 'error503'])->name('development');
 
-Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system', 'dojo.mensualidad']], function () {
+Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system', 'dojo.mensualidad', 'dojo.activo']], function () {
     // Estas rutas deben ir ANTES de Voyager::routes() para evitar que grados/{id} las capture
     Route::get('grados/reorder', [GradoController::class, 'reorderView'])->name('grados.reorder.index');
     Route::post('grados/reorder', [GradoController::class, 'reorder'])->name('grados.reorder');
@@ -134,10 +135,15 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system', 'dojo.me
 
  
 
+    // Selector de dojo activo del sidebar (solo usuarios globales)
+    Route::post('contexto/dojo', [ContextoDojoController::class, 'update'])->name('contexto.dojo.update');
+
     Route::get('people', [PersonController::class, 'index'])->name('voyager.people.index');
     Route::get('people/ajax/list', [PersonController::class, 'list']);
     Route::post('people', [PersonController::class, 'store'])->name('voyager.people.store');
     Route::put('people/{id}', [PersonController::class, 'update'])->name('voyager.people.update');
+    Route::get('people/{id}/edit', [PersonController::class, 'edit'])->name('voyager.people.edit');
+    Route::delete('people/{id}', [PersonController::class, 'destroy'])->name('voyager.people.destroy');
     Route::get('people/{id}', [PersonController::class, 'show'])->name('voyager.people.show');
 
     Route::get('grados', [GradoController::class, 'index'])->name('voyager.grados.index');

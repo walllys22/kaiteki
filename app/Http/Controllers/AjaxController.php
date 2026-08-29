@@ -14,19 +14,24 @@ class AjaxController extends Controller
 
     protected function resolveDojoIdFromContext(Request $request)
     {
-        $userDojoId = auth()->user()->dojo_id;
+        $user = auth()->user();
 
-        if ($userDojoId) {
-            return $userDojoId;
+        // Operador de sucursal: su dojo real, no negociable.
+        if (! $user->isGlobal()) {
+            return $user->getRawOriginal('dojo_id');
         }
 
-        return $request->dojo_id;
+        // Admin global: gana el dojo elegido explicitamente en el formulario;
+        // si no mando ninguno, cae al dojo activo del sidebar (o null = todos).
+        return $request->dojo_id ?: $user->dojo_id;
     }
 
     public function personList(){
         $q = request('q');
-        $userDojoId = auth()->user()->dojo_id;
-        $dojoId = $userDojoId ?: request('dojo_id');
+        $user = auth()->user();
+        $dojoId = $user->isGlobal()
+            ? (request('dojo_id') ?: $user->dojo_id)
+            : $user->getRawOriginal('dojo_id');
 
         $data = Person::with('dojo')
                         ->when($q, function ($query, $q) {

@@ -19,7 +19,7 @@
         ->orderBy('nombre')
         ->get();
 
-    $selectedDojoId = $userDojoId ?: request('dojo_id');
+    $selectedDojoId = auth()->user()->isGlobal() ? (request('dojo_id') ?: $userDojoId) : $userDojoId;
     if (!$selectedDojoId && $dojos->isNotEmpty()) {
         $selectedDojoId = $dojos->first()->id;
     }

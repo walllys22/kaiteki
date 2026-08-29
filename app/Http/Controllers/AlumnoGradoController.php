@@ -396,7 +396,7 @@ class AlumnoGradoController extends Controller
     {
         $this->custom_authorize('edit_alumnos');
 
-        if (auth()->user()->dojo_id !== null) {
+        if (! auth()->user()->isGlobal()) {
             abort(403, 'Solo administradores globales pueden anular pagos de repasos.');
         }
 
@@ -856,7 +856,7 @@ class AlumnoGradoController extends Controller
     {
         $this->custom_authorize('edit_alumnos');
 
-        if (auth()->user()->dojo_id !== null) {
+        if (! auth()->user()->isGlobal()) {
             abort(403, 'Solo administradores globales pueden anular pagos de examenes.');
         }
 

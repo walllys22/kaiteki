@@ -19,7 +19,9 @@ class ConsultaController extends Controller
     {
         $this->custom_authorize('browse_consulta');
 
-        $userDojoId = auth()->user()->dojo_id;
+        // Consulta es una herramienta cross-dojo: ignora el dojo elegido en el sidebar
+        // y usa el dojo real, para que el admin global siga viendo todas las sucursales.
+        $userDojoId = auth()->user()->getRawOriginal('dojo_id');
 
         $dojos = Dojo::whereNull('deleted_at')
             ->where('status', 1)
@@ -38,7 +40,9 @@ class ConsultaController extends Controller
             'q' => 'required|string|min:2|max:100',
         ]);
 
-        $userDojoId = auth()->user()->dojo_id;
+        // Consulta es una herramienta cross-dojo: ignora el dojo elegido en el sidebar
+        // y usa el dojo real, para que el admin global siga viendo todas las sucursales.
+        $userDojoId = auth()->user()->getRawOriginal('dojo_id');
         $q          = trim($request->q);
 
         $alumnos = Alumno::with(['person', 'dojo', 'ultimoGrado.grado'])
@@ -68,7 +72,9 @@ class ConsultaController extends Controller
     {
         $this->custom_authorize('browse_consulta');
 
-        $userDojoId = auth()->user()->dojo_id;
+        // Consulta es una herramienta cross-dojo: ignora el dojo elegido en el sidebar
+        // y usa el dojo real, para que el admin global siga viendo todas las sucursales.
+        $userDojoId = auth()->user()->getRawOriginal('dojo_id');
 
         $alumno = Alumno::with(['person', 'dojo'])
             ->whereNull('deleted_at')

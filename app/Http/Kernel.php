@@ -68,6 +68,7 @@ class Kernel extends HttpKernel
         'loggin'           => \App\Http\Middleware\Loggin::class,
         'system'           => \App\Http\Middleware\System::class,
         'dojo.mensualidad' => \App\Http\Middleware\CheckDojoMensualidad::class,
+        'dojo.activo'      => \App\Http\Middleware\EnsureDojoActivo::class,
 
 
     ];

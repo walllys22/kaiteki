@@ -19,7 +19,7 @@ class DojoMensualidadController extends Controller
     {
         $this->custom_authorize('browse_dojo_mensualidades');
 
-        $userDojoId = Auth::user()->dojo_id;
+        $userDojoId = $this->ownerDojoId();
 
         if ($userDojoId) {
             $dojo = Dojo::findOrFail($userDojoId);
@@ -48,16 +48,26 @@ class DojoMensualidadController extends Controller
 
     private function authorizeGlobalAdmin()
     {
-        if (Auth::user()->dojo_id) {
+        if (! Auth::user()->isGlobal()) {
             abort(403);
         }
+    }
+
+    /**
+     * dojo_id real del usuario para chequeos de propiedad. El admin global
+     * devuelve null aunque tenga un dojo elegido en el sidebar: la facturacion
+     * SaaS se administra sobre cualquier sucursal.
+     */
+    private function ownerDojoId()
+    {
+        return Auth::user()->getRawOriginal('dojo_id');
     }
 
     public function list($dojoId)
     {
         $this->custom_authorize('browse_dojo_mensualidades');
 
-        $userDojoId = Auth::user()->dojo_id;
+        $userDojoId = $this->ownerDojoId();
         if ($userDojoId && (int) $userDojoId !== (int) $dojoId) {
             abort(403);
         }
@@ -151,7 +161,7 @@ class DojoMensualidadController extends Controller
 
         $mensualidad = DojoMensualidad::with(['pagos.registerUser', 'dojo'])->findOrFail($id);
 
-        $userDojoId = Auth::user()->dojo_id;
+        $userDojoId = $this->ownerDojoId();
         if ($userDojoId && (int) $userDojoId !== (int) $mensualidad->dojo_id) {
             abort(403);
         }
@@ -165,7 +175,7 @@ class DojoMensualidadController extends Controller
 
         $pago = DojoMensualidadPago::with(['mensualidad.dojo', 'registerUser'])->findOrFail($pagoId);
 
-        $userDojoId = Auth::user()->dojo_id;
+        $userDojoId = $this->ownerDojoId();
         if ($userDojoId && (int) $userDojoId !== (int) $pago->mensualidad->dojo_id) {
             abort(403);
         }
@@ -184,7 +194,7 @@ class DojoMensualidadController extends Controller
             return $this->whatsappResponse(false, 'No se encontró la mensualidad del pago.');
         }
 
-        $userDojoId = Auth::user()->dojo_id;
+        $userDojoId = $this->ownerDojoId();
         if ($userDojoId && (int) $userDojoId !== (int) $mensualidad->dojo_id) {
             abort(403);
         }
@@ -264,7 +274,7 @@ class DojoMensualidadController extends Controller
 
         $mensualidad = DojoMensualidad::with(['dojo', 'pagos'])->findOrFail($id);
 
-        $userDojoId = Auth::user()->dojo_id;
+        $userDojoId = $this->ownerDojoId();
         if ($userDojoId && (int) $userDojoId !== (int) $mensualidad->dojo_id) {
             abort(403);
         }

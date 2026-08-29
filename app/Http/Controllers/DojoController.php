@@ -12,7 +12,7 @@ class DojoController extends Controller
     {
         $this->custom_authorize('read_dojos');
 
-        $userDojoId = Auth::user()->dojo_id;
+        $userDojoId = Auth::user()->getRawOriginal('dojo_id');
 
         if ($userDojoId && (int) $userDojoId !== (int) $id) {
             abort(403);

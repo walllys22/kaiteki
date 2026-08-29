@@ -179,7 +179,7 @@ class GradoController extends Controller
             'precio' => 'required|numeric|min:0|max:99999999.99',
         ]);
 
-        $dojoId = $userDojoId ?: $request->dojo_id;
+        $dojoId = auth()->user()->isGlobal() ? ($request->dojo_id ?: $userDojoId) : $userDojoId;
 
         if (!$dojoId) {
             return redirect()->back()

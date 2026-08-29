@@ -32,6 +32,13 @@
     $sidebarLogo = $adminLogoImage ? Voyager::image($adminLogoImage) : asset('images/icon.png');
     $userAvatar = $resolvePublicImage(optional($user?->person)->image, 'images/default.jpg');
     $dojoLogo = $user && $user->dojo ? $resolvePublicImage($user->dojo->logo, 'images/default.jpg') : asset('images/default.jpg');
+
+    // Selector de dojo activo: solo para usuarios globales (users.dojo_id NULL en base)
+    $esGlobal = $user ? $user->isGlobal() : false;
+    $dojoActivoId = $esGlobal ? session(\App\Models\User::DOJO_ACTIVO_SESSION_KEY) : null;
+    $dojosDisponibles = $esGlobal
+        ? \App\Models\Dojo::whereNull('deleted_at')->orderBy('nombre')->get(['id', 'nombre'])
+        : collect();
 @endphp
 
 <div class="side-menu sidebar-inverse">
@@ -171,6 +178,40 @@
             color: #fff;
             text-decoration: none;
         }
+        .sidebar-dojo-switcher {
+            padding: 10px 14px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .sidebar-dojo-switcher .sidebar-dojo-label {
+            display: block;
+            font-size: 10px;
+            letter-spacing: .08em;
+            opacity: .7;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .sidebar-dojo-switcher select {
+            width: 100%;
+            padding: 6px 8px;
+            font-size: 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.18);
+            background: rgba(255,255,255,0.10);
+            color: #fff;
+        }
+
+        .sidebar-dojo-switcher select option {
+            color: #333;
+        }
+
+        .sidebar-dojo-switcher .sidebar-dojo-hint {
+            display: block;
+            margin-top: 5px;
+            font-size: 10px;
+            opacity: .65;
+        }
     </style>
 
     <nav class="navbar navbar-default" role="navigation">
@@ -192,6 +233,28 @@
                         <p class="sidebar-user-email">{{ Auth::user()->email }}</p>
                     </div>
                 </div> --}}
+
+                @if($esGlobal)
+                    <div class="sidebar-dojo-switcher">
+                        <span class="sidebar-dojo-label">Dojo activo</span>
+                        <form method="POST" action="{{ route('contexto.dojo.update') }}" id="form-contexto-dojo">
+                            @csrf
+                            <select name="dojo_id" onchange="document.getElementById('form-contexto-dojo').submit();">
+                                {{-- Opcion "todas las sucursales" deshabilitada a proposito: el usuario
+                                     global siempre debe estar parado en un dojo concreto para no ver
+                                     informacion mezclada. Descomentar para volver a la vista global.
+                                <option value="">Todos los dojos</option>
+                                --}}
+                                @foreach($dojosDisponibles as $dojoOption)
+                                    <option value="{{ $dojoOption->id }}" {{ (int) $dojoActivoId === (int) $dojoOption->id ? 'selected' : '' }}>
+                                        {{ $dojoOption->nombre }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </form>
+                        <span class="sidebar-dojo-hint">Viendo solo esta sucursal.</span>
+                    </div>
+                @endif
 
                 @if($user && $user->dojo_id && $user->dojo)
                     <div class="sidebar-dojo-card">

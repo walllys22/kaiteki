@@ -47,6 +47,47 @@ class User extends \TCG\Voyager\Models\User
         return $this->belongsTo(Dojo::class, 'dojo_id');
     }
 
+    /**
+     * Clave de sesion donde el admin global guarda el dojo que esta mirando.
+     */
+    public const DOJO_ACTIVO_SESSION_KEY = 'dojo_activo_id';
+
+    /**
+     * Un usuario es global cuando su dojo_id REAL en base de datos es null
+     * (roles admin / administrador). No usar $this->dojo_id para esto: ese
+     * accessor devuelve el dojo elegido en el sidebar.
+     */
+    public function isGlobal(): bool
+    {
+        return $this->getRawOriginal('dojo_id') === null;
+    }
+
+    /**
+     * dojo_id efectivo:
+     * - operador de sucursal -> siempre su dojo real, no puede cambiarlo
+     * - admin global         -> el dojo elegido en el sidebar, o null (todos)
+     *
+     * Todo el sistema lee auth()->user()->dojo_id, asi que el filtrado por
+     * sucursal elegida funciona sin tocar los controladores.
+     */
+    public function getDojoIdAttribute($value)
+    {
+        if ($value !== null) {
+            return $value;
+        }
+
+        if (! app()->bound('session')) {
+            return null;
+        }
+
+        try {
+            return session(self::DOJO_ACTIVO_SESSION_KEY);
+        } catch (\Throwable $e) {
+            // Sin sesion disponible (colas, comandos): sin dojo activo.
+            return null;
+        }
+    }
+
 
     protected $hidden = [
         'password',
