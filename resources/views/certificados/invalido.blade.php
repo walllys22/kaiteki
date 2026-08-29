@@ -150,6 +150,24 @@
             opacity: .7;
         }
 
+        /* Celular: a pantalla completa, igual que la pagina de validacion. */
+        @media (max-width: 700px) {
+            body { padding: 0; }
+
+            .aviso {
+                border-radius: 0;
+                box-shadow: none;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                max-width: 100%;
+                min-height: 100vh;
+                min-height: 100svh;
+            }
+
+            .cuerpo { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; }
+        }
+
         @media (prefers-reduced-motion: reduce) {
             .aviso, .sello-nulo { animation: none; }
         }

@@ -119,13 +119,15 @@
 
             /* Escala fluida: el padding y los cuerpos de texto acompanan el
                ancho del viewport, asi no hacen falta saltos por breakpoint. */
-            --pad:        clamp(15px, 5.2vw, 26px);
-            --pad-bloque: clamp(16px, 4.6vw, 24px);
-            --t-dojo:     clamp(17px, 4.6vw, 22px);
-            --t-nombre:   clamp(19px, 5.6vw, 26px);
-            --t-grado:    clamp(23px, 7.4vw, 33px);
-            --t-dato:     clamp(14px, 3.6vw, 15px);
-            --t-rotulo:   clamp(9px, 2.5vw, 10px);
+            --pad:        clamp(18px, 5.4vw, 26px);
+            --pad-bloque: clamp(18px, 5vw, 24px);
+            --t-dojo:     clamp(19px, 5.4vw, 23px);
+            --t-nombre:   clamp(23px, 7vw, 28px);
+            --t-grado:    clamp(29px, 9.4vw, 36px);
+            --t-dato:     clamp(15px, 4.2vw, 16px);
+            --t-rotulo:   clamp(10px, 2.9vw, 11px);
+            --foto-an:    clamp(80px, 22vw, 94px);
+            --foto-al:    clamp(96px, 26vw, 112px);
         }
 
         * { box-sizing: border-box; }
@@ -273,7 +275,7 @@
 
         .veredicto .estado {
             font-family: ui-sans-serif, system-ui, sans-serif;
-            font-size: 13px;
+            font-size: clamp(13px, 3.8vw, 14px);
             font-weight: 700;
             letter-spacing: .2em;
             text-transform: uppercase;
@@ -284,7 +286,7 @@
 
         .veredicto .glosa {
             color: var(--sumi-2);
-            font-size: 13px;
+            font-size: clamp(13.5px, 3.8vw, 14px);
             margin: 8px auto 0;
             max-width: 40ch;
         }
@@ -380,11 +382,11 @@
             border-radius: 2px;
             box-shadow: 0 3px 10px rgba(27, 21, 18, .18);
             flex: 0 0 auto;
-            height: clamp(96px, 26vw, 112px);
+            height: var(--foto-al);
             object-fit: cover;
             padding: 4px;
             background: #fff;
-            width: clamp(80px, 22vw, 94px);
+            width: var(--foto-an);
         }
 
         .alumno .nombre {
@@ -398,7 +400,7 @@
         .alumno .registro {
             color: var(--sumi-2);
             font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-            font-size: 12px;
+            font-size: clamp(12px, 3.3vw, 13px);
             margin-top: 7px;
         }
 
@@ -420,12 +422,12 @@
             border: 2px solid var(--obi);
             border-radius: 50%;
             content: "";
-            height: 110px;
-            left: 24px;
+            height: var(--foto-al);
+            left: var(--pad);
             pointer-events: none;
             position: absolute;
-            top: 18px;
-            width: 92px;
+            top: var(--pad-bloque);
+            width: var(--foto-an);
         }
 
         @keyframes halo {
@@ -550,7 +552,7 @@
             border-top: 1px solid var(--linea);
             color: var(--sumi-2);
             font-family: ui-sans-serif, system-ui, sans-serif;
-            font-size: 11px;
+            font-size: clamp(11.5px, 3.1vw, 12px);
             line-height: 1.7;
             padding: var(--pad-bloque) var(--pad) calc(var(--pad-bloque) * 1.2);
             text-align: center;
@@ -570,9 +572,29 @@
            Los tamanos ya escalan solos con clamp(); estos quiebres solo cambian
            lo que la escala fluida no puede: la disposicion. */
 
-        /* Tablet y celular acostado: el rollo deja de pegarse a los bordes. */
+        /* Celular: el rollo ocupa la pantalla completa, de borde a borde.
+           Como tarjeta flotante con margenes se ve chico y desaprovecha
+           el ancho, que es justo lo que sobra poco en un telefono. */
         @media (max-width: 700px) {
-            .kakejiku { border-radius: 2px; }
+            body {
+                padding: 0;
+            }
+
+            .kakejiku {
+                border-radius: 0;
+                box-shadow: none;
+                display: flex;
+                flex-direction: column;
+                margin: 0;
+                max-width: 100%;
+                min-height: 100vh;
+                min-height: 100svh;
+                width: 100%;
+            }
+
+            /* El pie empuja hacia abajo, asi la varilla inferior queda
+               apoyada en el fondo real de la pantalla. */
+            .pie { margin-top: auto; }
         }
 
         /* El sello y el texto del veredicto dejan de competir por el ancho. */
@@ -582,18 +604,22 @@
 
         /* Celular: una sola columna. */
         @media (max-width: 520px) {
+            /* Una columna, y el retrato mas grande: en el celular sobra ancho
+               y la foto es lo primero que mira quien verifica el certificado. */
             .alumno {
+                --foto-an: clamp(104px, 30vw, 132px);
+                --foto-al: clamp(126px, 36vw, 158px);
                 flex-direction: column;
                 text-align: center;
             }
 
             .alumno::before {
-                left: 50%;
-                margin-left: calc(clamp(80px, 22vw, 94px) / -2);
-                top: 16px;
-                width: clamp(80px, 22vw, 94px);
-                height: clamp(96px, 26vw, 112px);
                 border-radius: 50%;
+                height: var(--foto-al);
+                left: 50%;
+                margin-left: calc(var(--foto-an) / -2);
+                top: var(--pad-bloque);
+                width: var(--foto-an);
             }
 
             .datos { grid-template-columns: 1fr; }
