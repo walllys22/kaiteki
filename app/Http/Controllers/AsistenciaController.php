@@ -80,7 +80,7 @@ class AsistenciaController extends Controller
 
         $userDojoId = auth()->user()->dojo_id;
         // Branch user: always use their own dojo; global admin: use submitted dojo_id
-        $dojoId    = auth()->user()->isGlobal() ? ($request->dojo_id ?: $userDojoId) : $userDojoId;
+        $dojoId    = auth()->user()->isSuperAdmin() ? ($request->dojo_id ?: $userDojoId) : $userDojoId;
         $horarioId = $request->horario_id;
         $fecha     = $request->fecha;
 
@@ -129,7 +129,7 @@ class AsistenciaController extends Controller
         ]);
 
         $userDojoId = auth()->user()->dojo_id;
-        $dojoId     = auth()->user()->isGlobal() ? ($request->dojo_id ?: $userDojoId) : $userDojoId;
+        $dojoId     = auth()->user()->isSuperAdmin() ? ($request->dojo_id ?: $userDojoId) : $userDojoId;
 
         $yaExiste = Asistencia::where('horario_id', $request->horario_id)
             ->where('fecha', $request->fecha)

@@ -119,7 +119,12 @@ El middleware `EnsureDojoActivo` (alias `dojo.activo`, aplicado a todo el grupo 
 POST admin/contexto/dojo   contexto.dojo.update   (ContextoDojoController)
 ```
 
-**Precedencia al resolver la sucursal:** `request('dojo_id')` explicito > dojo activo de sesion. El override por request solo se acepta si `isGlobal()`; para un operador de sucursal siempre manda su `dojo_id` real.
+**Precedencia al resolver la sucursal:**
+- `administrador_dojo` — siempre su `dojo_id` real.
+- `administrador` — siempre el dojo activo de sesion. **Un `dojo_id` mandado por request se ignora**: parado en una sucursal no puede mover un registro a otra.
+- `admin` — no tiene dojo activo, elige libremente con `request('dojo_id')`.
+
+En consecuencia, el bloque de `dojo_id` de `resources/views/vendor/voyager/bread/edit-add.blade.php` (BREAD de `people` y `horarios`) aplica tanto en alta como en **edicion**: si `auth()->user()->dojo_id` tiene valor, el select se renderiza `disabled` mas un `input hidden` con la sucursal correcta. Solo el rol `admin` ve el select editable.
 
 **Lugares que deliberadamente ignoran el dojo activo** y usan `getRawOriginal('dojo_id')` o `isGlobal()`:
 - `CheckDojoMensualidad` — el admin global nunca se bloquea, aunque mire un dojo con la mensualidad SaaS vencida.

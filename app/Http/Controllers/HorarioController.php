@@ -80,7 +80,7 @@ class HorarioController extends Controller
         ]);
 
         $userDojoId = auth()->user()->dojo_id;
-        $dojoId     = auth()->user()->isGlobal() ? ($request->dojo_id ?: $userDojoId) : $userDojoId;
+        $dojoId     = auth()->user()->isSuperAdmin() ? ($request->dojo_id ?: $userDojoId) : $userDojoId;
 
         try {
             Horario::create([

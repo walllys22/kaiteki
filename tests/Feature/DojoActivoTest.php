@@ -111,6 +111,53 @@ class DojoActivoTest extends TestCase
         }
     }
 
+    public function test_administrador_no_puede_mover_una_persona_a_otra_sucursal()
+    {
+        $admin = $this->administrador();
+        $dojoActivo = Dojo::whereNull('deleted_at')->whereHas('people')->firstOrFail();
+        $otroDojo = Dojo::whereNull('deleted_at')->where('id', '!=', $dojoActivo->id)->firstOrFail();
+
+        $persona = Person::whereNull('deleted_at')->where('dojo_id', $dojoActivo->id)->firstOrFail();
+
+        // Intenta forzar por request el traslado a otra sucursal.
+        $this->actingAs($admin)
+            ->withSession([User::DOJO_ACTIVO_SESSION_KEY => $dojoActivo->id])
+            ->put("/admin/people/{$persona->id}", [
+                'dojo_id' => $otroDojo->id,
+                'first_name' => $persona->first_name,
+                'gender' => $persona->gender ?: 'Masculino',
+                'ci' => $persona->ci,
+            ]);
+
+        $this->assertEquals(
+            $dojoActivo->id,
+            $persona->fresh()->dojo_id,
+            'El dojo activo debe ganarle al dojo_id mandado por el formulario'
+        );
+    }
+
+    public function test_formulario_de_edicion_bloquea_el_select_de_sucursal()
+    {
+        $admin = $this->administrador();
+        $dojo = Dojo::whereNull('deleted_at')->whereHas('people')->firstOrFail();
+        $persona = Person::whereNull('deleted_at')->where('dojo_id', $dojo->id)->firstOrFail();
+
+        $html = $this->actingAs($admin)
+            ->withSession([User::DOJO_ACTIVO_SESSION_KEY => $dojo->id])
+            ->get("/admin/people/{$persona->id}/edit")
+            ->assertOk()
+            ->getContent();
+
+        // Ojo: el sidebar tiene su propio <select name="dojo_id"> (el switcher),
+        // por eso se busca puntualmente el select editable del formulario BREAD.
+        $this->assertStringNotContainsString(
+            '<select name="dojo_id" class="form-control select2" required>',
+            $html,
+            'El select de sucursal del formulario debe venir bloqueado, no editable'
+        );
+        $this->assertStringContainsString('<input type="hidden" name="dojo_id"', $html);
+    }
+
     public function test_operador_no_puede_ver_ni_editar_persona_de_otra_sucursal()
     {
         $oper = $this->operador();

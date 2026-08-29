@@ -41,9 +41,14 @@ class AlumnoController extends Controller
             return $user->getRawOriginal('dojo_id');
         }
 
-        // Admin global: gana el dojo elegido explicitamente en el formulario;
-        // si no mando ninguno, cae al dojo activo del sidebar (o null = todos).
-        return $request->dojo_id ?: $user->dojo_id;
+        // Rol administrador: manda el dojo activo del sidebar. No puede mover un
+        // registro a otra sucursal mientras esta parado en una.
+        if ($user->usaDojoActivo()) {
+            return $user->dojo_id;
+        }
+
+        // Rol admin: no tiene dojo activo, elige libremente en el formulario.
+        return $request->dojo_id;
     }
 
     protected function resolveAlumnoDojoId(Request $request): ?int
@@ -54,7 +59,7 @@ class AlumnoController extends Controller
         }
 
         if (!$request->person_id) {
-            $dojoId = $request->dojo_id ?: $user->dojo_id;
+            $dojoId = $user->usaDojoActivo() ? $user->dojo_id : $request->dojo_id;
 
             return $dojoId ? (int) $dojoId : null;
         }

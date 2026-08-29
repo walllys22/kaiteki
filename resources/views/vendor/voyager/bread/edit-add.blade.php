@@ -90,7 +90,9 @@
                                     {{ $row->slugify }}
                                     <label class="control-label" for="name">{{ $row->getTranslatedAttribute('display_name') }}</label>
                                     @include('voyager::multilingual.input-hidden-bread-edit-add')
-                                    @if (in_array($dataType->slug, ['people', 'horarios'], true) && $row->field === 'dojo_id' && ($dataType->slug !== 'people' || $add))
+                                    {{-- Vale tanto al crear como al editar: si el usuario esta parado en una
+                                         sucursal, el select va bloqueado y no puede mover el registro a otra. --}}
+                                    @if (in_array($dataType->slug, ['people', 'horarios'], true) && $row->field === 'dojo_id')
                                         @php
                                             $breadDojos = $breadDojos ?? \App\Models\Dojo::whereNull('deleted_at')->orderBy('nombre')->get();
                                             $selectedDojoId = old('dojo_id', $userDojoId ?: $dataTypeContent->dojo_id);
