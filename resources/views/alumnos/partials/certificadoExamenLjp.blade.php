@@ -94,22 +94,22 @@
             width: min(100%, 1120px);
         }
         .student-photo {
-            height: 23.5%;
-            left: 71%;
+            height: 22%;
+            left: 71.6%;
             object-fit: cover;
             position: absolute;
-            top: 9.2%;
-            width: 17.1%;
+            top: 8.6%;
+            width: 16%;
         }
         .reg {
             color: #f20b3f;
-            font-size: clamp(18px, 3vw, 36px);
+            font-size: clamp(15px, 2.4vw, 29px);
             font-style: italic;
             font-weight: 800;
-            left: 74.2%;
+            left: 73.1%;
             position: absolute;
             text-align: center;
-            top: 30.4%;
+            top: 31.2%;
             width: 13%;
         }
         .certificate-text {
