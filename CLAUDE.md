@@ -338,10 +338,10 @@ GET /validar/certificado/cursando/{id}   certificados.validar.cursando  (signed)
 
 - Sin autenticacion: cualquiera que escanee el papel puede verificarlo.
 - Las URLs son **firmadas y sin vencimiento** (un certificado impreso es permanente). La firma se valida **dentro del controlador** con `hasValidSignature()`, no con el middleware `signed`: asi un enlace manipulado cae en la pagina de rechazo en vez del 403 pelado de Laravel. No volver a poner el middleware en la ruta — abortaria antes de llegar al controlador.
-- **Pagina de rechazo:** `resources/views/certificados/invalido.blade.php`, con sello "NO VALIDO" tachado. Dos motivos, resueltos por `noValido()`:
-  - `enlace` (**403**) — la firma no valida. Es el caso de quien escanea su certificado y edita el numero de examen en la URL para ver el de otro alumno.
-  - `inexistente` (**404**) — la firma es buena pero no hay registro vigente: examen no aprobado, registro dado de baja o certificado anulado.
-- La pagina de rechazo **no filtra ningun dato del alumno** (hay tests que lo verifican) y conserva los codigos 403/404 reales: es un rechazo, no un resultado.
+- **Pagina de rechazo:** `resources/views/certificados/invalido.blade.php`, con sello "NO VALIDO" tachado.
+- **El motivo del rechazo NO se informa.** Siempre **404** y siempre el mismo texto, sin importar si la firma fue alterada (alguien edito el numero de examen en la URL) o si el registro no existe / no esta aprobado / fue dado de baja. Distinguir un caso del otro le indicaria a quien manipula la direccion por donde seguir probando. El detalle va solo al log (`Log::info('Certificado rechazado', ...)` con motivo, id e IP).
+- Al tocar esa vista, cuidado con los **comentarios CSS**: se renderizan en el HTML y pueden filtrar el motivo (los comentarios Blade `{{-- --}}` no). Hay un test que compara byte a byte la respuesta de un enlace alterado contra la de uno inexistente y falla si difieren.
+- La pagina de rechazo tampoco filtra dato alguno del alumno.
 - `examen()` solo resuelve examenes con `aprobado=1`; `cursando()` solo grados en progreso (`status` null o `'0'`).
 - Las URLs se generan con `CertificadoValidacionController::urlExamen($id)` / `::urlCursando($id)`, que es lo que consumen `certificadoExamenLjp.blade.php` y `certificadoExamenEka.blade.php` para armar el QR. Si el registro no tiene id, el QR cae al texto plano anterior.
 - La pagina muestra: sello con el veredicto, foto, nombre, N&deg; de registro, fecha de ingreso, la cinta dibujada en SVG, grado, fecha de examen, dojo e instructor responsable. **No lista los grados anteriores del alumno.**

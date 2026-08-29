@@ -57,9 +57,8 @@ class CertificadoValidacionTest extends TestCase
 
         $res = $this->get("/validar/certificado/examen/{$examen->id}");
 
-        $res->assertForbidden();
+        $res->assertNotFound();
         $res->assertSee('Este certificado no pudo verificarse');
-        $res->assertSee('El enlace fue modificado.');
         // No puede filtrar ningun dato del alumno.
         $res->assertDontSee($examen->alumnoGrado->alumno->person->first_name, false);
     }
@@ -83,19 +82,37 @@ class CertificadoValidacionTest extends TestCase
 
         $res = $this->get("/validar/certificado/examen/{$otro->id}?{$firma}");
 
-        $res->assertForbidden();
-        $res->assertSee('El enlace fue modificado.');
+        $res->assertNotFound();
+        $res->assertSee('Este certificado no pudo verificarse');
         $res->assertDontSee($otro->alumnoGrado->alumno->person->first_name, false);
     }
 
-    public function test_certificado_inexistente_da_no_disponible()
+    public function test_el_rechazo_no_revela_el_motivo()
     {
+        // Un enlace alterado y uno inexistente tienen que ser indistinguibles:
+        // mismo codigo HTTP y mismo cuerpo. Si difieren, quien manipula la
+        // direccion aprende por donde seguir probando.
+        $examen = $this->examenAprobado();
+
+        $alterado = $this->get("/validar/certificado/examen/{$examen->id}?signature=" . str_repeat('a', 64));
+
         $idLibre = (AlumnoGradoExamen::max('id') ?? 0) + 9999;
+        $inexistente = $this->get(CertificadoValidacionController::urlExamen($idLibre));
 
-        $res = $this->get(CertificadoValidacionController::urlExamen($idLibre));
+        $this->assertSame($alterado->getStatusCode(), $inexistente->getStatusCode(), 'El codigo HTTP delata el motivo');
 
-        $res->assertNotFound();
-        $res->assertSee('El registro no esta disponible.');
+        // Se compara el cuerpo sin la hora del pie, que obviamente varia.
+        $sinHora = fn ($html) => preg_replace('/\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}/', '', $html);
+
+        $this->assertSame(
+            $sinHora($alterado->getContent()),
+            $sinHora($inexistente->getContent()),
+            'El mensaje delata el motivo del rechazo'
+        );
+
+        foreach (['enlace', 'modificad', 'firma', 'signature', 'no esta disponible', 'anulado'] as $pista) {
+            $alterado->assertDontSee($pista, false);
+        }
     }
 
     public function test_examen_aplazado_no_tiene_pagina_de_validacion()
@@ -110,7 +127,7 @@ class CertificadoValidacionTest extends TestCase
 
         $this->get(CertificadoValidacionController::urlExamen($aplazado->id))
             ->assertNotFound()
-            ->assertSee('El registro no esta disponible.');
+            ->assertSee('Este certificado no pudo verificarse');
     }
 
     public function test_la_cinta_dibuja_base_y_franja_por_separado()

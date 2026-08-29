@@ -1,6 +1,3 @@
-@php
-    $alterado = $motivo === 'enlace';
-@endphp
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -72,7 +69,7 @@
 
         .cuerpo { padding: var(--pad); }
 
-        /* Sello anulado: se estampa torcido y queda tachado. */
+        /* Sello de rechazo: se estampa torcido y queda tachado. */
         .sello-nulo {
             animation: estampar-nulo .55s cubic-bezier(.2, 1.25, .5, 1) .1s both;
             border: 3px double var(--bermellon);
@@ -167,32 +164,22 @@
 
             <h1>Este certificado no pudo verificarse</h1>
 
-            @if ($alterado)
-                <p>
-                    El enlace no coincide con ningun certificado emitido por el dojo.
-                </p>
-                <div class="motivo">
-                    <strong>El enlace fue modificado.</strong><br>
-                    Cada certificado lleva un codigo unico que se genera al emitirlo. Si se cambia
-                    aunque sea un numero de la direccion, la verificacion falla. Volve a escanear
-                    el codigo QR directamente del documento impreso.
-                </div>
-            @else
-                <p>
-                    El codigo es legitimo, pero no hay ningun certificado vigente asociado.
-                </p>
-                <div class="motivo">
-                    <strong>El registro no esta disponible.</strong><br>
-                    Puede tratarse de un examen que no fue aprobado, de un registro dado de baja
-                    o de un certificado anulado por el dojo. Consulta directamente con la sucursal
-                    que emitio el documento.
-                </div>
-            @endif
+            {{-- Mensaje unico a proposito: no se informa el motivo del rechazo.
+                 Distinguir "enlace alterado" de "registro inexistente" le indica
+                 a quien manipula la direccion por donde seguir probando. --}}
+            <p>
+                No corresponde a ningun certificado verificable emitido por el dojo.
+            </p>
+
+            <div class="motivo">
+                Escanea el codigo QR directamente del documento impreso. Si aun asi no se
+                verifica, consulta con el dojo que emitio el certificado.
+            </div>
         </div>
 
         <div class="pie">
             Ante cualquier duda, verifica el documento con el dojo emisor.<br>
-            <span class="ref">REF. {{ $referencia }} &middot; {{ now()->format('d/m/Y H:i') }}</span>
+            <span class="ref">{{ now()->format('d/m/Y H:i') }}</span>
         </div>
     </main>
 </body>

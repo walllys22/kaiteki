@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AlumnoGrado;
 use App\Models\AlumnoGradoExamen;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 
 /**
@@ -91,20 +92,21 @@ class CertificadoValidacionController extends Controller
     /**
      * Pagina de rechazo.
      *
-     * `enlace`      -> la firma no valida: alguien edito la URL (por ejemplo,
-     *                  cambio el numero de examen para ver otro certificado).
-     * `inexistente` -> la firma es buena pero el registro no existe, fue dado
-     *                  de baja o el examen no esta aprobado.
+     * El motivo NO se le informa a quien consulta ni por el mensaje ni por el
+     * codigo HTTP: siempre 404 y siempre el mismo texto. Distinguir "enlace
+     * alterado" de "registro inexistente" le indicaria a quien manipula la
+     * direccion por donde seguir probando.
      *
-     * Devuelve 403 / 404 de verdad: la pagina es un rechazo, no un resultado.
+     * El detalle queda solo en el log, para que el dojo pueda diagnosticar.
      */
     private function noValido(string $motivo, int $id)
     {
-        $status = $motivo === 'enlace' ? 403 : 404;
-
-        return response()->view('certificados.invalido', [
+        Log::info('Certificado rechazado', [
             'motivo' => $motivo,
-            'referencia' => $id,
-        ], $status);
+            'id' => $id,
+            'ip' => request()->ip(),
+        ]);
+
+        return response()->view('certificados.invalido', [], 404);
     }
 }
