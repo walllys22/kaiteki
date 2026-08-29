@@ -63,9 +63,29 @@ class User extends \TCG\Voyager\Models\User
     }
 
     /**
+     * Super admin (rol `admin`): ve todo el sistema sin restriccion de sucursal.
+     * No se le muestra el selector de dojo ni se le fuerza ninguno.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return optional($this->role)->name === 'admin';
+    }
+
+    /**
+     * Solo el rol `administrador` trabaja parado sobre una sucursal a la vez.
+     * `admin` queda afuera (ve todo) y `administrador_dojo` ya esta atado a su
+     * dojo real en base.
+     */
+    public function usaDojoActivo(): bool
+    {
+        return $this->isGlobal() && ! $this->isSuperAdmin();
+    }
+
+    /**
      * dojo_id efectivo:
      * - operador de sucursal -> siempre su dojo real, no puede cambiarlo
-     * - admin global         -> el dojo elegido en el sidebar, o null (todos)
+     * - rol administrador    -> el dojo elegido en el sidebar
+     * - rol admin            -> null siempre (ve todas las sucursales)
      *
      * Todo el sistema lee auth()->user()->dojo_id, asi que el filtrado por
      * sucursal elegida funciona sin tocar los controladores.
@@ -76,7 +96,8 @@ class User extends \TCG\Voyager\Models\User
             return $value;
         }
 
-        if (! app()->bound('session')) {
+        // El super admin nunca se filtra por sucursal.
+        if (! app()->bound('session') || $this->isSuperAdmin()) {
             return null;
         }
 

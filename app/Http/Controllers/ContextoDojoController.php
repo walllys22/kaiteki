@@ -9,8 +9,8 @@ use Illuminate\Http\Request;
 /**
  * Selector de "dojo activo" del sidebar.
  *
- * Solo aplica a usuarios globales (users.dojo_id NULL en base: roles admin y
- * administrador). Un operador de sucursal nunca puede cambiar su contexto.
+ * Solo aplica al rol `administrador`. El rol `admin` ve todo el sistema sin
+ * selector, y un operador de sucursal nunca puede cambiar su contexto.
  */
 class ContextoDojoController extends Controller
 {
@@ -23,7 +23,9 @@ class ContextoDojoController extends Controller
     {
         $user = auth()->user();
 
-        if (! $user->isGlobal()) {
+        // Solo el rol administrador cambia de sucursal. El rol admin ve todo y
+        // no necesita contexto; los operadores estan atados a su dojo real.
+        if (! $user->usaDojoActivo()) {
             abort(403);
         }
 

@@ -9,8 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * Garantiza que un usuario global (admin / administrador) siempre este parado
- * en una sucursal concreta.
+ * Garantiza que un usuario con rol `administrador` siempre este parado en una
+ * sucursal concreta. El rol `admin` queda excluido: ve todo el sistema.
  *
  * El sidebar no ofrece "Todos los dojos": si el usuario todavia no eligio
  * ninguno, se le asigna el primero activo para que nunca vea informacion
@@ -20,7 +20,9 @@ class EnsureDojoActivo
 {
     public function handle(Request $request, Closure $next)
     {
-        if (! Auth::check() || ! Auth::user()->isGlobal()) {
+        // Solo el rol administrador trabaja sobre una sucursal a la vez.
+        // El rol admin ve todo y los operadores ya estan atados a su dojo real.
+        if (! Auth::check() || ! Auth::user()->usaDojoActivo()) {
             return $next($request);
         }
 

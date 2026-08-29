@@ -92,18 +92,28 @@ This pattern is applied in `PersonController`, `AlumnoController`, `UserControll
 - `people.dojo_id` — which branch registered the person
 - `registerUser_id` — audit only, does not determine ownership
 
-### Dojo activo (selector del sidebar para usuarios globales)
-Un usuario global (`users.dojo_id` NULL en base: roles `admin` y `administrador`) elige en el sidebar que sucursal esta mirando. La eleccion se guarda en sesion y filtra **todo el sistema** sin tocar los controladores.
+### Dojo activo (selector del sidebar para el rol `administrador`)
+El rol `administrador` elige en el sidebar que sucursal esta mirando. La eleccion se guarda en sesion y filtra **todo el sistema** sin tocar los controladores.
 
-- `User::isGlobal()` — unica forma valida de preguntar "es admin global". Lee `getRawOriginal('dojo_id')`. **No usar `$user->dojo_id === null` para esto**: ese accessor devuelve el dojo elegido.
-- `User::getDojoIdAttribute()` — operador de sucursal: siempre su `dojo_id` real (la sesion se ignora, no puede cambiar de sucursal). Usuario global: el dojo elegido.
+Comportamiento por rol:
+
+| Rol | `users.dojo_id` | Selector | Alcance |
+|-----|-----------------|----------|---------|
+| `admin` | `null` | no | todas las sucursales, siempre |
+| `administrador` | `null` | si | una sucursal a la vez (obligatorio) |
+| `administrador_dojo` | seteado | no | su propia sucursal |
+
+- `User::isGlobal()` — unica forma valida de preguntar "es usuario global" (`admin` o `administrador`). Lee `getRawOriginal('dojo_id')`. **No usar `$user->dojo_id === null` para esto**: ese accessor devuelve el dojo elegido.
+- `User::isSuperAdmin()` — rol `admin`. Nunca se filtra por sucursal.
+- `User::usaDojoActivo()` — `isGlobal() && ! isSuperAdmin()`, o sea solo `administrador`. Es el chequeo que gobierna el selector, el middleware y la vista.
+- `User::getDojoIdAttribute()` — operador de sucursal: siempre su `dojo_id` real (la sesion se ignora, no puede cambiar de sucursal). `administrador`: el dojo elegido. `admin`: siempre `null`.
 - `User::DOJO_ACTIVO_SESSION_KEY` (`dojo_activo_id`) — clave de sesion.
 - Como los ~82 call sites leen `auth()->user()->dojo_id`, el filtrado por sucursal elegida funciona solo en alumnos, personas, horarios, asistencias, grados, aranceles, mensualidades, kardex y dashboard.
-- Select en `resources/views/vendor/voyager/dashboard/sidebar.blade.php`, visible solo si `isGlobal()`.
+- Select en `resources/views/vendor/voyager/dashboard/sidebar.blade.php`, visible solo si `usaDojoActivo()`.
 
-**No existe la opcion "Todos los dojos".** El usuario global siempre esta parado en una sucursal concreta; nunca ve informacion mezclada de varias. La opcion global quedo comentada en el select del sidebar y en `ContextoDojoController@update` (que valida `dojo_id` como `required`). Para rehabilitarla hay que descomentar ambos lugares.
+**No existe la opcion "Todos los dojos".** El rol `administrador` siempre esta parado en una sucursal concreta; nunca ve informacion mezclada de varias. La opcion global quedo comentada en el select del sidebar y en `ContextoDojoController@update` (que valida `dojo_id` como `required`). Para rehabilitarla hay que descomentar ambos lugares.
 
-El middleware `EnsureDojoActivo` (alias `dojo.activo`, aplicado a todo el grupo `/admin`) garantiza la invariante: si un usuario global no tiene dojo elegido — o el elegido fue dado de baja — le asigna el primer dojo activo por nombre. No toca a los operadores de sucursal. Corre antes de los controladores, asi que la primera pantalla ya sale filtrada.
+El middleware `EnsureDojoActivo` (alias `dojo.activo`, aplicado a todo el grupo `/admin`) garantiza la invariante: si un `administrador` no tiene dojo elegido — o el elegido fue dado de baja — le asigna el primer dojo activo por nombre. No toca ni al rol `admin` ni a los operadores de sucursal. Corre antes de los controladores, asi que la primera pantalla ya sale filtrada.
 
 ```
 POST admin/contexto/dojo   contexto.dojo.update   (ContextoDojoController)
@@ -116,9 +126,11 @@ POST admin/contexto/dojo   contexto.dojo.update   (ContextoDojoController)
 - `DojoMensualidadController` — la facturacion SaaS se administra sobre cualquier sucursal (`authorizeGlobalAdmin()`, `ownerDojoId()`).
 - `DojoController::show()` — el admin global puede abrir la ficha de cualquier dojo.
 - `ConsultaController` — es una herramienta cross-dojo; el admin global sigue viendo todas las sucursales.
-- `AlumnoGradoController::anularPagoRepaso()` / `anularPagoExamen()` — privilegio de admin global, independiente del dojo elegido.
+- `AlumnoGradoController::anularPagoRepaso()` / `anularPagoExamen()` — privilegio de usuario global, independiente del dojo elegido.
 
-El selector es una comodidad de UI, no un limite de seguridad: un usuario global puede cambiar de sucursal cuando quiera. El limite real sigue siendo `users.dojo_id` en base.
+Cobertura de regresion: `tests/Feature/DojoActivoTest.php`.
+
+El selector es una comodidad de UI, no un limite de seguridad: un `administrador` puede cambiar de sucursal cuando quiera, y el rol `admin` ve todo igual. El limite real sigue siendo `users.dojo_id` en base.
 
 Voyager BREAD generico (dojos, roles, settings) no consulta `dojo_id` y **no** queda filtrado por el selector.
 

@@ -33,8 +33,9 @@
     $userAvatar = $resolvePublicImage(optional($user?->person)->image, 'images/default.jpg');
     $dojoLogo = $user && $user->dojo ? $resolvePublicImage($user->dojo->logo, 'images/default.jpg') : asset('images/default.jpg');
 
-    // Selector de dojo activo: solo para usuarios globales (users.dojo_id NULL en base)
-    $esGlobal = $user ? $user->isGlobal() : false;
+    // Selector de dojo activo: solo para el rol administrador.
+    // El rol admin ve todo el sistema y no lleva selector.
+    $esGlobal = $user ? $user->usaDojoActivo() : false;
     $dojoActivoId = $esGlobal ? session(\App\Models\User::DOJO_ACTIVO_SESSION_KEY) : null;
     $dojosDisponibles = $esGlobal
         ? \App\Models\Dojo::whereNull('deleted_at')->orderBy('nombre')->get(['id', 'nombre'])

@@ -19,9 +19,20 @@ class DojoActivoTest extends TestCase
         }
     }
 
-    private function adminGlobal(): User
+    /** Rol administrador: global, pero trabaja parado sobre una sucursal. */
+    private function administrador(): User
     {
-        return User::whereNull('dojo_id')->firstOrFail();
+        return User::whereNull('dojo_id')
+            ->whereHas('role', fn ($q) => $q->where('name', 'administrador'))
+            ->firstOrFail();
+    }
+
+    /** Rol admin: ve todo el sistema, sin selector ni dojo forzado. */
+    private function superAdmin(): User
+    {
+        return User::whereNull('dojo_id')
+            ->whereHas('role', fn ($q) => $q->where('name', 'admin'))
+            ->firstOrFail();
     }
 
     private function operador(): User
@@ -29,11 +40,43 @@ class DojoActivoTest extends TestCase
         return User::whereNotNull('dojo_id')->firstOrFail();
     }
 
-    public function test_admin_global_recibe_dojo_por_defecto()
+    public function test_administrador_recibe_dojo_por_defecto()
     {
-        $this->actingAs($this->adminGlobal())->get('/admin/people')->assertOk();
+        $this->actingAs($this->administrador())->get('/admin/people')->assertOk();
 
         $this->assertNotNull(session(User::DOJO_ACTIVO_SESSION_KEY));
+    }
+
+    public function test_super_admin_no_queda_atado_a_ninguna_sucursal()
+    {
+        $admin = $this->superAdmin();
+
+        $this->actingAs($admin)->get('/admin/people')->assertOk();
+
+        $this->assertNull(session(User::DOJO_ACTIVO_SESSION_KEY), 'Al rol admin no se le debe forzar un dojo');
+        $this->assertNull($admin->dojo_id, 'El rol admin debe ver todas las sucursales');
+        $this->assertFalse($admin->usaDojoActivo());
+    }
+
+    public function test_super_admin_ignora_el_dojo_activo_de_sesion()
+    {
+        $admin = $this->superAdmin();
+
+        $res = $this->actingAs($admin)
+            ->withSession([User::DOJO_ACTIVO_SESSION_KEY => 3])
+            ->get('/admin/people/ajax/list');
+
+        $res->assertOk();
+        $dojos = $res->original->getData()['data']->pluck('dojo_id')->unique();
+
+        $this->assertGreaterThan(1, $dojos->count(), 'El rol admin debe seguir viendo personas de varias sucursales');
+    }
+
+    public function test_super_admin_no_puede_usar_el_selector()
+    {
+        $this->actingAs($this->superAdmin())
+            ->post('/admin/contexto/dojo', ['dojo_id' => 3])
+            ->assertForbidden();
     }
 
     public function test_listado_de_personas_solo_trae_el_dojo_activo()
@@ -41,7 +84,7 @@ class DojoActivoTest extends TestCase
         $dojo = Dojo::whereNull('deleted_at')
             ->whereHas('people')->firstOrFail();
 
-        $res = $this->actingAs($this->adminGlobal())
+        $res = $this->actingAs($this->administrador())
             ->withSession([User::DOJO_ACTIVO_SESSION_KEY => $dojo->id])
             ->get('/admin/people/ajax/list');
 
@@ -58,7 +101,7 @@ class DojoActivoTest extends TestCase
     {
         $dojoId = Alumno::whereNull('deleted_at')->whereNotNull('dojo_id')->firstOrFail()->dojo_id;
 
-        $res = $this->actingAs($this->adminGlobal())
+        $res = $this->actingAs($this->administrador())
             ->withSession([User::DOJO_ACTIVO_SESSION_KEY => $dojoId])
             ->get('/admin/alumnos/ajax/list');
 
