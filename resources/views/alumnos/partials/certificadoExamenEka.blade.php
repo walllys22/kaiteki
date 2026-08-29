@@ -36,8 +36,14 @@
 
     $dojoNombre   = trim((string) optional($dojo)->nombre) ?: 'Dojo';
     $alumnoNombre = trim((string) optional($person)->first_name) ?: 'Alumno no registrado';
-    $qrTexto      = "Alumno: {$alumnoNombre}\nDojo: {$dojoNombre}\nGrado: {$gradoCertificado}\nFecha: {$dia}/{$mes}/{$anio}";
-    $qrSvg        = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(110)->generate($qrTexto);
+    // El QR apunta a la pagina publica de validacion (URL firmada). Si el registro
+    // todavia no tiene id, cae al texto plano con los datos del certificado.
+    $qrTexto = $isCursando
+        ? ($alumnoGrado->id ? \App\Http\Controllers\CertificadoValidacionController::urlCursando($alumnoGrado->id) : null)
+        : ($examen->id ? \App\Http\Controllers\CertificadoValidacionController::urlExamen($examen->id) : null);
+
+    $qrTexto = $qrTexto ?: "Alumno: {$alumnoNombre}\nDojo: {$dojoNombre}\nGrado: {$gradoCertificado}\nFecha: {$dia}/{$mes}/{$anio}";
+    $qrSvg   = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(110)->generate($qrTexto);
 
     $template = asset('images/dojos/eka/certificados/examen.png');
     $photo    = asset('images/default.jpg');

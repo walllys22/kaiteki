@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CertificadoValidacionController;
 use App\Http\Controllers\ContextoDojoController;
 use App\Http\Controllers\ErrorController;
 use App\Http\Controllers\PersonController;
@@ -47,6 +48,15 @@ Route::get('/info/{id?}', [ErrorController::class , 'error'])->name('errors');
 Route::get('/comprobantes/mensualidades/pagos/{id}', [AlumnoMensualidadController::class, 'comprobantePagoPublic'])
     ->middleware('signed')
     ->name('alumno.mensualidades.pago.comprobante.public');
+// Validacion publica de certificados (destino del QR impreso). Sin auth, pero
+// firmadas para que no se puedan enumerar alumnos cambiando el id.
+Route::get('/validar/certificado/examen/{id}', [CertificadoValidacionController::class, 'examen'])
+    ->middleware('signed')
+    ->name('certificados.validar.examen');
+Route::get('/validar/certificado/cursando/{id}', [CertificadoValidacionController::class, 'cursando'])
+    ->middleware('signed')
+    ->name('certificados.validar.cursando');
+
 // Route::get('/development', [ErrorController::class , 'error503'])->name('development');
 
 Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system', 'dojo.mensualidad', 'dojo.activo']], function () {

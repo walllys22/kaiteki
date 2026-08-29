@@ -325,6 +325,28 @@ View: `resources/views/alumnos/partials/comprobanteExamen.blade.php`
 
 An exam is considered paid when `monto > 0` AND `monto_pagado >= monto`. Only paid exams show a print button. The controller (`comprobanteExamen()`) also blocks direct URL access to unpaid exams.
 
+### Validacion publica de certificados (destino del QR)
+El QR impreso en los certificados ya no lleva texto plano: apunta a una pagina publica de verificacion.
+
+**Controlador:** `app/Http/Controllers/CertificadoValidacionController.php`
+**Vista:** `resources/views/certificados/validar.blade.php` (standalone, no usa el layout de Voyager)
+
+```
+GET /validar/certificado/examen/{id}     certificados.validar.examen    (signed)
+GET /validar/certificado/cursando/{id}   certificados.validar.cursando  (signed)
+```
+
+- Sin autenticacion: cualquiera que escanee el papel puede verificarlo.
+- **Ambas rutas usan middleware `signed`**, sin vencimiento (un certificado impreso es permanente). La firma impide enumerar alumnos cambiando el id en la barra de direcciones; una firma de otro certificado tampoco sirve.
+- `examen()` solo resuelve examenes con `aprobado=1`; un aplazado da 404.
+- `cursando()` solo resuelve grados en progreso (`status` null o `'0'`).
+- Las URLs se generan con `CertificadoValidacionController::urlExamen($id)` / `::urlCursando($id)`, que es lo que consumen `certificadoExamenLjp.blade.php` y `certificadoExamenEka.blade.php` para armar el QR. Si el registro no tiene id, el QR cae al texto plano anterior.
+- La pagina muestra: estado (valido / en curso), foto, nombre, N&deg; de registro, fecha de ingreso, grado y cinta, fecha de examen, dojo, instructor responsable y el historial de grados completados.
+- **El documento va enmascarado** (solo los ultimos 3 digitos): la pagina es publica y solo tiene que permitir confirmar identidad. No agregar datos de contacto (telefono, email, direccion) a esta vista.
+- Lleva `<meta name="robots" content="noindex, nofollow">`.
+
+Cobertura: `tests/Feature/CertificadoValidacionTest.php`.
+
 ### Certificates
 View: `resources/views/alumnos/partials/certificadoExamenLjp.blade.php`
 
