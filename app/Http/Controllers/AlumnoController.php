@@ -531,6 +531,100 @@ class AlumnoController extends Controller
         return view('alumnos.print', compact('alumnos', 'dojo', 'gradoFiltro', 'esGlobal'));
     }
 
+    /**
+     * Lista de cumpleanos para imprimir.
+     *
+     * El rango se interpreta por dia/mes, no por fecha absoluta: un cumpleanos
+     * se repite todos los anios, asi que "01/03 al 31/03" trae a todos los
+     * nacidos un 3 de marzo sin importar el anio de nacimiento. El rango puede
+     * cruzar el fin de anio (15/12 al 15/01).
+     *
+     * A diferencia de print(), el dojo es OBLIGATORIO: la lista siempre sale de
+     * una sola sucursal. No existe "Todos los Dojos" ni para el rol admin.
+     */
+    public function printCumpleanos(Request $request)
+    {
+        $this->custom_authorize('read_alumnos');
+
+        $request->validate([
+            'desde'   => 'required|date',
+            'hasta'   => 'required|date',
+            'dojo_id' => 'nullable|exists:dojos,id',
+            'estado'  => 'nullable|in:1,0,todos',
+        ]);
+
+        // Operador de sucursal y rol administrador quedan atados a su dojo (el
+        // accessor ya resuelve dojo real / dojo activo). Solo el rol admin llega
+        // con dojo_id null y tiene que elegir uno en el modal.
+        $userDojoId = auth()->user()->dojo_id;
+        $dojo_id    = $userDojoId ?: $request->input('dojo_id');
+
+        if (! $dojo_id) {
+            abort(400, 'Debe seleccionar una sucursal para imprimir la lista de cumpleanos.');
+        }
+
+        $estado = $request->input('estado', '1');
+
+        $desde = Carbon::parse($request->input('desde'))->startOfDay();
+        $hasta = Carbon::parse($request->input('hasta'))->startOfDay();
+
+        // MMDD como entero: 15 de marzo => 315. Comparable directamente.
+        $desdeMMDD = (int) $desde->format('md');
+        $hastaMMDD = (int) $hasta->format('md');
+        // Rango que cruza el fin de anio (ej. 15/12 -> 15/01).
+        $cruzaAnio = $desdeMMDD > $hastaMMDD;
+
+        $alumnos = Alumno::with(['person', 'dojo'])
+            ->whereNull('deleted_at')
+            ->whereNotNull('person_id')
+            ->where('dojo_id', $dojo_id)
+            ->when($estado !== 'todos', fn($q) => $q->where('status', (int) $estado))
+            ->whereHas('person', function ($q) use ($desdeMMDD, $hastaMMDD, $cruzaAnio) {
+                $q->whereNull('deleted_at')
+                  ->whereNotNull('birth_date')
+                  ->when(
+                      $cruzaAnio,
+                      fn($inner) => $inner->where(function ($w) use ($desdeMMDD, $hastaMMDD) {
+                          $w->whereRaw('CAST(DATE_FORMAT(people.birth_date, "%m%d") AS UNSIGNED) >= ?', [$desdeMMDD])
+                            ->orWhereRaw('CAST(DATE_FORMAT(people.birth_date, "%m%d") AS UNSIGNED) <= ?', [$hastaMMDD]);
+                      }),
+                      fn($inner) => $inner->whereRaw(
+                          'CAST(DATE_FORMAT(people.birth_date, "%m%d") AS UNSIGNED) BETWEEN ? AND ?',
+                          [$desdeMMDD, $hastaMMDD]
+                      )
+                  );
+            })
+            ->get();
+
+        $filas = $alumnos->map(function ($alumno) use ($desde, $desdeMMDD, $cruzaAnio) {
+            $nacimiento = Carbon::parse($alumno->person->birth_date);
+            $mmdd       = (int) $nacimiento->format('md');
+            // En un rango que cruza el anio, lo anterior al inicio cae en el anio siguiente.
+            $seVaAlAnioQueViene = $cruzaAnio && $mmdd < $desdeMMDD;
+            $anio = $seVaAlAnioQueViene ? $desde->year + 1 : $desde->year;
+
+            // Nacido un 29/02 en anio no bisiesto: se festeja el 28/02.
+            $dia = $nacimiento->day;
+            if ($nacimiento->month === 2 && $dia === 29 && ! Carbon::create($anio, 1, 1)->isLeapYear()) {
+                $dia = 28;
+            }
+
+            return [
+                'alumno'     => $alumno,
+                'nacimiento' => $nacimiento,
+                'cumple'     => Carbon::create($anio, $nacimiento->month, $dia)->startOfDay(),
+                'edad'       => $anio - $nacimiento->year,
+                'orden'      => $seVaAlAnioQueViene ? $mmdd + 10000 : $mmdd,
+            ];
+        })
+        ->sortBy('orden')
+        ->values();
+
+        $dojo = Dojo::whereNull('deleted_at')->findOrFail($dojo_id);
+
+        return view('alumnos.cumpleanos', compact('filas', 'dojo', 'desde', 'hasta', 'estado', 'cruzaAnio'));
+    }
+
     public function tutorList($alumno_id)
     {
         $search = request('search');

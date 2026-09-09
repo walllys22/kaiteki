@@ -85,6 +85,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['loggin', 'system', 'dojo.me
     Route::put('alumnos/{id}/fecha-ingreso', [AlumnoController::class, 'updateFechaIngreso'])->name('alumnos.fecha_ingreso.update');
     Route::get('alumnos/check-registration/{person_id}', [AlumnoController::class, 'checkRegistration'])->name('alumnos.check_registration');
     Route::get('alumnos/imprimir/reporte', [AlumnoController::class, 'print'])->name('alumnos.print');
+    Route::get('alumnos/imprimir/cumpleanos', [AlumnoController::class, 'printCumpleanos'])->name('alumnos.cumpleanos.print');
     
 
 

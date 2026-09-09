@@ -209,11 +209,52 @@ POST admin/alumnos/{id}/status             alumnos.status.update
 PUT  admin/alumnos/{id}/fecha-ingreso      alumnos.fecha_ingreso.update
 GET  admin/alumnos/check-registration/{person_id} alumnos.check_registration
 GET  admin/alumnos/imprimir/reporte        alumnos.print
+GET  admin/alumnos/imprimir/cumpleanos     alumnos.cumpleanos.print
 ```
 
 `updateStatus()` cannot inactivate a student while they have an active monthly plan or a currently vigente mensualidad. `checkRegistration()` prevents registering a person already used as an alumno anywhere in the system and also detects when the selected person is the responsible person for the same dojo.
 
 `updateFechaIngreso()` edits `Alumno.fechaIngreso` and is restricted to users whose role is `admin` or `administrador` (`abort(403)` otherwise). Role `administrador_dojo` is NOT allowed. The new date cannot be after today. The edit pencil next to "Fecha de Ingreso" in `alumnos/read.blade.php` (modal `#modal-edit-fecha-ingreso`) is rendered only for those roles.
+
+### Lista de cumpleanos (`AlumnoController::printCumpleanos()`)
+
+Reporte imprimible de cumpleanos de alumnos por rango de fechas.
+
+**Vista:** `resources/views/alumnos/cumpleanos.blade.php` (standalone, no usa el layout de Voyager)
+**Disparador:** boton "Cumpleaños" + modal `#modal-print-cumple` en `alumnos/browse.blade.php`, abierto en pestana nueva.
+
+```
+GET admin/alumnos/imprimir/cumpleanos   alumnos.cumpleanos.print
+```
+
+Parametros: `desde` y `hasta` (requeridos, `date`), `dojo_id` (nullable), `estado` (`1` / `0` / `todos`, por defecto `1`).
+
+**El rango se aplica por dia/mes, NO por fecha absoluta.** Un cumpleanos se repite todos los anios, asi que "01/03 al 31/03" trae a todos los nacidos un dia de marzo sin importar el anio de nacimiento. El filtro se resuelve en SQL comparando `CAST(DATE_FORMAT(people.birth_date, '%m%d') AS UNSIGNED)` contra el MMDD entero de cada extremo. No usar `whereBetween` sobre `birth_date` ni `DAYOFYEAR` (los anios bisiestos corren el valor un dia).
+
+- **El rango puede cruzar el fin de anio** (15/12 al 15/01). Se detecta con `desdeMMDD > hastaMMDD` y ahi el `BETWEEN` se cambia por `>= desde OR <= hasta`. El orden de impresion se mantiene cronologico sumando `10000` a las fechas que caen del otro lado del corte, y a esos alumnos se les calcula el cumpleanos en `desde->year + 1`.
+- Nacidos un 29/02: en anio no bisiesto la fila se muestra como 28/02.
+
+**La vista no es una tabla, es una hoja de tarjetas** agrupadas por mes: cada alumno entra en una tarjeta con sello de dia (numero + mes abreviado), retrato redondo, nombre, y la edad que cumple destacada a la derecha. Grilla de dos columnas que pasa a una sola en pantallas menores a 900px.
+
+- El retrato usa el `-cropped.webp` de `people.image` segun la convencion de S3 del proyecto; si no hay imagen o falla la carga, cae a un circulo con las iniciales del alumno (no a `default.jpg`).
+- El logo del dojo cae a un circulo con la inicial del dojo.
+- El renglon de datos (`.datos .meta`) va forzado a **una sola linea con ellipsis**: si envuelve, las tarjetas de una misma fila quedan de distinta altura y la lista se ve despareja. Dice dia de la semana, año de nacimiento y telefono — el dia/mes ya esta en el sello, por eso no se repite la fecha completa.
+- **El telefono solo se arma si `people.phone` tiene valor.** Concatenar `country_code` siempre imprimia un "591" suelto en los alumnos sin numero.
+- El que cumple el dia de la impresion sale resaltado con badge "HOY" y ademas se anuncia en una franja arriba de la lista. Los inactivos llevan badge "INACTIVO".
+- Impresion: carta vertical, margen 12mm, `print-color-adjust: exact` en todo lo que lleva fondo, y `break-inside: avoid` en tarjetas y bloques de mes mas `break-after: avoid` en la cabecera del mes (para que un mes no arranque al pie de una hoja). La barra de acciones no se imprime.
+- Textos en castellano con acentos y ñ (`años`, `Cumpleaños`, `Miércoles`, `Sábado`). Mantenerlos al editar.
+
+**El dojo es obligatorio: la lista siempre sale de UNA sola sucursal.** A diferencia de `print()`, aca no existe "Todos los Dojos" ni para el rol `admin`. Resolucion:
+
+| Rol | Origen del dojo |
+|-----|-----------------|
+| `administrador_dojo` | su `dojo_id` real; un `dojo_id` mandado por request se ignora |
+| `administrador` | el dojo activo del sidebar; un `dojo_id` mandado por request se ignora |
+| `admin` | `request('dojo_id')`, obligatorio — sin el, `abort(400)` |
+
+Como los tres casos leen `auth()->user()->dojo_id` primero, el accessor de `User` ya resuelve dojo real / dojo activo y el request solo se consulta cuando ese valor es null (unicamente el rol `admin`). El modal no ofrece opcion vacia: al operador y al `administrador` les muestra el nombre de su sucursal como texto fijo mas un `input hidden`.
+
+Cobertura de regresion: `tests/Feature/CumpleanosTest.php`. Usa `DatabaseTransactions` porque los casos de operador dan de alta una `DojoMensualidad` vigente: sin ella `CheckDojoMensualidad` redirige al 402 y el test mediria el bloqueo de facturacion en vez del filtro.
 
 ---
 

@@ -17,6 +17,9 @@
                             <a href="#" class="btn btn-dark" data-toggle="modal" data-target="#modal-print">
                                 <i class="fa-solid fa-print"></i> <span>Imprimir</span>
                             </a>
+                            <a href="#" class="btn btn-warning" data-toggle="modal" data-target="#modal-print-cumple">
+                                <i class="fa-solid fa-cake-candles"></i> <span>Cumpleaños</span>
+                            </a>
                             @if (auth()->user()->hasPermission('add_alumnos'))
                                 <a href="#" class="btn btn-success" data-toggle="modal" data-target="#modal-add-alumno">
                                     <i class="voyager-plus"></i> <span>Crear</span>
@@ -168,6 +171,94 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
                         <button type="button" class="btn btn-success" id="btn-print-confirm">
+                            <i class="fa-solid fa-print"></i> Imprimir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal modal-warning fade" tabindex="-1" id="modal-print-cumple" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" style="color: white;"><i class="fa-solid fa-cake-candles"></i> Lista de Cumpleaños</h4>
+                    </div>
+                    <div class="modal-body">
+
+                        <div class="alert alert-info" style="font-size:12px; margin-bottom:12px;">
+                            <i class="fa fa-info-circle"></i>
+                            El rango se aplica por <strong>día y mes</strong>: trae a todos los alumnos que cumplen
+                            años en esas fechas, sin importar el año de nacimiento. Se puede cruzar el fin de año
+                            (ej. 15/12 al 15/01).
+                        </div>
+
+                        {{-- La lista de cumpleaños siempre sale de UNA sucursal.
+                             Usuario de sucursal y rol administrador quedan atados
+                             a su dojo; solo el rol admin elige, y sin opción "todos". --}}
+                        @if(!$userDojoId)
+                        <div class="form-group">
+                            <label style="color: #333;">Sucursal / Dojo <span style="color:#c0392b;">*</span></label>
+                            <select id="cumple_dojo_id" class="form-control">
+                                @foreach (\App\Models\Dojo::whereNull('deleted_at')->orderBy('nombre')->get() as $item)
+                                    <option value="{{ $item->id }}">{{ $item->nombre }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @else
+                        <div class="form-group">
+                            <label style="color: #333;">Sucursal / Dojo</label>
+                            <p class="form-control-static" style="color:#333; font-weight:bold; margin:0;">
+                                <i class="fa-solid fa-location-dot"></i>
+                                {{ optional(\App\Models\Dojo::find($userDojoId))->nombre ?: 'Sucursal asignada' }}
+                            </p>
+                        </div>
+                        <input type="hidden" id="cumple_dojo_id" value="{{ $userDojoId }}">
+                        @endif
+
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label style="color: #333;">Desde</label>
+                                    <input type="date" id="cumple_desde" class="form-control"
+                                           value="{{ now()->startOfMonth()->format('Y-m-d') }}">
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="form-group">
+                                    <label style="color: #333;">Hasta</label>
+                                    <input type="date" id="cumple_hasta" class="form-control"
+                                           value="{{ now()->endOfMonth()->format('Y-m-d') }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label style="color: #333;">Rangos rápidos</label><br>
+                            <button type="button" class="btn btn-default btn-sm cumple-preset" data-preset="mes">Este mes</button>
+                            <button type="button" class="btn btn-default btn-sm cumple-preset" data-preset="mes_siguiente">Mes siguiente</button>
+                            <button type="button" class="btn btn-default btn-sm cumple-preset" data-preset="30dias">Próximos 30 días</button>
+                            <button type="button" class="btn btn-default btn-sm cumple-preset" data-preset="anio">Todo el año</button>
+                        </div>
+
+                        <div class="form-group">
+                            <label style="color: #333;">Alumnos a incluir</label>
+                            <select id="cumple_estado" class="form-control">
+                                <option value="1">Solo activos</option>
+                                <option value="0">Solo inactivos</option>
+                                <option value="todos">Activos e inactivos</option>
+                            </select>
+                        </div>
+
+                        <div id="cumple-alert" class="alert alert-danger" style="display:none; margin-bottom:0;">
+                            <i class="fa fa-exclamation-triangle"></i> <span id="cumple-alert-msg"></span>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-warning" id="btn-print-cumple-confirm">
                             <i class="fa-solid fa-print"></i> Imprimir
                         </button>
                     </div>
@@ -492,6 +583,66 @@
                 if (params.length) url += '?' + params.join('&');
                 window.open(url, '_blank');
                 $('#modal-print').modal('hide');
+            });
+
+            // ── Lista de cumpleaños ──
+            function fmtFecha(d) {
+                var mes = String(d.getMonth() + 1).padStart(2, '0');
+                var dia = String(d.getDate()).padStart(2, '0');
+                return d.getFullYear() + '-' + mes + '-' + dia;
+            }
+
+            $('.cumple-preset').click(function(){
+                var preset = $(this).data('preset');
+                var hoy = new Date();
+                var desde, hasta;
+
+                if (preset === 'mes') {
+                    desde = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+                    hasta = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+                } else if (preset === 'mes_siguiente') {
+                    desde = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1);
+                    hasta = new Date(hoy.getFullYear(), hoy.getMonth() + 2, 0);
+                } else if (preset === '30dias') {
+                    desde = hoy;
+                    hasta = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + 30);
+                } else { // anio
+                    desde = new Date(hoy.getFullYear(), 0, 1);
+                    hasta = new Date(hoy.getFullYear(), 11, 31);
+                }
+
+                $('#cumple_desde').val(fmtFecha(desde));
+                $('#cumple_hasta').val(fmtFecha(hasta));
+                $('#cumple-alert').hide();
+            });
+
+            $('#btn-print-cumple-confirm').click(function(){
+                var desde   = $('#cumple_desde').val();
+                var hasta   = $('#cumple_hasta').val();
+                var dojo_id = $('#cumple_dojo_id').val();
+
+                if (!desde || !hasta) {
+                    $('#cumple-alert-msg').text('Seleccione la fecha desde y la fecha hasta.');
+                    $('#cumple-alert').show();
+                    return;
+                }
+                // La lista siempre es de una sola sucursal.
+                if (!dojo_id) {
+                    $('#cumple-alert-msg').text('Seleccione la sucursal / dojo.');
+                    $('#cumple-alert').show();
+                    return;
+                }
+                $('#cumple-alert').hide();
+
+                var params = [
+                    'desde=' + desde,
+                    'hasta=' + hasta,
+                    'estado=' + $('#cumple_estado').val(),
+                    'dojo_id=' + dojo_id
+                ];
+
+                window.open('{{ route("alumnos.cumpleanos.print") }}?' + params.join('&'), '_blank');
+                $('#modal-print-cumple').modal('hide');
             });
 
             $('#modal_alumno_dojo_id').on('change', function() {
